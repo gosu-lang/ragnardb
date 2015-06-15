@@ -39,7 +39,7 @@ public class SQLPlugin extends TypeLoaderBase {
     public IType getType(String name) {
       for(ISQLSource source : _sqlTypeNames.keySet()) {
         //Set<String> namedTypes = source.getTypeNames();
-        IType result = TypeSystem.getOrCreateTypeReference(new SQLType(this, name));
+        IType result = TypeSystem.getTypeReference(new SQLType(this, name));
         return result;
 //        Set<IType> typesInSource = source.getTypes();
 //        for(IType theType : typesInSource) {
