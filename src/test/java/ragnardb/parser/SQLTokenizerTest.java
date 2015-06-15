@@ -9,7 +9,7 @@ public class SQLTokenizerTest
 {
   @Test
   public void basicTokenizingTest() {
-    File inFile = new File("src/test/resources/Foo/Users.dll");
+    File inFile = new File("src/test/resources/Foo/Users.ddl");
     System.out.println(inFile.getAbsolutePath());
     Assert.assertTrue(inFile.exists());
 
