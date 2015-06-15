@@ -1,137 +1,85 @@
 package ragnardb.plugin;
 
+import gw.fs.FileFactory;
 import gw.fs.IDirectory;
 import gw.fs.IFile;
-import gw.lang.reflect.IType;
-import gw.lang.reflect.ITypeLoader;
-import gw.lang.reflect.RefreshKind;
-import gw.lang.reflect.RefreshRequest;
+import gw.fs.IResource;
+import gw.lang.reflect.*;
 import gw.lang.reflect.gs.TypeName;
 import gw.lang.reflect.module.IModule;
 
+import java.io.File;
 import java.net.URL;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class SQLPlugin implements ITypeLoader
-{
-    @Override
-    public IModule getModule() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+public class SQLPlugin extends TypeLoaderBase {
+
+    private static final String FILE_EXTENSION = "ddl";
+
+    private Set<IResource> _sources; //TODO populate set of all DDL files on disk? Use IFile?
+    private Map<ISQLSource, Set<String>> _sqlTypeNames = new HashMap<>();
+
+    public SQLPlugin(IModule module) {
+      super(module);
+      _sources = new HashSet<>();
+      FileFactory ff = FileFactory.instance();
+      _sources.add(ff.getIFile(new File("src/test/resources/Foo/Users.ddl"))); //TODO unhack me
+
+      //populate _sqlTypes
+      for(IResource source : _sources) {
+        ISQLSource newGuy = new SQLSource(source);
+        _sqlTypeNames.put(newGuy, newGuy.getTypeNames());
+
+
+      }
+
     }
 
     @Override
-    public IType getType(String s) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public IType getType(String name) {
+      for(ISQLSource source : _sqlTypeNames.keySet()) {
+        //Set<String> namedTypes = source.getTypeNames();
+        IType result = TypeSystem.getOrCreateTypeReference(new SQLType(this, name));
+        return result;
+//        Set<IType> typesInSource = source.getTypes();
+//        for(IType theType : typesInSource) {
+//          if(name == theType.getName()) {
+//            return theType;
+//          }
+//        }
+      }
+      return null;
     }
 
-    @Override
-    public Set<? extends CharSequence> getAllTypeNames() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+  @Override
+  public Set<? extends CharSequence> getAllNamespaces() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 
-    @Override
-    public boolean showTypeNamesInIDE() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+  @Override
+  public List<String> getHandledPrefixes() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 
-    @Override
-    public Set<? extends CharSequence> getAllNamespaces() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+  @Override
+  public boolean handlesNonPrefixLoads() {
+    return false;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 
-    @Override
-    public URL getResource(String s) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+  @Override
+  public void refreshedNamespace(String s, IDirectory iDirectory, RefreshKind refreshKind) {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
 
-    @Override
-    public boolean isCaseSensitive() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+  @Override
+  public boolean hasNamespace(String s) {
+    return false;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 
-    @Override
-    public List<String> getHandledPrefixes() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+  @Override
+  public Set<String> computeTypeNames() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 
-    @Override
-    public boolean handlesNonPrefixLoads() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
 
-    @Override
-    public boolean handlesFile(IFile iFile) {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public String[] getTypesForFile(IFile iFile) {
-        return new String[0];  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public RefreshKind refreshedFile(IFile iFile, String[] strings, RefreshKind refreshKind) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void refreshedNamespace(String s, IDirectory iDirectory, RefreshKind refreshKind) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void refreshedTypes(RefreshRequest refreshRequest) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void refreshed() {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public boolean handlesDirectory(IDirectory iDirectory) {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public String getNamespaceForDirectory(IDirectory iDirectory) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public boolean hasNamespace(String s) {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Set<TypeName> getTypeNames(String s) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Set<String> computeTypeNames() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void shutdown() {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public boolean isInited() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void init() {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void uninit() {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
 }
