@@ -1,6 +1,6 @@
 # Design Ideas/Concepts
 
-RagnarDB is a SQL Typeloader: it will inspect SQL resources on disk and produce types corresponding to these resources, 
+RagnarDB is a SQL ~~Typeloader~~ compiler plugin for Gosu: it will inspect SQL resources on disk and produce types corresponding to these resources,
 and provide basic CRUD operations against a database based on this information.
 
 ## Components
@@ -8,8 +8,8 @@ and provide basic CRUD operations against a database based on this information.
 RagnarDB will consist of four different components:
 
 * A SQL Parser
-* A Gosu Type Loader that uses the results of the SQL Parser to produce types
-* A runtime that the Type Loader uses for producing objects to meet the runtime needs of the above types
+* A Gosu ~~Type Loader~~ compiler plugin that uses the results of the SQL Parser to produce types
+* A runtime that the ~~Type Loader~~ compiler plugin uses for producing objects to meet the runtime needs of the above types
 * A runtime API that will expose whatever is necessary to RagnarDB users
 
 ### SQL Parser
@@ -57,9 +57,9 @@ A variable can be used more than once and only needs to include the type the fir
     WHERE FirstName = @name:java.lang.String OR
           LastName = @name;
 
-### The SQL Typeloader
+### The SQL ~~Typeloader~~ compiler plugin
 
-The Typeloader will take the results of the parser above and produce types.  For the DDL files, this is fairly
+The plugin will take the results of the parser above and produce types.  For the DDL files, this is fairly
 straight-forward:  given a ddl file found at `/model/application.ddl` with the `Persons` table defined above,
 the following type will be created `model.application.Person`, where the package for the type is the path 
 to the DDL file, plus the file name, and then the singularized version of the table name.
