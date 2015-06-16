@@ -1,22 +1,21 @@
 package ragnardb.plugin;
 
-import gw.fs.IDirectory;
-import gw.fs.IResource;
+import gw.fs.FileFactory;
 import gw.fs.ResourcePath;
+import gw.fs.physical.IPhysicalFileSystem;
+import gw.fs.physical.PhysicalResourceImpl;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SQLSource implements ISQLSource { // TODO extend gw.fs.physical.PhysicalResourceImpl and get rid of useless overrides?
+public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
 
-  private IResource _file;
+  public SQLSource(ResourcePath path, IPhysicalFileSystem backingFileSystem) {
+    super(path, backingFileSystem);
+  }
 
-  public SQLSource(IResource file) {
-    _file = file;
-
+  public SQLSource(ResourcePath path) {
+    this(path, FileFactory.instance().getDefaultPhysicalFileSystem());
   }
 
   @Override
@@ -29,63 +28,4 @@ public class SQLSource implements ISQLSource { // TODO extend gw.fs.physical.Phy
     return returnSet;
   }
 
-  @Override
-  public IDirectory getParent() {
-    return _file.getParent();
-  }
-
-  @Override
-  public String getName() {
-    return _file.getName();
-  }
-
-  @Override
-  public boolean exists() {
-    return _file.exists();
-  }
-
-  @Override
-  public boolean delete() throws IOException {
-    return _file.delete();
-  }
-
-  @Override
-  public URI toURI() {
-    return _file.toURI();
-  }
-
-  @Override
-  public ResourcePath getPath() {
-    return _file.getPath();
-  }
-
-  @Override
-  public boolean isChildOf(IDirectory iDirectory) {
-    return _file.isChildOf(iDirectory);
-  }
-
-  @Override
-  public boolean isDescendantOf(IDirectory iDirectory) {
-    return _file.isDescendantOf(iDirectory);
-  }
-
-  @Override
-  public File toJavaFile() {
-    return _file.toJavaFile();
-  }
-
-  @Override
-  public boolean isJavaFile() {
-    return _file.isJavaFile();
-  }
-
-  @Override
-  public boolean isInJar() {
-    return _file.isInJar();
-  }
-
-  @Override
-  public boolean create() {
-    return _file.create();
-  }
 }

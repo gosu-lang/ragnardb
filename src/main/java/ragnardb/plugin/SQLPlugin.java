@@ -27,7 +27,7 @@ public class SQLPlugin extends TypeLoaderBase {
       for(Pair<String, IFile> pair : ddlFiles) {
         String fileName = pair.getFirst();
         String packageName = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
-        ISQLSource sqlSource = new SQLSource(pair.getSecond());
+        ISQLSource sqlSource = new SQLSource(pair.getSecond().getPath());
         Set<String> typeNames = sqlSource.getTypeNames();
 
         boolean allTypeNamesAreValid = true;
@@ -54,7 +54,7 @@ public class SQLPlugin extends TypeLoaderBase {
         String packageName = String.join(".", packages);
 
       if(_sqlSourcesByPackage.keySet().contains(packageName)) {
-        ISQLSource ddlFile = new SQLSource(_sqlSourcesByPackage.get(packageName));
+        ISQLSource ddlFile = new SQLSource(_sqlSourcesByPackage.get(packageName).getPath());
         if(ddlFile.getTypeNames().contains(typeName)) {
           return TypeSystem.getOrCreateTypeReference(new SQLType(this, fullyQualifiedName));
         }
