@@ -49,7 +49,7 @@ public class SQLTokenizer {
   }
 
   private boolean isNumber(char c) {
-    return c >= '0' && c <= '9';
+    return (c >= '0' && c <= '9') || c == '.';
   }
 
   private Token number() {
@@ -57,29 +57,52 @@ public class SQLTokenizer {
     int l = line;
     int c = col;
     long intNum = 0;
-    double decNum = 0.0;
+    double decNum;
     boolean isDecimal = false;
+    boolean isExponential = false;
 
-    while(isNumber(ch)) {
-      intNum = intNum * 10 + (ch - '0');
-      next();
-    }
-    if(ch == '.') {
-      next();
-      isDecimal = true;
-      int e = 0;
-      while(isNumber(ch)) {
-        intNum = intNum * 10 + (ch - '0');
+    /*Set exponent*/
+    int e = 0;
+
+    while(isNumber(ch) || ch == 'e') {
+      if(ch == '.') {
+        isDecimal = true;
         next();
-        e--;
+        continue;
       }
-      decNum = intNum * Math.pow(10, e);
+      if(ch == 'e') {
+        isExponential = true;
+        next();
+        break;
+      }
+      intNum = intNum * 10 + (ch - '0');
+      if(isDecimal){ e--; }
+      next();
     }
+    if(isExponential){
+      isDecimal = true;
+      /*Used to deal with the event a negative exponential is used*/
+      int negativeExp = 1;
+      int expNum = 0;
+      if(ch == '+') {
+        next();
+      }
+      if(ch == '-') {
+        negativeExp = -1;
+        next();
+      }
+      while(isNumber(ch) && ch != '.') {
+        expNum = expNum * 10 + (ch - '0');
+        next();
+      }
+      e += negativeExp*expNum;
+    }
+    decNum = intNum * Math.pow(10, e);
     if(isDecimal) {
-      tok = new Token(TokenType.DOUBLE, l, c);
+      tok = new Token(TokenType.DOUBLE, 1, c);
       tok.setDoubleNumber(decNum);
     } else {
-      tok = new Token(TokenType.LONG, l, c);
+      tok = new Token(TokenType.LONG, 1, c);
       tok.setLongNumber(intNum);
     }
     return tok;
