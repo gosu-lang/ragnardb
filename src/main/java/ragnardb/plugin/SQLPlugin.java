@@ -14,53 +14,53 @@ import java.util.*;
 
 public class SQLPlugin extends TypeLoaderBase {
 
-    private static final String FILE_EXTENSION = ".ddl";
+  private static final String FILE_EXTENSION = ".ddl";
 
-    Map<String, ISQLSource> _sqlSourcesByPackage;
+  Map<String, ISQLSource> _sqlSourcesByPackage;
 
-    public SQLPlugin(IModule module) {
-      super(module);
-      List<Pair<String, IFile>> ddlFiles = module.getFileRepository().findAllFilesByExtension(FILE_EXTENSION);
-      final int initialCapacity = ddlFiles.size();
-      Map<String, ISQLSource> result = new HashMap<>(initialCapacity);
+  public SQLPlugin(IModule module) {
+    super(module);
+    List<Pair<String, IFile>> ddlFiles = module.getFileRepository().findAllFilesByExtension(FILE_EXTENSION);
+    final int initialCapacity = ddlFiles.size();
+    Map<String, ISQLSource> result = new HashMap<>(initialCapacity);
 
-      for(Pair<String, IFile> pair : ddlFiles) {
-        String fileName = pair.getFirst();
-        String packageName = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
-        ISQLSource sqlSource = new SQLSource(pair.getSecond().getPath());
-        Set<String> typeNames = sqlSource.getTypeNames();
+    for(Pair<String, IFile> pair : ddlFiles) {
+      String fileName = pair.getFirst();
+      String packageName = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
+      ISQLSource sqlSource = new SQLSource(pair.getSecond().getPath());
+      Set<String> typeNames = sqlSource.getTypeNames();
 
-        boolean allTypeNamesAreValid = true;
-        for(String typeName : typeNames) {
-          String fullyQualifiedName = packageName + '.' + typeName;
-          if (!isValidTypeName(fullyQualifiedName)) {
-            allTypeNamesAreValid = false;
-          }
-          if(allTypeNamesAreValid) {
-            result.put(packageName, sqlSource);
-          }
+      boolean allTypeNamesAreValid = true;
+      for(String typeName : typeNames) {
+        String fullyQualifiedName = packageName + '.' + typeName;
+        if(!isValidTypeName(fullyQualifiedName)) {
+          allTypeNamesAreValid = false;
+        }
+        if(allTypeNamesAreValid) {
+          result.put(packageName, sqlSource);
         }
       }
-
-      _sqlSourcesByPackage = result; //TODO replace with lockinglazyvar impl
-
     }
 
-    @Override
-    public IType getType(final String fullyQualifiedName) {
-        String[] packagesAndType = fullyQualifiedName.split("\\.");
-        String[] packages = Arrays.copyOfRange(packagesAndType, 0, packagesAndType.length-1);
-        String typeName = packagesAndType[packagesAndType.length-1];
-        String packageName = String.join(".", packages);
+    _sqlSourcesByPackage = result; //TODO replace with lockinglazyvar impl
 
-      if(_sqlSourcesByPackage.keySet().contains(packageName)) {
-        ISQLSource ddlFile = new SQLSource(_sqlSourcesByPackage.get(packageName).getPath());
-        if(ddlFile.getTypeNames().contains(typeName)) {
-          return TypeSystem.getOrCreateTypeReference(new SQLType(this, fullyQualifiedName));
-        }
+  }
+
+  @Override
+  public IType getType(final String fullyQualifiedName) {
+    String[] packagesAndType = fullyQualifiedName.split("\\.");
+    String[] packages = Arrays.copyOfRange(packagesAndType, 0, packagesAndType.length - 1);
+    String typeName = packagesAndType[packagesAndType.length - 1];
+    String packageName = String.join(".", packages);
+
+    if(_sqlSourcesByPackage.keySet().contains(packageName)) {
+      ISQLSource ddlFile = new SQLSource(_sqlSourcesByPackage.get(packageName).getPath());
+      if(ddlFile.getTypeNames().contains(typeName)) {
+        return TypeSystem.getOrCreateTypeReference(new SQLType(this, fullyQualifiedName));
       }
-      return null;
     }
+    return null;
+  }
 
   @Override
   public Set<? extends CharSequence> getAllNamespaces() {
@@ -94,7 +94,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   private static boolean isValidTypeName(String typeName) {
     List<String> nameParts = StringUtil.tokenizeToList(typeName, '.');
-    if (nameParts == null || nameParts.isEmpty()) {
+    if(nameParts == null || nameParts.isEmpty()) {
       return false;
     }
 //    for (String namePart : nameParts) {
