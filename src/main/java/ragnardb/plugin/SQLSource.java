@@ -21,16 +21,12 @@ public class SQLSource implements ISQLSource {
 
   @Override
   public Set<String> getTypeNames() {
-    return Collections.singleton(_file.getName());
+    return Collections.singleton("Contacts"); //TODO incorporate parser output here
   }
 
-  @Override
-  public IType getTypeByName(String name) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
+//  @Override
+//  public IType getTypeByName(String name) {
+//    return null;  //To change body of implemented methods use File | Settings | File Templates.
+//  }
 
-  @Override
-  public IFile getFile(String name) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
 }

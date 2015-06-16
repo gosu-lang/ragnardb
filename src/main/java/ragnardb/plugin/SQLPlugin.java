@@ -1,54 +1,60 @@
 package ragnardb.plugin;
 
-import gw.fs.FileFactory;
 import gw.fs.IDirectory;
 import gw.fs.IFile;
-import gw.fs.IResource;
-import gw.lang.reflect.*;
-import gw.lang.reflect.gs.TypeName;
+import gw.internal.gosu.util.StringUtil;
+import gw.lang.reflect.IType;
+import gw.lang.reflect.RefreshKind;
+import gw.lang.reflect.TypeLoaderBase;
+import gw.lang.reflect.TypeSystem;
 import gw.lang.reflect.module.IModule;
+import gw.util.Pair;
 
-import java.io.File;
-import java.net.URL;
 import java.util.*;
 
 public class SQLPlugin extends TypeLoaderBase {
 
-    private static final String FILE_EXTENSION = "ddl";
+    private static final String FILE_EXTENSION = ".ddl";
 
-    private Set<IResource> _sources; //TODO populate set of all DDL files on disk? Use IFile?
-    private Map<ISQLSource, Set<String>> _sqlTypeNames = new HashMap<>();
+    //private Set<IResource> _sources; //TODO populate set of all DDL files on disk? Use IFile?
+    //private Map<ISQLSource, Set<String>> _sqlTypeNames = new HashMap<>();
+    //private Map<String, Set<ISQLSource>> _sqlSourcesByPackage = new HashMap<>(); //package corresponds to fqn
+    Map<String, IFile> _sqlSourcesByPackage;
 
     public SQLPlugin(IModule module) {
       super(module);
-      _sources = new HashSet<>();
-      FileFactory ff = FileFactory.instance();
-      _sources.add(ff.getIFile(new File("src/test/resources/Foo/Users.ddl"))); //TODO unhack me
+      //_sources = new HashSet<>();
+      List<Pair<String, IFile>> ddlFiles = module.getFileRepository().findAllFilesByExtension(FILE_EXTENSION);
+      final int initialCapacity = ddlFiles.size();
+      Map<String, IFile> result = new HashMap<>(initialCapacity);
 
-      //populate _sqlTypes
-      for(IResource source : _sources) {
-        ISQLSource newGuy = new SQLSource(source);
-        _sqlTypeNames.put(newGuy, newGuy.getTypeNames());
-
-
+      for(Pair<String, IFile> pair : ddlFiles) {
+        String fileName = pair.getFirst();
+        String packageName = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
+        Set<String> tableNames = new SQLSource(pair.getSecond()).getTypeNames();
+        for(String tableName : tableNames) {
+          String fullyQualifiedName = packageName + '.' + tableName;
+          if (isValidTypeName(fullyQualifiedName)) {
+            result.put(fullyQualifiedName, pair.getSecond());
+          }
+        }
       }
+
+      _sqlSourcesByPackage = result; //TODO replace with lockinglazyvar impl
+
+
+      //TODO now cache everything
 
     }
 
     @Override
-    public IType getType(String name) {
-      for(ISQLSource source : _sqlTypeNames.keySet()) {
-        //Set<String> namedTypes = source.getTypeNames();
-        IType result = TypeSystem.getTypeReference(new SQLType(this, name));
-        return result;
-//        Set<IType> typesInSource = source.getTypes();
-//        for(IType theType : typesInSource) {
-//          if(name == theType.getName()) {
-//            return theType;
-//          }
-//        }
+    public IType getType(String fullyQualifiedName) {
+
+      if(_sqlSourcesByPackage.keySet().contains(fullyQualifiedName)) {
+        return TypeSystem.getOrCreateTypeReference(new SQLType(this, fullyQualifiedName));
       }
       return null;
+
     }
 
   @Override
@@ -58,7 +64,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public List<String> getHandledPrefixes() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return Collections.emptyList();
   }
 
   @Override
@@ -81,5 +87,17 @@ public class SQLPlugin extends TypeLoaderBase {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  private static boolean isValidTypeName(String typeName) {
+    List<String> nameParts = StringUtil.tokenizeToList(typeName, '.');
+    if (nameParts == null || nameParts.isEmpty()) {
+      return false;
+    }
+//    for (String namePart : nameParts) {
+//      if (!PropertyNode.isGosuIdentifier(namePart)) {
+//        return false;
+//      }
+//    }
+    return true;
+  }
 
 }
