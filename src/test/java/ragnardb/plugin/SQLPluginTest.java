@@ -34,9 +34,16 @@ public class SQLPluginTest {
   }
 
   @Test
-  public void getTypes() {
+  public void oneSourceWithMultipleTypes() {
+    ITypeLoader sqlPlugin = new SQLPlugin(TypeSystem.getGlobalModule());
+    TypeSystem.pushTypeLoader(TypeSystem.getGlobalModule(), sqlPlugin);
 
+    IType result = sqlPlugin.getType("ragnardb.foo.Vehicles.Cars");
+    assertNotNull(result);
+    assertEquals("ragnardb.foo.Vehicles.Cars", result.getName());
 
-    fail("not implemented yet");
+    result = sqlPlugin.getType("ragnardb.foo.Vehicles.Motorcycles");
+    assertNotNull(result);
+    assertEquals("ragnardb.foo.Vehicles.Motorcycles", result.getName());
   }
 }

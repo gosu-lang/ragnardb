@@ -7,7 +7,7 @@ import gw.fs.ResourcePath;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class SQLSource implements ISQLSource { // TODO extend gw.fs.physical.PhysicalResourceImpl and get rid of useless overrides?
@@ -20,8 +20,13 @@ public class SQLSource implements ISQLSource { // TODO extend gw.fs.physical.Phy
   }
 
   @Override
-  public Set<String> getTypeNames() {
-    return Collections.singleton("Contacts"); //TODO incorporate parser output here
+  public Set<String> getTypeNames() { //TODO incorporate parser output here
+    Set<String> returnSet = new HashSet<>();
+    returnSet.add("Contacts");
+    returnSet.add("Cars");
+    returnSet.add("Motorcycles");
+
+    return returnSet;
   }
 
   @Override
