@@ -38,7 +38,7 @@ public class SQLTokenizer {
 
     if(EOF) {
       tok = new Token(TokenType.EOF, line, col);
-    } else if(isIdent(ch)) {
+    } else if(isIdent(ch) ) {
       tok = identifier();
     } else if(isNumber(ch)) {
       tok = number();
@@ -90,7 +90,11 @@ public class SQLTokenizer {
     int l = line;
     int c = col;
 
-    while(isIdent(ch)) {
+
+    sb.append(ch);
+    next();
+
+    while(isIdent(ch) || isNumber(ch)  ) {
       sb.append(ch);
       next();
     }
