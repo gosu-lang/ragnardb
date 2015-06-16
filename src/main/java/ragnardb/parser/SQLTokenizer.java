@@ -12,39 +12,13 @@ public class SQLTokenizer {
   private int col;
   private char ch;
   private boolean EOF;
-  private Map<String, TokenType> keyword2TokType;
-  private String[] keywords = { "abort", "action", "add", "after", "all", "alter", "analyze", "and", "as", "asc",
-                                "attach", "autoincrement", "before", "begin", "between", "by", "cascade", "case",
-                                "cast", "check", "collate", "column", "commit", "conflict", "constraint", "create",
-                                "cross", "current_date", "current_time", "current_timestamp", "database", "default",
-                                "deferrable", "deferred", "delete", "desc", "detach", "distinct", "drop", "each",
-                                "else", "end", "escape", "except", "exclusive", "exists", "explain", "fail", "for",
-                                "foreign", "from", "full", "glob", "group", "having", "if", "ignore", "immediate", "in",
-                                "index", "indexed", "initially", "inner", "insert", "instead", "intersect", "into", "is",
-                                "isnull", "join", "key", "left", "like", "limit", "match", "natural", "no", "not",
-                                "notnull", "null", "of", "offset", "on", "or", "order", "outer", "plan", "pragma",
-                                "primary", "query", "raise", "recursive", "references", "regexp", "reindex", "release",
-                                "rename", "replace", "restrict", "right", "rollback", "row", "savepoint", "select",
-                                "set", "table", "temp", "temporary", "then", "to", "transaction", "trigger", "union",
-                                "unique", "update", "using", "vacuum", "values", "view", "virtual", "when", "where",
-                                "with", "without"};
-
 
   public SQLTokenizer(Reader r) {
     reader = new BufferedReader(r);
     line = 1;
     col = 0;
     EOF = false;
-    keyword2TokType = populateKeywordTable(keywords);
     next();
-  }
-
-  private Map<String, TokenType> populateKeywordTable(String[] keywords) {
-    HashMap<String, TokenType> map = new HashMap<String, TokenType>();
-    for(String kw : keywords) {
-      map.put(kw, TokenType.valueOf(kw.toUpperCase()));
-    }
-    return map;
   }
 
   private boolean isBlank(char c) {
@@ -122,7 +96,7 @@ public class SQLTokenizer {
     }
     String s = sb.toString().toLowerCase();
     Token tok;
-    TokenType type = keyword2TokType.get(s);
+    TokenType type = TokenType.find(s);
     if(type != null) {
       tok = new Token(type, l, c);
     } else {
