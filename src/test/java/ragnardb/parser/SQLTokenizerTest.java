@@ -20,10 +20,24 @@ public class SQLTokenizerTest {
   public void identifierTest() {
     StringReader s = new StringReader("hello HELLo SELECT sElEcT");
     SQLTokenizer tokenizer = new SQLTokenizer(s);
-    for(int i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
       Token tok = tokenizer.get();
       assertEquals(TokenType.IDENT, tok.getType());
       assertEquals("hello", tok.getText());
+    }
+    for (int i = 0; i < 2; i++) {
+      Token tok = tokenizer.get();
+      assertEquals(TokenType.SELECT, tok.getType());
+    }
+  }
+  @Test
+   public void numVarTest() {
+    StringReader s = new StringReader("he1lo HE1Lo SELECT sElEcT");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    for(int i = 0; i < 2; i++) {
+      Token tok = tokenizer.get();
+      assertEquals(TokenType.IDENT, tok.getType());
+      assertEquals("he1lo", tok.getText());
     }
     for(int i = 0; i < 2; i++) {
       Token tok = tokenizer.get();
