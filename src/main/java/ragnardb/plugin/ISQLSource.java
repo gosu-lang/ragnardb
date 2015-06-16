@@ -1,8 +1,10 @@
 package ragnardb.plugin;
 
+import gw.fs.IResource;
+
 import java.util.Set;
 
-public interface ISQLSource {
+public interface ISQLSource extends IResource {
 
   /**
    * The names of all the SQL types available from this source

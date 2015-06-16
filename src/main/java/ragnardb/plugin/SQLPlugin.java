@@ -16,45 +16,50 @@ public class SQLPlugin extends TypeLoaderBase {
 
     private static final String FILE_EXTENSION = ".ddl";
 
-    //private Set<IResource> _sources; //TODO populate set of all DDL files on disk? Use IFile?
-    //private Map<ISQLSource, Set<String>> _sqlTypeNames = new HashMap<>();
-    //private Map<String, Set<ISQLSource>> _sqlSourcesByPackage = new HashMap<>(); //package corresponds to fqn
-    Map<String, IFile> _sqlSourcesByPackage;
+    Map<String, ISQLSource> _sqlSourcesByPackage;
 
     public SQLPlugin(IModule module) {
       super(module);
-      //_sources = new HashSet<>();
       List<Pair<String, IFile>> ddlFiles = module.getFileRepository().findAllFilesByExtension(FILE_EXTENSION);
       final int initialCapacity = ddlFiles.size();
-      Map<String, IFile> result = new HashMap<>(initialCapacity);
+      Map<String, ISQLSource> result = new HashMap<>(initialCapacity);
 
       for(Pair<String, IFile> pair : ddlFiles) {
         String fileName = pair.getFirst();
         String packageName = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
-        Set<String> tableNames = new SQLSource(pair.getSecond()).getTypeNames();
-        for(String tableName : tableNames) {
-          String fullyQualifiedName = packageName + '.' + tableName;
-          if (isValidTypeName(fullyQualifiedName)) {
-            result.put(fullyQualifiedName, pair.getSecond());
+        ISQLSource sqlSource = new SQLSource(pair.getSecond());
+        Set<String> typeNames = sqlSource.getTypeNames();
+
+        boolean allTypeNamesAreValid = true;
+        for(String typeName : typeNames) {
+          String fullyQualifiedName = packageName + '.' + typeName;
+          if (!isValidTypeName(fullyQualifiedName)) {
+            allTypeNamesAreValid = false;
+          }
+          if(allTypeNamesAreValid) {
+            result.put(packageName, sqlSource);
           }
         }
       }
 
       _sqlSourcesByPackage = result; //TODO replace with lockinglazyvar impl
 
-
-      //TODO now cache everything
-
     }
 
     @Override
-    public IType getType(String fullyQualifiedName) {
+    public IType getType(final String fullyQualifiedName) {
+        String[] packagesAndType = fullyQualifiedName.split("\\.");
+        String[] packages = Arrays.copyOfRange(packagesAndType, 0, packagesAndType.length-1);
+        String typeName = packagesAndType[packagesAndType.length-1];
+        String packageName = String.join(".", packages);
 
-      if(_sqlSourcesByPackage.keySet().contains(fullyQualifiedName)) {
-        return TypeSystem.getOrCreateTypeReference(new SQLType(this, fullyQualifiedName));
+      if(_sqlSourcesByPackage.keySet().contains(packageName)) {
+        ISQLSource ddlFile = new SQLSource(_sqlSourcesByPackage.get(packageName));
+        if(ddlFile.getTypeNames().contains(typeName)) {
+          return TypeSystem.getOrCreateTypeReference(new SQLType(this, fullyQualifiedName));
+        }
       }
       return null;
-
     }
 
   @Override
