@@ -144,5 +144,36 @@ public class SQLTokenizerTest {
 
     assertEquals(TokenType.DOUBLE, tok.getType());
     assertEquals(1.0905, tok.getDoubleNumber(), 0.01);
+
+    s = new StringReader("/*Pure Comment*/");
+    tokenizer = new SQLTokenizer(s);
+    tok = tokenizer.get();
+
+    assertEquals(TokenType.EOF, tok.getType());
+
+    s = new StringReader("HELLO/*Comment*/HELLO");
+    tokenizer = new SQLTokenizer(s);
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.IDENT, tok.getType());
+    assertEquals("hello", tok.getText());
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.IDENT, tok.getType());
+    assertEquals("hello", tok.getText());
+
+    s = new StringReader("1/2");
+    tokenizer = new SQLTokenizer(s);
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.LONG, tok.getType());
+    assertEquals(1,tok.getLongNumber());
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.SLASH, tok.getType());
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.LONG, tok.getType());
+    assertEquals(2, tok.getLongNumber());
   }
 }

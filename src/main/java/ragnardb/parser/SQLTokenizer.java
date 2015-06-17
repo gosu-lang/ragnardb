@@ -3,8 +3,6 @@ package ragnardb.parser;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SQLTokenizer {
   private BufferedReader reader;
@@ -29,59 +27,70 @@ public class SQLTokenizer {
     return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_';
   }
 
+  private void comment(){
+    next();
+    while(ch != '*') {
+      next();
+      if(ch == '*') {
+        next();
+        if(ch == '/') {
+          next();
+          return;
+        }
+      }
+    }
+  }
+
   public Token get() {
     Token tok;
-
-    while(!EOF && isBlank(ch)) {
+    while (!EOF && isBlank(ch)) {
       next();
     }
 
-    if(EOF) {
+    if (EOF) {
       tok = new Token(TokenType.EOF, line, col);
-    } else if(isIdent(ch) ) {
+    } else if (ch == '/') {
+      next();
+      if (ch == '*') {
+        comment();
+        return get();
+      } else {
+        tok = new Token(TokenType.SLASH, line, col-1);
+      }
+    } else if (isIdent(ch)) {
       tok = identifier();
-    } else if(isNumber(ch)) {
-      tok = number();
-    } else if(isSpecial(ch)) {
-      tok = special();
+    } else if (isNumberOrDot(ch)) {
+      tok = numberOrDot();
+    } else if (ch == '(') {
+      tok = new Token(TokenType.LPAREN, line, col);
+      next();
+    } else if (ch == ')') {
+      tok = new Token(TokenType.RPAREN, line, col);
+      next();
+    } else if (ch == '+') {
+      tok = new Token(TokenType.PLUS, line, col);
+      next();
+    } else if (ch == '-') {
+      tok = new Token(TokenType.MINUS, line, col);
+      next();
+    } else if (ch == ',') {
+      tok = new Token(TokenType.COMMA, line, col);
+      next();
+    } else if (ch == ';') {
+      tok = new Token(TokenType.SEMI, line, col);
+      next();
     } else {
       tok = new Token(TokenType.UNKNOWN, line, col);
+      next();
     }
     return tok;
   }
 
-  private boolean isSpecial(char c)
-    { return c == '('  ||
-      c == ')'  ||
-      c == '+'  ||
-      c == '-'  ||
-      c == '.'  ||
-      c == ','  ||
-      c == ';' ;
-    }
-
-  private Token special()
-  {
-    Token tok;
-    if(ch == '('){tok = new Token(TokenType.LPAREN, line, col);}
-    else if(ch == ')'){tok = new Token(TokenType.RPAREN, line, col);}
-    else if(ch == '+'){tok = new Token(TokenType.PLUS, line, col);}
-    else if(ch == '-'){tok = new Token(TokenType.MINUS, line, col);}
-    else if(ch == '.'){tok = new Token(TokenType.DOT, line, col);}
-    else if(ch == ','){tok = new Token(TokenType.COMMA, line, col);}
-    else if(ch == ';'){tok = new Token(TokenType.SEMI, line, col);}
-    else{tok = new Token(TokenType.UNKNOWN, line, col);}
-
-    next();
-    return tok;
-
-  }
-
-  private boolean isNumber(char c) {
+  private boolean isNumberOrDot(char c) {
     return (c >= '0' && c <= '9') || c == '.';
   }
 
-  private Token number() {
+  private Token numberOrDot() {
     Token tok;
     int l = line;
     int c = col;
@@ -93,10 +102,13 @@ public class SQLTokenizer {
     /*Set exponent*/
     int e = 0;
 
-    while(isNumber(ch) || ch == 'e') {
+    while(isNumberOrDot(ch) || ch == 'e') {
       if(ch == '.') {
         isDecimal = true;
         next();
+        if(!isNumberOrDot(ch) && intNum == 0){
+          return new Token(TokenType.DOT, line, col-1);
+        }
         continue;
       }
       if(ch == 'e') {
@@ -120,7 +132,7 @@ public class SQLTokenizer {
         negativeExp = -1;
         next();
       }
-      while(isNumber(ch) && ch != '.') {
+      while(isNumberOrDot(ch) && ch != '.') {
         expNum = expNum * 10 + (ch - '0');
         next();
       }
@@ -146,7 +158,7 @@ public class SQLTokenizer {
     sb.append(ch);
     next();
 
-    while(isIdent(ch) || isNumber(ch)  ) {
+    while(isIdent(ch) || isNumberOrDot(ch)  ) {
       sb.append(ch);
       next();
     }
