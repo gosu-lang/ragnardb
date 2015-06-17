@@ -25,9 +25,9 @@ public enum TokenType {
   TRANSACTION("transaction"), TRIGGER("trigger"), UNION("union"), UNIQUE("unique"), UPDATE("update"), USING("using"),
   VACUUM("vacuum"), VALUES("values"), VIEW("view"), VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"),
   WITHOUT("without"),
-  IDENT, LONG, DOUBLE,
-  LPAREN, RPAREN, PLUS, MINUS, DOT, COMMA, SEMI, SLASH,
-  EOF, UNKNOWN,;
+  IDENT("identifier"), LONG("long"), DOUBLE("double"),
+  LPAREN("("), RPAREN(")"), PLUS("+"), MINUS("-"), DOT("."), COMMA(","), SEMI(";"), SLASH("/"),
+  EOF("End of file"), UNKNOWN,;
 
   String _name;
   private static Map<String, TokenType> keyword2TokType;
@@ -45,5 +45,9 @@ public enum TokenType {
       }
     }
     return keyword2TokType.get(name);
+  }
+
+  public String getName() {
+    return _name;
   }
 }
