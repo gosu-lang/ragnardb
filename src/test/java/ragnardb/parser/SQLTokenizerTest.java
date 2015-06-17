@@ -178,5 +178,19 @@ public class SQLTokenizerTest {
     tok = tokenizer.get();
     assertEquals(TokenType.LONG, tok.getType());
     assertEquals(2, tok.getLongNumber());
+
+
+    s = new StringReader("/*Comment*withstar*/ +");
+    tokenizer = new SQLTokenizer(s);
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.PLUS, tok.getType());
+
+    s = new StringReader("--All of this is ommited + - \n ;");
+    tokenizer = new SQLTokenizer(s);
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.SEMI, tok.getType());
+
   }
 }

@@ -26,7 +26,11 @@ public class SQLTokenizer {
   private boolean isIdent(char c) {
     return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_';
   }
-
+  private void hComment(){
+    while(ch != '\n')
+    {next();}
+    next();
+  }
   private void comment(){
     next();
     while(ch != '*') {
@@ -55,9 +59,20 @@ public class SQLTokenizer {
         comment();
         return get();
       } else {
-        tok = new Token(TokenType.SLASH, line, col-1);
+        tok = new Token(TokenType.SLASH, line, col - 1);
       }
-    } else if (isIdent(ch)) {
+    }
+    else if (ch == '-') {
+      next();
+      if (ch == '-') {
+      hComment();
+      return get();
+      } else {
+        tok = new Token(TokenType.MINUS, line, col - 1);
+    }
+
+
+    }  else if (isIdent(ch)) {
       tok = identifier();
     } else if (isNumberOrDot(ch)) {
       tok = numberOrDot();
@@ -69,9 +84,6 @@ public class SQLTokenizer {
       next();
     } else if (ch == '+') {
       tok = new Token(TokenType.PLUS, line, col);
-      next();
-    } else if (ch == '-') {
-      tok = new Token(TokenType.MINUS, line, col);
       next();
     } else if (ch == ',') {
       tok = new Token(TokenType.COMMA, line, col);
