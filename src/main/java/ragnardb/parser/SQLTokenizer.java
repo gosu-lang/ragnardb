@@ -36,17 +36,16 @@ public class SQLTokenizer {
 
   private void comment() {
     boolean exiting = false;
-    while(!exiting) {
-      next();
-      if(ch == '*') {
+    while(!exiting && !EOF) {
+      if(ch != '*') {
+          next();
+      }
+      else {
         next();
         if(ch == '/') {
           next();
           exiting = true;
         }
-      }
-      if(EOF) {
-        exiting = true;
       }
     }
   }
