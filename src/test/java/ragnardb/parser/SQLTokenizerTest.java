@@ -30,6 +30,25 @@ public class SQLTokenizerTest {
       assertEquals(TokenType.SELECT, tok.getType());
     }
   }
+
+  @Test
+  public void specialCharTest()
+  {
+    StringReader s = new StringReader("+ - hello .");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+
+    Token tok = tokenizer.get();
+    assertEquals(TokenType.PLUS, tok.getType());
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.MINUS, tok.getType());
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.IDENT, tok.getType());
+
+    tok = tokenizer.get();
+    assertEquals(TokenType.DOT, tok.getType());
+  }
   @Test
    public void numVarTest() {
     StringReader s = new StringReader("he1lo HE1Lo SELECT sElEcT");

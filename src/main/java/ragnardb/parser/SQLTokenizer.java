@@ -42,10 +42,39 @@ public class SQLTokenizer {
       tok = identifier();
     } else if(isNumber(ch)) {
       tok = number();
+    } else if(isSpecial(ch)) {
+      tok = special();
     } else {
       tok = new Token(TokenType.UNKNOWN, line, col);
     }
     return tok;
+  }
+
+  private boolean isSpecial(char c)
+    { return c == '('  ||
+      c == ')'  ||
+      c == '+'  ||
+      c == '-'  ||
+      c == '.'  ||
+      c == ','  ||
+      c == ';' ;
+    }
+
+  private Token special()
+  {
+    Token tok;
+    if(ch == '('){tok = new Token(TokenType.LPAREN, line, col);}
+    else if(ch == ')'){tok = new Token(TokenType.RPAREN, line, col);}
+    else if(ch == '+'){tok = new Token(TokenType.PLUS, line, col);}
+    else if(ch == '-'){tok = new Token(TokenType.MINUS, line, col);}
+    else if(ch == '.'){tok = new Token(TokenType.DOT, line, col);}
+    else if(ch == ','){tok = new Token(TokenType.COMMA, line, col);}
+    else if(ch == ';'){tok = new Token(TokenType.SEMI, line, col);}
+    else{tok = new Token(TokenType.UNKNOWN, line, col);}
+
+    next();
+    return tok;
+
   }
 
   private boolean isNumber(char c) {

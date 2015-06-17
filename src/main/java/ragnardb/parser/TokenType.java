@@ -25,7 +25,8 @@ public enum TokenType {
   TRANSACTION("transaction"), TRIGGER("trigger"), UNION("union"), UNIQUE("unique"), UPDATE("update"), USING("using"),
   VACUUM("vacuum"), VALUES("values"), VIEW("view"), VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"),
   WITHOUT("without"),
-  IDENT, LONG, DOUBLE, EOF, UNKNOWN;
+  IDENT, LONG, DOUBLE, EOF, UNKNOWN,
+  LPAREN, RPAREN, PLUS, MINUS, DOT, COMMA, SEMI;
 
   String _name;
   private static Map<String, TokenType> keyword2TokType;
