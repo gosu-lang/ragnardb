@@ -144,10 +144,13 @@ public class SQLTokenizerTest {
 
     assertEquals(TokenType.DOUBLE, tok.getType());
     assertEquals(1.0905, tok.getDoubleNumber(), 0.01);
+  }
 
-    s = new StringReader("/*Pure Comment*/");
-    tokenizer = new SQLTokenizer(s);
-    tok = tokenizer.get();
+  @Test
+  public void commentTest(){
+    StringReader s = new StringReader("/*Pure Comment*/");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    Token tok = tokenizer.get();
 
     assertEquals(TokenType.EOF, tok.getType());
 
