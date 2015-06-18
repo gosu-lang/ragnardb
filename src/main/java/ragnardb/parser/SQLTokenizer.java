@@ -255,7 +255,7 @@ public class SQLTokenizer {
     sb.append(ch);
     next();
 
-    while(isIdent(ch) || isNumberOrDot(ch)) {
+    while(isIdent(ch) || (isNumberOrDot(ch) && ch != '.') ) {
       sb.append(ch);
       next();
     }

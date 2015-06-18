@@ -9,9 +9,10 @@ import java.io.StringReader;
 import static org.junit.Assert.assertEquals;
 
 public class SQLTokenizerTest {
+
   @Test
   public void basicTokenizingTest() {
-    File inFile = new File("src/test/resources/Foo/Users.ddl");
+    File inFile = new File("src/test/java/ragnardb/foo/Users.ddl");
     System.out.println(inFile.getAbsolutePath());
     Assert.assertTrue(inFile.exists());
   }
@@ -29,6 +30,16 @@ public class SQLTokenizerTest {
       Token tok = tokenizer.get();
       assertEquals(TokenType.SELECT, tok.getType());
     }
+    s = new StringReader("databae.contacts");
+    tokenizer = new SQLTokenizer(s);
+    Token tok = tokenizer.get();
+    assertEquals(TokenType.IDENT, tok.getType());
+    assertEquals("databae", tok.getText());
+    tok = tokenizer.get();
+    assertEquals(TokenType.DOT, tok.getType());
+    tok = tokenizer.get();
+    assertEquals(TokenType.IDENT, tok.getType());
+    assertEquals("contacts", tok.getText());
   }
 
   @Test
