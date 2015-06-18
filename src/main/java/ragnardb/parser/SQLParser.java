@@ -82,10 +82,34 @@ public class SQLParser {
     }
 
   }
-
+  private void parseTypeName(){
+    match(TokenType.IDENT);
+    while(tokEquals(TokenType.IDENT)){
+      next();
+    }
+    if(tokEquals(TokenType.LPAREN)){
+      next();
+      if(currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE){
+        next();
+        if(tokEquals(TokenType.COMMA)){
+          next();
+          if(currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE){
+            next();
+            match(TokenType.RPAREN);
+          } else {
+            error(currentToken, "Expecting LONG or DOUBLE but found '" + currentToken.getType() + "'.");
+          }
+        } else{
+          match(TokenType.RPAREN);
+        }
+      }else{
+        error(currentToken, "Expecting LONG or DOUBLE but found '" + currentToken.getType() + "'.");
+      }
+    }
+  }
   private void parseColumnDef() { //Also does constraint
     match(TokenType.IDENT);
-    match(TokenType.IDENT);
+    parseTypeName();
     while (currentToken.getType() == TokenType.CONSTRAINT) {
       next();
       match(TokenType.IDENT);

@@ -15,6 +15,12 @@ public class SQLParserTest {
     SQLTokenizer tokenizer = new SQLTokenizer(s);
     SQLParser parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts( name varchar(255))");
+     tokenizer = new SQLTokenizer(s);
+     parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
     s = new StringReader("CREATE HELLO contacts");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
