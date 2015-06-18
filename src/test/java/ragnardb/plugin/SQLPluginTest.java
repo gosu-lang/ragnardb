@@ -8,6 +8,7 @@ import gw.lang.reflect.TypeSystem;
 import gw.lang.reflect.java.IJavaType;
 import gw.lang.reflect.java.JavaTypes;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -21,47 +22,40 @@ import static org.junit.Assert.*;
 
 public class SQLPluginTest {
 
-  @Before
-  public void beforeMethod() {
+  @BeforeClass
+  public static void beforeClass() {
     Gosu.init();
+    ITypeLoader sqlPlugin = new SQLPlugin(TypeSystem.getGlobalModule()); // global vs. current?
+    TypeSystem.pushTypeLoader(TypeSystem.getGlobalModule(), sqlPlugin);
   }
 
   @Test
   public void getTypeExplicitly() {
-    ITypeLoader sqlPlugin = new SQLPlugin(TypeSystem.getGlobalModule());
-    TypeSystem.pushTypeLoader(TypeSystem.getGlobalModule(), sqlPlugin);
-    IType result = sqlPlugin.getType("ragnardb.foo.Users.Contacts");
+    IType result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users.Contacts", result.getName());
   }
 
   @Test
   public void getNonExistantType() {
-    ITypeLoader sqlPlugin = new SQLPlugin(TypeSystem.getGlobalModule());
-    TypeSystem.pushTypeLoader(TypeSystem.getGlobalModule(), sqlPlugin);
-    IType result = sqlPlugin.getType("ragnardb.foo.Unknown.DoesNotExist");
+    IType result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Unknown.DoesNotExist");
     assertNull(result);
   }
 
   @Test
   public void oneSourceWithMultipleTypes() {
-    ITypeLoader sqlPlugin = new SQLPlugin(TypeSystem.getGlobalModule());
-    TypeSystem.pushTypeLoader(TypeSystem.getGlobalModule(), sqlPlugin);
-
-    IType result = sqlPlugin.getType("ragnardb.foo.Vehicles.Cars");
+    IType result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Vehicles.Cars");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Vehicles.Cars", result.getName());
 
-    result = sqlPlugin.getType("ragnardb.foo.Vehicles.Motorcycles");
+    result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Vehicles.Motorcycles");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Vehicles.Motorcycles", result.getName());
   }
 
   @Test
   public void getColumnDefs() {
-    ITypeLoader sqlPlugin = new SQLPlugin(TypeSystem.getGlobalModule());
-    TypeSystem.pushTypeLoader(TypeSystem.getGlobalModule(), sqlPlugin);
-    ISQLType result = (ISQLType) sqlPlugin.getType("ragnardb.foo.Users.Contacts");
+    ISQLType result = (ISQLType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
     assertNotNull(result);
 
     List<ColumnDefinition> colDefs = result.getColumnDefinitions();
@@ -75,9 +69,7 @@ public class SQLPluginTest {
 
   @Test
   public void getTypeInfo() {
-    ITypeLoader sqlPlugin = new SQLPlugin(TypeSystem.getGlobalModule());
-    TypeSystem.pushTypeLoader(TypeSystem.getGlobalModule(), sqlPlugin);
-    ISQLType result = (ISQLType) sqlPlugin.getType("ragnardb.foo.Users.Contacts");
+    ISQLType result = (ISQLType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users.Contacts", result.getName());
     assertEquals("ragnardb.foo.Users", result.getNamespace());
