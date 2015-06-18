@@ -21,6 +21,17 @@ public class SQLParserTest {
      parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
+    s = new StringReader("CREATE TEMP TABLE IF NOT EXISTS somedatabase.contacts( name varchar(255)) WITHOUT ROWID");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+
+    s = new StringReader("CREATE TABLE contacts( id int PRIMARY KEY , name varchar(255))");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
     s = new StringReader("CREATE HELLO contacts");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
