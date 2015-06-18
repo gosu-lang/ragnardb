@@ -1,18 +1,22 @@
 package ragnardb.plugin;
 
+import gw.config.CommonServices;
 import gw.fs.IDirectory;
-import gw.internal.gosu.util.StringUtil;
+import gw.fs.IFile;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.RefreshKind;
 import gw.lang.reflect.TypeLoaderBase;
 import gw.lang.reflect.TypeSystem;
 import gw.lang.reflect.module.IModule;
+import gw.util.GosuStringUtil;
 import gw.util.Pair;
 import gw.util.concurrent.LockingLazyVar;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,6 +57,7 @@ public class SQLPlugin extends TypeLoaderBase {
   public SQLPlugin(IModule module) {
     super(module);
     initSources(module);
+    init();
   }
 
   /**
@@ -61,7 +66,7 @@ public class SQLPlugin extends TypeLoaderBase {
    */
   private void initSources(IModule module) {
     //leverage Streams API to basically cast Pair<String, IFile> to Pair<String, ISQLSource> in place
-    _sqlSources = module.getFileRepository().findAllFilesByExtension(FILE_EXTENSION)
+    _sqlSources = findAllFilesByExtension(FILE_EXTENSION)
         .stream()
         .map(pair -> new Pair<String, ISQLSource>(pair.getFirst(), new SQLSource(pair.getSecond().getPath())))
         .collect(Collectors.toList());
@@ -85,7 +90,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public Set<? extends CharSequence> getAllNamespaces() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return Collections.emptySet();
   }
 
   @Override
@@ -95,7 +100,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public boolean handlesNonPrefixLoads() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return true;
   }
 
   @Override
@@ -105,17 +110,23 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public boolean hasNamespace(String s) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
   public Set<String> computeTypeNames() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    Set<String> result = new HashSet<>();
+    for(String pkg : _sqlSourcesByPackage.get().keySet()) {
+      for(String typeName : _sqlSourcesByPackage.get().get(pkg).getTypeNames()) {
+        result.add(pkg + '.' + typeName);
+      }
+    }
+    return result;
   }
 
   private static boolean isValidTypeName(String typeName) {
-    List<String> nameParts = StringUtil.tokenizeToList(typeName, '.');
-    if(nameParts == null || nameParts.isEmpty()) {
+    String[] nameParts = GosuStringUtil.tokenize(typeName, '.');
+    if(nameParts == null || nameParts.length == 0) {
       return false;
     }
 //    for (String namePart : nameParts) {
@@ -124,6 +135,47 @@ public class SQLPlugin extends TypeLoaderBase {
 //      }
 //    }
     return true;
+  }
+
+  public List<Pair<String, IFile>> findAllFilesByExtension(String extension) {
+    List<Pair<String, IFile>> results = new ArrayList<>();
+
+    for (IDirectory sourceEntry : _module.getSourcePath()) {
+      if (sourceEntry.exists()) {
+        String prefix = sourceEntry.getName().equals(IModule.CONFIG_RESOURCE_PREFIX) ? IModule.CONFIG_RESOURCE_PREFIX : "";
+        addAllLocalResourceFilesByExtensionInternal(prefix, sourceEntry, extension, results);
+      }
+    }
+    return results;
+  }
+
+  private void addAllLocalResourceFilesByExtensionInternal(String relativePath, IDirectory dir, String extension, List<Pair<String, IFile>> results) {
+    List<IDirectory> excludedPath = Arrays.asList(_module.getFileRepository().getExcludedPath());
+    if ( excludedPath.contains( dir )) {
+      return;
+    }
+    if(!CommonServices.getPlatformHelper().isPathIgnored(relativePath)) {
+      for(IFile file : dir.listFiles()) {
+        if(file.getName().endsWith(extension)) {
+          String path = appendResourceNameToPath(relativePath, file.getName());
+          results.add(new Pair<>(path, file));
+        }
+      }
+      for(IDirectory subdir : dir.listDirs()) {
+        String path = appendResourceNameToPath(relativePath, subdir.getName());
+        addAllLocalResourceFilesByExtensionInternal(path, subdir, extension, results);
+      }
+    }
+  }
+
+  private static String appendResourceNameToPath(String relativePath, String resourceName) {
+    String path;
+    if(relativePath.length() > 0) {
+      path = relativePath + '/' + resourceName;
+    } else {
+      path = resourceName;
+    }
+    return path;
   }
 
 }

@@ -21,10 +21,16 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
   @Override
   public Set<String> getTypeNames() { //TODO incorporate parser output here
     Set<String> returnSet = new HashSet<>();
-    returnSet.add("Contacts");
-    returnSet.add("Cars");
-    returnSet.add("Motorcycles");
-
+    switch(this._path.getName()) {
+      case("Users.ddl"):
+        returnSet.add("Contacts");
+        break;
+      case("Vehicles.ddl"):
+        returnSet.add("Cars");
+        returnSet.add("Motorcycles");
+        break;
+      default: //noop
+    }
     return returnSet;
   }
 
