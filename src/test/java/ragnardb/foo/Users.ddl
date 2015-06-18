@@ -1,4 +1,4 @@
-CREATE TABLE USERS (
+CREATE TABLE CONTACTS (
     UserId int,
     FirstName nchar(50),
     LastName nchar(50),
