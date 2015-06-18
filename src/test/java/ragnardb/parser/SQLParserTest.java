@@ -129,4 +129,29 @@ public class SQLParserTest {
       assertEquals("[1, 37] - ERROR: The statement has not terminated but the grammar has been exhausted.", e.getMessage());
     }
   }
+
+  @Test
+  public void tableConstraint() {
+    StringReader s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT test PRIMARY KEY (col) ON CONFLICT ABORT)");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    SQLParser parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts(ID int, PRIMARY KEY (col) ON CONFLICT ABORT)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT test UNIQUE (col) ON CONFLICT ABORT)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT test CHECK (3 * 3))");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+  }
+
+
 }

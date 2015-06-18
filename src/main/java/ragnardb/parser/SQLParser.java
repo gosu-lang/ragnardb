@@ -64,11 +64,10 @@ public class SQLParser {
       parseColumnDef();
       while (currentToken.getType() == TokenType.COMMA) {
         next();
-        if (tokEquals(TokenType.CONSTRAINT)) {
-          next();
-          parseTableConstraint();
-        } else {
+        if (tokEquals(TokenType.IDENT)) {
           parseColumnDef();
+        } else {
+          parseTableConstraint();
         }
       }
       match(TokenType.RPAREN);
@@ -267,11 +266,12 @@ public class SQLParser {
         parseIndexedColumn();
         while(currentToken.getType() == TokenType.COMMA){
         parseIndexedColumn();
-      }
-      match(TokenType.RPAREN);
-      parseConflictClause();
-      break;
+        }
+        match(TokenType.RPAREN);
+        parseConflictClause();
+        break;
       case CHECK:
+        next();
         match(TokenType.LPAREN);
         parseExpr();
         match(TokenType.RPAREN);
@@ -339,7 +339,7 @@ public class SQLParser {
     }
   }
   private void parseCondition(){ //Ommiting EXISTS (select)
-    while(tokEquals(TokenType.NOT)){
+    if(tokEquals(TokenType.NOT)){
       next();
     }
     parseOperand();
@@ -375,6 +375,7 @@ public class SQLParser {
     if(!(tokEquals(TokenType.DOUBLE)||tokEquals(TokenType.LONG))){
       error(currentToken, "Expecting 'DOUBLE' or 'LONG' but found '" + currentToken.getType().toString());
     }
+    next();
   }
 
 
