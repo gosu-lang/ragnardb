@@ -75,7 +75,10 @@ public class SQLParser {
     }
     if (tokEquals(TokenType.WITHOUT)) {
       next();
-      match(TokenType.IDENT); //Calls ror row id, could be number instead???
+      match(TokenType.ROWID);
+    }
+    if (!tokEquals(TokenType.EOF)) {
+      error(currentToken, "The statement has not terminated but the grammar has been exhausted.");
     }
 
   }

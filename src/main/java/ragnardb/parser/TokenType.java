@@ -20,7 +20,7 @@ public enum TokenType {
   NULL("null"), OF("of"), OFFSET("offset"), ON("on"), OR("or"), ORDER("order"), OUTER("outer"), PLAN("plan"),
   PRAGMA("pragma"), PRIMARY("primary"), QUERY("query"), RAISE("raise"), RECURSIVE("recursive"),
   REFERENCES("references"), REGEXP("regexp"), REINDEX("reindex"), RELEASE("release"), RENAME("rename"),
-  REPLACE("replace"), RESTRICT("restrict"), RIGHT("right"), ROLLBACK("rollback"), ROW("row"), SAVEPOINT("savepoint"),
+  REPLACE("replace"), RESTRICT("restrict"), RIGHT("right"), ROLLBACK("rollback"), ROW("row"), ROWID("rowid"), SAVEPOINT("savepoint"),
   SELECT("select"), SET("set"), TABLE("table"), TEMP("temp"), TEMPORARY("temporary"), THEN("then"), TO("to"),
   TRANSACTION("transaction"), TRIGGER("trigger"), UNION("union"), UNIQUE("unique"), UPDATE("update"), USING("using"),
   VACUUM("vacuum"), VALUES("values"), VIEW("view"), VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"),
