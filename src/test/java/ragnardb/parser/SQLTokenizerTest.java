@@ -9,9 +9,10 @@ import java.io.StringReader;
 import static org.junit.Assert.assertEquals;
 
 public class SQLTokenizerTest {
+
   @Test
   public void basicTokenizingTest() {
-    File inFile = new File("src/test/resources/Foo/Users.ddl");
+    File inFile = new File("src/test/java/ragnardb/foo/Users.ddl");
     System.out.println(inFile.getAbsolutePath());
     Assert.assertTrue(inFile.exists());
   }
