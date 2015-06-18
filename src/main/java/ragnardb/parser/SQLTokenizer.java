@@ -59,7 +59,7 @@ public class SQLTokenizer {
 
     if(EOF) {
       tok = new Token(TokenType.EOF, line, col);
-    } else if(ch == '/') {
+    } else if(ch == '/') { //Need to add in // Comments
       next();
       if(ch == '*') {
         comment();
@@ -96,6 +96,64 @@ public class SQLTokenizer {
     } else if(ch == ';') {
       tok = new Token(TokenType.SEMI, line, col);
       next();
+    } else if(ch == '*') {
+      tok = new Token(TokenType.TIMES, line, col);
+      next();
+    } else if(ch == '%') {
+      tok = new Token(TokenType.MOD, line, col);
+      next();
+    } else if(ch == '<') {
+      next();
+      if(ch == '>'){
+        tok = new Token(TokenType.NEQ,line,col);
+        next();
+      }
+      else if(ch == '='){
+        tok = new Token(TokenType.GTE,line,col);
+        next();
+      }
+      else{
+        tok = new Token(TokenType.GT,line,col-1);
+      }
+    } else if(ch == '>') {
+      next();
+      if(ch == '='){
+        tok = new Token(TokenType.LTE,line,col);
+        next();
+      }
+      else{
+        tok = new Token(TokenType.LT,line-1,col);
+      }
+    } else if(ch == '!'){
+      next();
+      if(ch == '='){
+        tok = new Token(TokenType.NEQ,line,col);
+        next();
+      }
+      else{
+        tok = new Token(TokenType.UNKNOWN,line,col);
+      }
+    } else if(ch == '=') {
+      tok = new Token(TokenType.EQ, line, col);
+      next();
+    } else if(ch == '&'){
+      next();
+      if(ch == '&'){
+        tok = new Token(TokenType.OVL, line, col);
+        next();
+      }
+      else{
+        tok = new Token(TokenType.UNKNOWN, line, col);
+      }
+    } else if(ch == '|'){
+      next();
+      if(ch == '|'){
+        tok = new Token(TokenType.BAR, line, col);
+        next();
+      }
+      else{
+        tok = new Token(TokenType.UNKNOWN, line, col);
+      }
     } else {
       tok = new Token(TokenType.UNKNOWN, line, col);
       next();

@@ -11,12 +11,11 @@ public class SQLParserTest {
 
   @Test
   public void basicCreateTable() {
-    StringReader s = new StringReader("CREATE TABLE contacts()");
+    StringReader s = new StringReader("CREATE TABLE contacts");
     SQLTokenizer tokenizer = new SQLTokenizer(s);
     SQLParser parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
-
-    s = new StringReader("CREATE HELLO contacts()");
+    s = new StringReader("CREATE HELLO contacts");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     try {

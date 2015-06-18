@@ -26,7 +26,8 @@ public enum TokenType {
   VACUUM("vacuum"), VALUES("values"), VIEW("view"), VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"),
   WITHOUT("without"),
   IDENT("identifier"), LONG("long"), DOUBLE("double"),
-  LPAREN("("), RPAREN(")"), PLUS("+"), MINUS("-"), DOT("."), COMMA(","), SEMI(";"), SLASH("/"),
+  LPAREN("("), RPAREN(")"), PLUS("+"), MINUS("-"), DOT("."), COMMA(","), SEMI(";"), SLASH("/"),TIMES("*"),MOD("%"),
+  BAR("||"),EQ("="),NEQ("!="),GT(">"),LT("<"),GTE(">="),LTE("<="),OVL("&&"),
   EOF("End of file"), UNKNOWN,;
 
   String _name;
