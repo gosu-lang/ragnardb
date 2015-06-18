@@ -107,13 +107,26 @@ public class SQLParser {
       }
     }
   }
+  private boolean isTableConstraint(){
+    return tokEquals(TokenType.CONSTRAINT) ||
+            tokEquals(TokenType.PRIMARY) ||
+            tokEquals(TokenType.NOT) ||
+            tokEquals(TokenType.UNIQUE) ||
+            tokEquals(TokenType.CHECK) ||
+            tokEquals(TokenType.DEFAULT) ||
+            tokEquals(TokenType.COLLATE) ||
+            tokEquals(TokenType.REFERENCES) ;
+  }
   private void parseColumnDef() { //Also does constraint
     match(TokenType.IDENT);
     parseTypeName();
-    while (currentToken.getType() == TokenType.CONSTRAINT) {
-      next();
-      match(TokenType.IDENT);
+    while (isTableConstraint()) {
+      if(tokEquals(TokenType.CONSTRAINT)){
+        next();
+        match(TokenType.IDENT);
+      }
       if (currentToken.getType() == TokenType.PRIMARY) {
+        next();
         match(TokenType.KEY);
         if (currentToken.getType() == TokenType.ASC || currentToken.getType() == TokenType.DESC) {
           next();
@@ -164,17 +177,18 @@ public class SQLParser {
     }
 
     private void parseConflictClause(){
-      match(TokenType.ON);
-      match(TokenType.CONFLICT);
-      if(currentToken.getType() == TokenType.ROLLBACK ||
-              currentToken.getType() == TokenType.ABORT  ||
-              currentToken.getType() == TokenType.FAIL  ||
-              currentToken.getType() == TokenType.IGNORE  ||
-              currentToken.getType() == TokenType.REPLACE  ){
+      if(tokEquals(TokenType.ON)) {
         next();
-      }
-      else{
-        error(currentToken, "Expecting Conflict but found '" + currentToken.getText() + "'.");
+        match(TokenType.CONFLICT);
+        if (currentToken.getType() == TokenType.ROLLBACK ||
+                currentToken.getType() == TokenType.ABORT ||
+                currentToken.getType() == TokenType.FAIL ||
+                currentToken.getType() == TokenType.IGNORE ||
+                currentToken.getType() == TokenType.REPLACE) {
+          next();
+        } else {
+          error(currentToken, "Expecting Conflict but found '" + currentToken.getText() + "'.");
+        }
       }
     }
 
