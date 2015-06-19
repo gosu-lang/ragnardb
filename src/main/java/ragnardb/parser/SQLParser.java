@@ -18,6 +18,15 @@ public class SQLParser {
     return expectedType == currentToken.getType();
   }
 
+  private void specialError(String s){
+    error(currentToken, "Expecting " + s + " but found '" + currentToken.getText() + ".");
+  }
+  private void pass(TokenType passType){
+    if(passType == currentToken.getType()){
+      next();
+    }
+  }
+
   private void match(TokenType expectedType) {
     TokenType currentType = currentToken.getType();
     if (currentType == expectedType) {
@@ -28,6 +37,29 @@ public class SQLParser {
         name = currentToken.getText();
       }
       error(currentToken, "Expecting '" + expectedType.getName() + "' but found '" + name + "'.");
+    }
+  }
+
+  private void matchNum() {
+    TokenType currentType = currentToken.getType();
+    if (currentType == TokenType.LONG || currentType == TokenType.DOUBLE) {
+      next();
+    } else {
+      String name = currentType.getName();
+      error(currentToken, "Expecting 'LONG' or 'DOUBLE' but found '" + name + "'.");
+    }
+  }
+
+
+  private boolean isNum(){
+    return (currentToken.getType() == TokenType.LONG || currentToken.getType() == TokenType.DOUBLE);
+  }
+
+  private void list(TokenType item){
+    match(item);
+    while(tokEquals(TokenType.COMMA)){
+      next();
+      match(item);
     }
   }
 
@@ -64,8 +96,7 @@ public class SQLParser {
       parseColumnDef();
       while (currentToken.getType() == TokenType.COMMA) {
         next();
-        if (tokEquals(TokenType.CONSTRAINT)) {
-          next();
+        if (isConstraint()) {
           parseTableConstraint();
         } else {
           parseColumnDef();
@@ -107,74 +138,148 @@ public class SQLParser {
       }
     }
   }
-  private boolean isTableConstraint(){
+  private boolean isConstraint(){
+
     return tokEquals(TokenType.CONSTRAINT) ||
             tokEquals(TokenType.PRIMARY) ||
-            tokEquals(TokenType.NOT) ||
             tokEquals(TokenType.UNIQUE) ||
             tokEquals(TokenType.CHECK) ||
-            tokEquals(TokenType.DEFAULT) ||
-            tokEquals(TokenType.COLLATE) ||
-            tokEquals(TokenType.REFERENCES) ;
+            tokEquals(TokenType.FOREIGN) ;
   }
-  private void parseColumnDef() { //Also does constraint
+
+  private void parseColumnDef(){
     match(TokenType.IDENT);
     parseTypeName();
-    while (isTableConstraint()) {
-      if(tokEquals(TokenType.CONSTRAINT)){
-        next();
-        match(TokenType.IDENT);
-      }
-      if (currentToken.getType() == TokenType.PRIMARY) {
-        next();
-        match(TokenType.KEY);
-        if (currentToken.getType() == TokenType.ASC || currentToken.getType() == TokenType.DESC) {
-          next();
-        }
-        parseConflictClause();
-        if (currentToken.getType() == TokenType.AUTOINCREMENT) {
-          next();
-        }
-      } else if (currentToken.getType() == TokenType.NOT) {
-        next();
-        match(TokenType.NULL);
-        parseConflictClause();
-      } else if (currentToken.getType() == TokenType.UNIQUE){
-        next();
-        parseConflictClause();
-      } else if (currentToken.getType() == TokenType.CHECK){
-        next();
-        match(TokenType.LPAREN);
-        parseExpr();
-        match(TokenType.RPAREN);
-      } else if (currentToken.getType() == TokenType.DEFAULT)
-      {
-        next();
-        if(currentToken.getType() == TokenType.IDENT || currentToken.getType() == TokenType.DOUBLE
-                || currentToken.getType() == TokenType.LONG)
-        {
-          next();
-        } else if(currentToken.getType() == TokenType.LPAREN){
-          next();
-          parseExpr();
-          match(TokenType.RPAREN);
-        } else {
-          error(currentToken, "Expecting LONG DOUBLE RPAREN or IDENT but found '" + currentToken.getText() + "'.");
-        }
-      } else if(currentToken.getType() == TokenType.COLLATE)
-      {
-        next();
-        match(TokenType.IDENT);
-      }
-      else if(currentToken.getType() == TokenType.REFERENCES) //First keyword of foreign key clause
-      {
-        parseForeignKeyClause();
-      }
-      else{
-        error(currentToken, "Expecting Constraint but found '" + currentToken.getText() + "'.");
-      }
-      }
+    if(tokEquals(TokenType.DEFAULT)) {
+      next();
+      parseExpr();
     }
+    //TODO: Add 'as' clause when select statements work
+    if(tokEquals(TokenType.NOT)){
+      next();
+      match(TokenType.NULL);
+    }
+    else if (tokEquals(TokenType.NULL)){
+      next();
+    }
+
+    if(tokEquals(TokenType.AUTOINCREMENT) || tokEquals(TokenType.IDENTITY)){
+      next();
+      if(tokEquals(TokenType.LPAREN)){
+        next();
+        matchNum();
+        if (tokEquals(TokenType.COMMA)){
+          next();
+          matchNum();
+        }
+        match(TokenType.RPAREN);
+        }
+      }
+      //Implement Selectivity, Comment?
+    if(tokEquals(TokenType.UNIQUE)){
+      next();
+    }
+    else if(tokEquals(TokenType.PRIMARY)){
+      next();
+      match(TokenType.KEY);
+      pass(TokenType.HASH);
+    }
+
+    if(tokEquals(TokenType.CHECK)){
+      next();
+      parseCondition();
+    }
+  }
+
+  private void parseConstraint()
+  {
+    if(tokEquals(TokenType.CONSTRAINT)){
+      next();
+      if(tokEquals(TokenType.IF)){
+        next();
+        match(TokenType.NOT);
+        match(TokenType.EXISTS);
+      }
+      match(TokenType.IDENT);
+    }
+    if(tokEquals(TokenType.CHECK)){
+      next();
+      parseExpr();
+    }
+    else if (tokEquals(TokenType.UNIQUE)){
+      next();
+      match(TokenType.LPAREN);
+      match(TokenType.IDENT);
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        match(TokenType.IDENT);
+      }
+      match(TokenType.RPAREN);
+    }
+    else if (tokEquals(TokenType.PRIMARY)){
+      next();
+      match(TokenType.KEY);
+      pass(TokenType.HASH);
+      match(TokenType.LPAREN);
+      match(TokenType.IDENT);
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        match(TokenType.IDENT);
+      }
+      match(TokenType.RPAREN);
+    }
+    else if(tokEquals(TokenType.FOREIGN)){
+      next();
+      match(TokenType.KEY);
+      match(TokenType.LPAREN);
+      list(TokenType.IDENT);
+      match(TokenType.RPAREN);
+      match(TokenType.REFERENCES);
+      pass(TokenType.IDENT);
+      if(tokEquals(TokenType.LPAREN)){
+        next();
+        list(TokenType.IDENT);
+        match(TokenType.RPAREN);
+      }
+      if(tokEquals(TokenType.ON)){
+        next();
+        if(tokEquals(TokenType.DELETE)||tokEquals(TokenType.UPDATE)){
+          next();
+          parseReferentialAction();
+        }
+        else{
+          error(currentToken, "Expecting DELETE or UPDATE but found '" + currentToken.getText() + ".");
+        }
+
+
+      }
+
+    }
+
+
+  }
+
+  private void parseReferentialAction(){
+
+    switch(currentToken.getType()) {
+      case CASCADE:
+        next();
+      case RESTRICT:
+        next();
+      case NO:
+        next();
+        match(TokenType.ACTION);
+      case SET:
+        if(tokEquals(TokenType.DEFAULT)||tokEquals(TokenType.NULL)){
+          next();
+        }
+        else{
+          specialError("DEFAULT or NULL");
+        }
+      default:
+        specialError("CASCADE or RESTRICT or NO or SET");
+    }
+  }
 
     private void parseConflictClause(){
       if(tokEquals(TokenType.ON)) {

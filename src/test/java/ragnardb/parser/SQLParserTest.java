@@ -52,6 +52,20 @@ public class SQLParserTest {
     }
   }
 
+
+  @Test
+  public void testConstraints() {
+    StringReader s = new StringReader("CREATE TABLE contacts( id int PRIMARY KEY , name varchar(255))");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    SQLParser parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts( id int NOT NULL PRIMARY KEY  , name varchar(255))");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+  }
+
   @Test
   public void createTemporary() {
     StringReader s = new StringReader("CREATE TEMP TABLE contacts");

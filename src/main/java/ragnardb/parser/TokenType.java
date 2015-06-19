@@ -24,7 +24,7 @@ public enum TokenType {
   SELECT("select"), SET("set"), TABLE("table"), TEMP("temp"), TEMPORARY("temporary"), THEN("then"), TO("to"),
   TRANSACTION("transaction"), TRIGGER("trigger"), UNION("union"), UNIQUE("unique"), UPDATE("update"), USING("using"),
   VACUUM("vacuum"), VALUES("values"), VIEW("view"), VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"),
-  WITHOUT("without"),
+  WITHOUT("without"), IDENTITY("identity"),HASH("hash"),
   IDENT("identifier"), LONG("long"), DOUBLE("double"),
   LPAREN("("), RPAREN(")"), PLUS("+"), MINUS("-"), DOT("."), COMMA(","), SEMI(";"), SLASH("/"),TIMES("*"),MOD("%"),
   BAR("||"),EQ("="),NEQ("!="),GT(">"),LT("<"),GTE(">="),LTE("<="),OVL("&&"),
