@@ -18,11 +18,12 @@ public class SQLParser {
     return expectedType == currentToken.getType();
   }
 
-  private void specialError(String s){
+  private void specialError(String s) {
     error(currentToken, "Expecting " + s + " but found '" + currentToken.getText() + ".");
   }
-  private void pass(TokenType passType){
-    if(passType == currentToken.getType()){
+
+  private void pass(TokenType passType) {
+    if (passType == currentToken.getType()) {
       next();
     }
   }
@@ -51,13 +52,13 @@ public class SQLParser {
   }
 
 
-  private boolean isNum(){
+  private boolean isNum() {
     return (currentToken.getType() == TokenType.LONG || currentToken.getType() == TokenType.DOUBLE);
   }
 
-  private void list(TokenType item){
+  private void list(TokenType item) {
     match(item);
-    while(tokEquals(TokenType.COMMA)){
+    while (tokEquals(TokenType.COMMA)) {
       next();
       match(item);
     }
@@ -78,7 +79,7 @@ public class SQLParser {
   private void parseCreateTable() {
     match(TokenType.CREATE);
     if (currentToken.getType() == TokenType.TEMP ||
-            currentToken.getType() == TokenType.TEMPORARY) {
+      currentToken.getType() == TokenType.TEMPORARY) {
       next();
     }
     match(TokenType.TABLE);
@@ -94,7 +95,7 @@ public class SQLParser {
       next();
       match(TokenType.IDENT);
     }
-    if(tokEquals(TokenType.LPAREN)) {
+    if (tokEquals(TokenType.LPAREN)) {
       next();
 
       parseColumnDef();
@@ -117,38 +118,40 @@ public class SQLParser {
     }
 
   }
-  private void parseTypeName(){
+
+  private void parseTypeName() {
     match(TokenType.IDENT);
-    while(tokEquals(TokenType.IDENT)){
+    while (tokEquals(TokenType.IDENT)) {
       next();
     }
-    if(tokEquals(TokenType.LPAREN)){
+    if (tokEquals(TokenType.LPAREN)) {
       next();
-      if(currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE){
+      if (currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE) {
         next();
-        if(tokEquals(TokenType.COMMA)){
+        if (tokEquals(TokenType.COMMA)) {
           next();
-          if(currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE){
+          if (currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE) {
             next();
             match(TokenType.RPAREN);
           } else {
             error(currentToken, "Expecting LONG or DOUBLE but found '" + currentToken.getType() + "'.");
           }
-        } else{
+        } else {
           match(TokenType.RPAREN);
         }
-      }else{
+      } else {
         error(currentToken, "Expecting LONG or DOUBLE but found '" + currentToken.getType() + "'.");
       }
     }
   }
-  private boolean isConstraint(){
+
+  private boolean isConstraint() {
 
     return tokEquals(TokenType.CONSTRAINT) ||
-            tokEquals(TokenType.PRIMARY) ||
-            tokEquals(TokenType.UNIQUE) ||
-            tokEquals(TokenType.CHECK) ||
-            tokEquals(TokenType.FOREIGN) ;
+      tokEquals(TokenType.PRIMARY) ||
+      tokEquals(TokenType.UNIQUE) ||
+      tokEquals(TokenType.CHECK) ||
+      tokEquals(TokenType.FOREIGN);
   }
 
   private boolean isComparator() {
@@ -160,89 +163,83 @@ public class SQLParser {
       tokEquals(TokenType.LTE) ||
       tokEquals(TokenType.OVL);
   }
-  
+
   private void parseColumnDef() { //Also does constraint
     match(TokenType.IDENT);
     parseTypeName();
-    if(tokEquals(TokenType.DEFAULT)) {
+    if (tokEquals(TokenType.DEFAULT)) {
       next();
       parseExpr();
     }
     //TODO: Add 'as' clause when select statements work
-    if(tokEquals(TokenType.NOT)){
+    if (tokEquals(TokenType.NOT)) {
       next();
       match(TokenType.NULL);
-    }
-    else if (tokEquals(TokenType.NULL)){
+    } else if (tokEquals(TokenType.NULL)) {
       next();
     }
 
-    if(tokEquals(TokenType.AUTOINCREMENT) || tokEquals(TokenType.IDENTITY)){
+    if (tokEquals(TokenType.AUTOINCREMENT) || tokEquals(TokenType.IDENTITY)) {
       next();
-      if(tokEquals(TokenType.LPAREN)){
+      if (tokEquals(TokenType.LPAREN)) {
         next();
         matchNum();
-        if (tokEquals(TokenType.COMMA)){
+        if (tokEquals(TokenType.COMMA)) {
           next();
           matchNum();
         }
         match(TokenType.RPAREN);
-        }
       }
-      //Implement Selectivity, Comment?
-    if(tokEquals(TokenType.UNIQUE)){
-      next();
     }
-    else if(tokEquals(TokenType.PRIMARY)){
+    //Implement Selectivity, Comment?
+    if (tokEquals(TokenType.UNIQUE)) {
+      next();
+    } else if (tokEquals(TokenType.PRIMARY)) {
       next();
       match(TokenType.KEY);
       pass(TokenType.HASH);
     }
 
-    if(tokEquals(TokenType.CHECK)){
+    if (tokEquals(TokenType.CHECK)) {
       next();
       parseCondition();
     }
   }
 
-  private void parseConstraint()
-  {
-    if(tokEquals(TokenType.CONSTRAINT)){
+  private void parseConstraint() {
+    if (tokEquals(TokenType.CONSTRAINT)) {
       next();
-      if(tokEquals(TokenType.IF)){
+      if (tokEquals(TokenType.IF)) {
         next();
         match(TokenType.NOT);
         match(TokenType.EXISTS);
       }
       match(TokenType.IDENT);
     }
-    if(tokEquals(TokenType.CHECK)){
+    if (tokEquals(TokenType.CHECK)) {
       next();
       parseExpr();
-    }
-    else if (tokEquals(TokenType.UNIQUE)){
+    } else if (tokEquals(TokenType.UNIQUE)) {
       next();
       match(TokenType.LPAREN);
       match(TokenType.IDENT);
-      while(tokEquals(TokenType.COMMA)){
+      while (tokEquals(TokenType.COMMA)) {
         next();
         match(TokenType.IDENT);
       }
       match(TokenType.RPAREN);
-    }
-    else if (tokEquals(TokenType.PRIMARY)){
+    } else if (tokEquals(TokenType.PRIMARY)) {
       next();
       match(TokenType.KEY);
       pass(TokenType.HASH);
       match(TokenType.LPAREN);
       match(TokenType.IDENT);
-      while(tokEquals(TokenType.COMMA)){
+      while (tokEquals(TokenType.COMMA)) {
         next();
         match(TokenType.IDENT);
       }
       match(TokenType.RPAREN);
-    }
-    else if(tokEquals(TokenType.FOREIGN)){
+    } else if (tokEquals(TokenType.FOREIGN)) {
       next();
       match(TokenType.KEY);
       match(TokenType.LPAREN);
@@ -250,18 +247,17 @@ public class SQLParser {
       match(TokenType.RPAREN);
       match(TokenType.REFERENCES);
       pass(TokenType.IDENT);
-      if(tokEquals(TokenType.LPAREN)){
+      if (tokEquals(TokenType.LPAREN)) {
         next();
         list(TokenType.IDENT);
         match(TokenType.RPAREN);
       }
-      if(tokEquals(TokenType.ON)){
+      if (tokEquals(TokenType.ON)) {
         next();
-        if(tokEquals(TokenType.DELETE)||tokEquals(TokenType.UPDATE)){
+        if (tokEquals(TokenType.DELETE) || tokEquals(TokenType.UPDATE)) {
           next();
           parseReferentialAction();
-        }
-        else{
+        } else {
           error(currentToken, "Expecting DELETE or UPDATE but found '" + currentToken.getText() + ".");
         }
 
@@ -273,9 +269,9 @@ public class SQLParser {
 
   }
 
-  private void parseReferentialAction(){
+  private void parseReferentialAction() {
 
-    switch(currentToken.getType()) {
+    switch (currentToken.getType()) {
       case CASCADE:
         next();
       case RESTRICT:
@@ -284,10 +280,9 @@ public class SQLParser {
         next();
         match(TokenType.ACTION);
       case SET:
-        if(tokEquals(TokenType.DEFAULT)||tokEquals(TokenType.NULL)){
+        if (tokEquals(TokenType.DEFAULT) || tokEquals(TokenType.NULL)) {
           next();
-        }
-        else{
+        } else {
           specialError("DEFAULT or NULL");
         }
       default:
@@ -295,101 +290,100 @@ public class SQLParser {
     }
   }
 
-    private void parseConflictClause(){
-      if(tokEquals(TokenType.ON)) {
+  private void parseConflictClause() {
+    if (tokEquals(TokenType.ON)) {
+      next();
+      match(TokenType.CONFLICT);
+      if (currentToken.getType() == TokenType.ROLLBACK ||
+        currentToken.getType() == TokenType.ABORT ||
+        currentToken.getType() == TokenType.FAIL ||
+        currentToken.getType() == TokenType.IGNORE ||
+        currentToken.getType() == TokenType.REPLACE) {
         next();
-        match(TokenType.CONFLICT);
-        if (currentToken.getType() == TokenType.ROLLBACK ||
-                currentToken.getType() == TokenType.ABORT ||
-          currentToken.getType() == TokenType.FAIL ||
-                currentToken.getType() == TokenType.IGNORE ||
-                currentToken.getType() == TokenType.REPLACE) {
-          next();
-        } else {
-          error(currentToken, "Expecting conflict action but found '" + currentToken.getText() + "'.");
-        }
+      } else {
+        error(currentToken, "Expecting conflict action but found '" + currentToken.getText() + "'.");
       }
     }
+  }
 
-    private void parseForeignKeyClause(){
-      match(TokenType.REFERENCES);
+  private void parseForeignKeyClause() {
+    match(TokenType.REFERENCES);
+    match(TokenType.IDENT);
+    if (tokEquals(TokenType.LPAREN)) {
+      next();
       match(TokenType.IDENT);
-      if(tokEquals(TokenType.LPAREN)) {
+      while (tokEquals(TokenType.COMMA)) {
         next();
         match(TokenType.IDENT);
-        while (tokEquals(TokenType.COMMA)) {
-          next();
-          match(TokenType.IDENT);
-        }
-        match(TokenType.RPAREN);
       }
-        while(tokEquals(TokenType.ON) || tokEquals(TokenType.MATCH)){
-          if (tokEquals(TokenType.ON)){
-            next();
-            if (!(tokEquals(TokenType.DELETE)||tokEquals(TokenType.UPDATE))){
-              error(currentToken, "Expecting Update/Delete but found '" + currentToken.getText() + "'.");
-            }
-            next();
-            if(tokEquals(TokenType.SET)){
-              next();
-              if (!(tokEquals(TokenType.NULL)||tokEquals(TokenType.DEFAULT))){
-                error(currentToken, "Expecting NULL/DEFAULT but found '" + currentToken.getText() + "'.");
-              }
-              next();
-            } else if (tokEquals(TokenType.CASCADE) || tokEquals(TokenType.RESTRICT)){
-              next();
-            } else if (tokEquals(TokenType.NO)){
-              next();
-              match(TokenType.ACTION);
-            } else{
-              error(currentToken, "Expecting foreign key value but found '" + currentToken.getText() + "'.");
-            }
-          } else if (tokEquals(TokenType.MATCH)){
-            next();
-            match(TokenType.IDENT);
-          }
-          else{
-            error(currentToken, "Expecting ON/MATCH but found '" + currentToken.getText() + "'.");
-          }
-
-          }
-        //I checked and am pretty certain that there are no contexts in which 'not' would be appropriate
-        //Other than for this clause
-        if(tokEquals(TokenType.NOT)){
-          next();
-          if (!tokEquals(TokenType.DEFERRABLE))
-          {
-            error(currentToken, "Expecting DEFERRABLE but found '" + currentToken.getText() + "'.");
-          }
+      match(TokenType.RPAREN);
+    }
+    while (tokEquals(TokenType.ON) || tokEquals(TokenType.MATCH)) {
+      if (tokEquals(TokenType.ON)) {
+        next();
+        if (!(tokEquals(TokenType.DELETE) || tokEquals(TokenType.UPDATE))) {
+          error(currentToken, "Expecting Update/Delete but found '" + currentToken.getText() + "'.");
         }
-
-        if(tokEquals(TokenType.DEFERRABLE)){
+        next();
+        if (tokEquals(TokenType.SET)) {
           next();
-          if(tokEquals(TokenType.INITIALLY)){
-            next();
-            if(tokEquals(TokenType.DEFERRED) || tokEquals(TokenType.IMMEDIATE)){
-              next();
-            }else{
-              error(currentToken, "Expecting DEFERRED/IMMEDIATE but found '" + currentToken.getText() + "'.");
-            }
+          if (!(tokEquals(TokenType.NULL) || tokEquals(TokenType.DEFAULT))) {
+            error(currentToken, "Expecting NULL/DEFAULT but found '" + currentToken.getText() + "'.");
           }
-
+          next();
+        } else if (tokEquals(TokenType.CASCADE) || tokEquals(TokenType.RESTRICT)) {
+          next();
+        } else if (tokEquals(TokenType.NO)) {
+          next();
+          match(TokenType.ACTION);
+        } else {
+          error(currentToken, "Expecting foreign key value but found '" + currentToken.getText() + "'.");
         }
-
+      } else if (tokEquals(TokenType.MATCH)) {
+        next();
+        match(TokenType.IDENT);
+      } else {
+        error(currentToken, "Expecting ON/MATCH but found '" + currentToken.getText() + "'.");
+      }
 
     }
+    //I checked and am pretty certain that there are no contexts in which 'not' would be appropriate
+    //Other than for this clause
+    if (tokEquals(TokenType.NOT)) {
+      next();
+      if (!tokEquals(TokenType.DEFERRABLE)) {
+        error(currentToken, "Expecting DEFERRABLE but found '" + currentToken.getText() + "'.");
+      }
+    }
+
+    if (tokEquals(TokenType.DEFERRABLE)) {
+      next();
+      if (tokEquals(TokenType.INITIALLY)) {
+        next();
+        if (tokEquals(TokenType.DEFERRED) || tokEquals(TokenType.IMMEDIATE)) {
+          next();
+        } else {
+          error(currentToken, "Expecting DEFERRED/IMMEDIATE but found '" + currentToken.getText() + "'.");
+        }
+      }
+
+    }
+
+
+  }
+
   private void parseTableConstraint() {
-    if(currentToken.getType() == TokenType.CONSTRAINT){
+    if (currentToken.getType() == TokenType.CONSTRAINT) {
       next();
       match(TokenType.IDENT);
     }
-    switch(currentToken.getType()){
+    switch (currentToken.getType()) {
       case PRIMARY:
         next();
         match(TokenType.KEY);
         match(TokenType.LPAREN);
         parseIndexedColumn();
-        while(currentToken.getType() == TokenType.COMMA){
+        while (currentToken.getType() == TokenType.COMMA) {
           next();
           parseIndexedColumn();
         }
@@ -400,7 +394,7 @@ public class SQLParser {
         next();
         match(TokenType.LPAREN);
         parseIndexedColumn();
-        while(currentToken.getType() == TokenType.COMMA){
+        while (currentToken.getType() == TokenType.COMMA) {
           next();
           parseIndexedColumn();
         }
@@ -418,7 +412,7 @@ public class SQLParser {
         match(TokenType.KEY);
         match(TokenType.LPAREN);
         match(TokenType.IDENT);
-        while(currentToken.getType() == TokenType.COMMA){
+        while (currentToken.getType() == TokenType.COMMA) {
           next();
           match(TokenType.IDENT);
         }
@@ -426,7 +420,8 @@ public class SQLParser {
         parseForeignKeyClause();
         break;
       default:
-        error(currentToken, "Expecting 'CONSTRAINT', 'PRIMARY', 'UNIQUE', 'CHECK' or 'FOREIGN' but found '" + currentToken.getType().toString() + "'.");
+        error(currentToken, "Expecting 'CONSTRAINT', 'PRIMARY', 'UNIQUE', 'CHECK' or 'FOREIGN' but found '"
+          + currentToken.getType().toString() + "'.");
         break;
     }
   }
@@ -437,7 +432,7 @@ public class SQLParser {
       next();
       match(TokenType.IDENT);
     }
-    if(currentToken.getType() == TokenType.ASC || currentToken.getType() == TokenType.DESC){
+    if (currentToken.getType() == TokenType.ASC || currentToken.getType() == TokenType.DESC) {
       next();
     }
   }
@@ -445,7 +440,7 @@ public class SQLParser {
   private void parseRaiseFunction() {
     match(TokenType.RAISE);
     match(TokenType.LPAREN);
-    switch (currentToken.getType()){
+    switch (currentToken.getType()) {
       case IGNORE:
         next();
         match(TokenType.RPAREN);
@@ -461,22 +456,24 @@ public class SQLParser {
     }
   }
 
-  private void parseExpr(){
+  private void parseExpr() {
     parseAndCondition();
-    if(tokEquals(TokenType.OR)){
+    if (tokEquals(TokenType.OR)) {
       next();
       parseExpr();
     }
   }
-  private void parseAndCondition(){
+
+  private void parseAndCondition() {
     parseCondition();
-    if(tokEquals(TokenType.AND)){
+    if (tokEquals(TokenType.AND)) {
       next();
       parseAndCondition();
     }
   }
-  private void parseCondition(){ //Ommiting EXISTS (select)
-    while(tokEquals(TokenType.NOT)){
+
+  private void parseCondition() { //Ommiting EXISTS (select)
+    while (tokEquals(TokenType.NOT)) {
       next();
       parseCondition();
     }
@@ -484,29 +481,26 @@ public class SQLParser {
   }
 
   private void parseConditionRHS() {
-    if(isComparator()){
+    if (isComparator()) {
       next();
-      if(tokEquals(TokenType.ALL) || tokEquals(TokenType.ANY) || tokEquals(TokenType.SOME)){
+      if (tokEquals(TokenType.ALL) || tokEquals(TokenType.ANY) || tokEquals(TokenType.SOME)) {
         next();
         match(TokenType.LPAREN);
         parseSelect();
         match(TokenType.RPAREN);
-      }
-      else{
+      } else {
         parseOperand();
       }
-    }
-    else{
+    } else {
       switch (currentToken.getType()) {
         case IS:
           next();
-          if(tokEquals(TokenType.NOT)){
+          if (tokEquals(TokenType.NOT)) {
             next();
           }
-          if(tokEquals(TokenType.NULL)){
+          if (tokEquals(TokenType.NULL)) {
             next();
-          }
-          else{
+          } else {
             match(TokenType.DISTINCT);
             match(TokenType.FROM);
             parseOperand();
@@ -520,12 +514,12 @@ public class SQLParser {
         case IN:
           next();
           match(TokenType.LPAREN);
-          if(tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT) || tokEquals(TokenType.VALUES)) {
+          if (tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT)
+            || tokEquals(TokenType.VALUES)) {
             parseSelect();
-          }
-          else {
+          } else {
             parseExpr();
-            while(tokEquals(TokenType.COMMA)){
+            while (tokEquals(TokenType.COMMA)) {
               next();
               parseExpr();
             }
@@ -537,7 +531,7 @@ public class SQLParser {
         case LIKE:
           next();
           parseOperand();
-          if(tokEquals(TokenType.ESCAPE)){
+          if (tokEquals(TokenType.ESCAPE)) {
             next();
             match(TokenType.IDENT);
           }
@@ -546,43 +540,104 @@ public class SQLParser {
           next();
           parseOperand();
           break;
+        default:
+          specialError("Comparator, IS, BETWEEN, IN, NOT, LIKE, or REGEXP");
+          break;
       }
     }
   }
 
-  private void parseOperand(){
+  private void parseOperand() {
     parseSummand();
-    if(tokEquals(TokenType.BAR)){
+    if (tokEquals(TokenType.BAR)) {
       next();
       parseOperand();
     }
-    if(!tokEquals(TokenType.EOF)){
+    if (tokEquals(TokenType.IS) || tokEquals(TokenType.BETWEEN) || tokEquals(TokenType.IN) || tokEquals(TokenType.NOT)
+      || tokEquals(TokenType.LIKE) || tokEquals(TokenType.REGEXP) || isComparator()) {
       parseConditionRHS();
     }
   }
 
-  private void parseSummand(){
+  private void parseSummand() {
     parseFactor();
-    if(tokEquals(TokenType.PLUS) || tokEquals(TokenType.MINUS)){
+    if (tokEquals(TokenType.PLUS) || tokEquals(TokenType.MINUS)) {
       next();
       parseSummand();
     }
   }
 
-  private void parseFactor(){
+  private void parseFactor() {
     parseTerm();
-    if(tokEquals(TokenType.SLASH)||tokEquals(TokenType.TIMES)||tokEquals(TokenType.MOD)){
+    if (tokEquals(TokenType.SLASH) || tokEquals(TokenType.TIMES) || tokEquals(TokenType.MOD)) {
       next();
       parseFactor();
     }
   }
 
-  private void parseTerm(){
-    if(!(tokEquals(TokenType.DOUBLE)||tokEquals(TokenType.LONG))){
-      error(currentToken, "Expecting 'DOUBLE' or 'LONG' but found '" + currentToken.getType().toString());
+  private void parseTerm() {
+    switch (currentToken.getType()) {
+      case IDENT:
+      case LONG:
+      case DOUBLE:
+        next();
+        break;
+      case QUESTION:
+        next();
+        if (tokEquals(TokenType.LONG)) {
+          next();
+        }
+        break;
+      case MINUS:
+      case PLUS:
+        next();
+        parseTerm();
+        break;
+      case LPAREN:
+        next();
+        if (tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT)
+          || tokEquals(TokenType.VALUES)) {
+          parseSelect();
+        } else {
+          parseExpr();
+          while (tokEquals(TokenType.COMMA)) {
+            next();
+            parseExpr();
+          }
+        }
+        match(TokenType.RPAREN);
+        break;
+      case CASE:
+        next();
+        if (tokEquals(TokenType.WHEN)) {
+          next();
+          parseCaseWhen();
+        } else {
+          parseCase();
+        }
+        break;
     }
-    next();
   }
 
+  private void parseCase() {
+    parseExpr();
+    parseCaseWhen();
+  }
+
+  private void parseCaseWhen() {
+    match(TokenType.WHEN);
+    parseExpr();
+    match(TokenType.THEN);
+    parseExpr();
+    if (tokEquals(TokenType.WHEN)) {
+      parseCaseWhen();
+    } else {
+      if (tokEquals(TokenType.ELSE)) {
+        next();
+        parseExpr();
+      }
+      match(TokenType.END);
+    }
+  }
 
 }

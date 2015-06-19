@@ -202,7 +202,7 @@ term	:	literalvalue
 	|	'columnname'
 	;
 	
-case	:	expr ('WHEN' expr 'THEN' expr)+ ('ELSE' expr)? 'END'
+case	:	expr casewhen
 	;
 	
 casewhen:	('WHEN' expr 'THEN' expr)+ ('ELSE' expr)? 'END'
