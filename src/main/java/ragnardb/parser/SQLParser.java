@@ -179,7 +179,7 @@ public class SQLParser {
       next();
     }
 
-    if (tokEquals(TokenType.AUTOINCREMENT) || tokEquals(TokenType.IDENTITY)) {
+    if (tokEquals(TokenType.AUTO_INCREMENT) || tokEquals(TokenType.IDENTITY)) {
       next();
       if(tokEquals(TokenType.LPAREN)){
         next();
