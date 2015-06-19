@@ -169,7 +169,9 @@ public class SQLParser {
     parseTypeName();
     if (tokEquals(TokenType.DEFAULT)) {
       next();
-      parseExpr();
+      if(tokEquals(TokenType.LONG) || tokEquals(TokenType.DOUBLE) || tokEquals(TokenType.IDENT) || tokEquals(TokenType.NULL)){
+        next();
+      }
     }
     //TODO: Add 'as' clause when select statements work
     if (tokEquals(TokenType.NOT)) {
@@ -611,6 +613,9 @@ public class SQLParser {
         } else {
           parseCase();
         }
+        break;
+      default:
+        specialError("Any term");
         break;
     }
   }
