@@ -154,7 +154,18 @@ public class SQLParserTest {
       assertEquals("[1, 37] - ERROR: The statement has not terminated but the grammar has been exhausted.", e.getMessage());
     }
   }
+  @Test
+  public void complexColumns() {
+    StringReader s = new StringReader("CREATE TABLE contacts(ID int DEFAULT 5 NOT NULL IDENTITY (5,6) PRIMARY KEY)");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    SQLParser parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
 
+    s = new StringReader("CREATE TABLE contacts(ID int DEFAULT 5 NOT NULL AUTO_INCREMENT (5) PRIMARY KEY)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+  }
   @Test
   public void tableConstraint() {
     StringReader s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT test PRIMARY KEY (col) ON CONFLICT ABORT)");
@@ -264,8 +275,8 @@ public class SQLParserTest {
 
     //TODO: add some more tests for the foreign key clause
   }
-  */
 
+ */
 
 
 }

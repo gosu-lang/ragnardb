@@ -112,7 +112,7 @@ public class SQLParser {
       error(currentToken, "The statement has not terminated but the grammar has been exhausted.");
     }
 
-  }
+}
   private void parseTypeName(){
     match(TokenType.IDENT);
     while(tokEquals(TokenType.IDENT)){
@@ -163,7 +163,7 @@ public class SQLParser {
       next();
     }
 
-    if(tokEquals(TokenType.AUTOINCREMENT) || tokEquals(TokenType.IDENTITY)){
+    if(tokEquals(TokenType.AUTO_INCREMENT) || tokEquals(TokenType.IDENTITY)){
       next();
       if(tokEquals(TokenType.LPAREN)){
         next();
@@ -496,7 +496,7 @@ public class SQLParser {
 
   private void parseTerm(){
     if(!(tokEquals(TokenType.DOUBLE)||tokEquals(TokenType.LONG))){
-      error(currentToken, "Expecting 'DOUBLE' or 'LONG' but found '" + currentToken.getType().toString());
+      error(currentToken, "Expecting 'DOUBLE' or 'LONG' or ' but found '" + currentToken.getType().toString());
     }
     next();
   }
