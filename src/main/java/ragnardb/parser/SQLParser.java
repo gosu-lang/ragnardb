@@ -444,6 +444,7 @@ public class SQLParser {
     }
   }
 
+
   private void parseRaiseFunction() {
     match(TokenType.RAISE);
     match(TokenType.LPAREN);
