@@ -96,10 +96,10 @@ public class SQLParser {
       parseColumnDef();
       while (currentToken.getType() == TokenType.COMMA) {
         next();
-        if (isConstraint()) {
-          parseTableConstraint();
-        } else {
+        if (tokEquals(TokenType.IDENT)) {
           parseColumnDef();
+        } else {
+          parseTableConstraint();
         }
       }
       match(TokenType.RPAREN);
@@ -292,7 +292,7 @@ public class SQLParser {
                 currentToken.getType() == TokenType.REPLACE) {
           next();
         } else {
-          error(currentToken, "Expecting Conflict but found '" + currentToken.getText() + "'.");
+          error(currentToken, "Expecting conflict action but found '" + currentToken.getText() + "'.");
         }
       }
     }
@@ -300,14 +300,15 @@ public class SQLParser {
     private void parseForeignKeyClause(){
       match(TokenType.REFERENCES);
       match(TokenType.IDENT);
-      if(tokEquals(TokenType.LPAREN)){
+      if(tokEquals(TokenType.LPAREN)) {
         next();
         match(TokenType.IDENT);
-        while(tokEquals(TokenType.IDENT)){
+        while (tokEquals(TokenType.COMMA)) {
           next();
-          match(TokenType.COMMA);
+          match(TokenType.IDENT);
         }
         match(TokenType.RPAREN);
+      }
         while(tokEquals(TokenType.ON) || tokEquals(TokenType.MATCH)){
           if (tokEquals(TokenType.ON)){
             next();
@@ -361,7 +362,7 @@ public class SQLParser {
 
         }
 
-      }
+
     }
   private void parseTableConstraint() {
     if(currentToken.getType() == TokenType.CONSTRAINT){
@@ -375,6 +376,7 @@ public class SQLParser {
         match(TokenType.LPAREN);
         parseIndexedColumn();
         while(currentToken.getType() == TokenType.COMMA){
+          next();
           parseIndexedColumn();
         }
         match(TokenType.RPAREN);
@@ -385,12 +387,14 @@ public class SQLParser {
         match(TokenType.LPAREN);
         parseIndexedColumn();
         while(currentToken.getType() == TokenType.COMMA){
-        parseIndexedColumn();
-      }
-      match(TokenType.RPAREN);
-      parseConflictClause();
-      break;
+          next();
+          parseIndexedColumn();
+        }
+        match(TokenType.RPAREN);
+        parseConflictClause();
+        break;
       case CHECK:
+        next();
         match(TokenType.LPAREN);
         parseExpr();
         match(TokenType.RPAREN);
@@ -408,7 +412,7 @@ public class SQLParser {
         parseForeignKeyClause();
         break;
       default:
-        error(currentToken, "Expecting 'CONSTRAINT', 'PRIMARY', 'UNIQUE', 'CHECK' or 'FOREIGN' but found '" + currentToken.getType().toString());
+        error(currentToken, "Expecting 'CONSTRAINT', 'PRIMARY', 'UNIQUE', 'CHECK' or 'FOREIGN' but found '" + currentToken.getType().toString() + "'.");
         break;
     }
   }
@@ -494,6 +498,7 @@ public class SQLParser {
     if(!(tokEquals(TokenType.DOUBLE)||tokEquals(TokenType.LONG))){
       error(currentToken, "Expecting 'DOUBLE' or 'LONG' but found '" + currentToken.getType().toString());
     }
+    next();
   }
 
 

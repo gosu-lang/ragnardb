@@ -1,5 +1,5 @@
 grammar SQL;
-options { k = 2; }
+options { k = 1; }
 
 ID  :	('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
     ;
@@ -67,7 +67,7 @@ columndef
         ;
         
 columnconstraint
-        :	('CONTRAINT' 'name' )?
+        :	('CONSTRAINT' 'name')? 
                  (
                    'PRIMARY' 'KEY' ('ASC' 'DESC')? 'conflict-clause' ('AUTOINCREMENT')?
                    | 'NOT' 'NULL' 'conflict-clause'
