@@ -71,6 +71,10 @@ public class SQLParser {
     parseCreateTable();
   }
 
+  private void parseSelect() {
+
+  }
+
   private void parseCreateTable() {
     match(TokenType.CREATE);
     if (currentToken.getType() == TokenType.TEMP ||
@@ -147,7 +151,17 @@ public class SQLParser {
             tokEquals(TokenType.FOREIGN) ;
   }
 
-  private void parseColumnDef(){
+  private boolean isComparator() {
+    return tokEquals(TokenType.EQ) ||
+      tokEquals(TokenType.NEQ) ||
+      tokEquals(TokenType.LT) ||
+      tokEquals(TokenType.GT) ||
+      tokEquals(TokenType.GTE) ||
+      tokEquals(TokenType.LTE) ||
+      tokEquals(TokenType.OVL);
+  }
+  
+  private void parseColumnDef() { //Also does constraint
     match(TokenType.IDENT);
     parseTypeName();
     if(tokEquals(TokenType.DEFAULT)) {
@@ -287,7 +301,7 @@ public class SQLParser {
         match(TokenType.CONFLICT);
         if (currentToken.getType() == TokenType.ROLLBACK ||
                 currentToken.getType() == TokenType.ABORT ||
-                currentToken.getType() == TokenType.FAIL ||
+          currentToken.getType() == TokenType.FAIL ||
                 currentToken.getType() == TokenType.IGNORE ||
                 currentToken.getType() == TokenType.REPLACE) {
           next();
@@ -458,23 +472,92 @@ public class SQLParser {
     parseCondition();
     if(tokEquals(TokenType.AND)){
       next();
-      parseExpr();
+      parseAndCondition();
     }
   }
   private void parseCondition(){ //Ommiting EXISTS (select)
     while(tokEquals(TokenType.NOT)){
       next();
+      parseCondition();
     }
     parseOperand();
-
-
   }
+
+  private void parseConditionRHS() {
+    if(isComparator()){
+      next();
+      if(tokEquals(TokenType.ALL) || tokEquals(TokenType.ANY) || tokEquals(TokenType.SOME)){
+        next();
+        match(TokenType.LPAREN);
+        parseSelect();
+        match(TokenType.RPAREN);
+      }
+      else{
+        parseOperand();
+      }
+    }
+    else{
+      switch (currentToken.getType()) {
+        case IS:
+          next();
+          if(tokEquals(TokenType.NOT)){
+            next();
+          }
+          if(tokEquals(TokenType.NULL)){
+            next();
+          }
+          else{
+            match(TokenType.DISTINCT);
+            match(TokenType.FROM);
+            parseOperand();
+          }
+          break;
+        case BETWEEN:
+          next();
+          parseOperand();
+          match(TokenType.AND);
+          break;
+        case IN:
+          next();
+          match(TokenType.LPAREN);
+          if(tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT) || tokEquals(TokenType.VALUES)) {
+            parseSelect();
+          }
+          else {
+            parseExpr();
+            while(tokEquals(TokenType.COMMA)){
+              next();
+              parseExpr();
+            }
+          }
+          match(TokenType.RPAREN);
+          break;
+        case NOT:
+          next();
+        case LIKE:
+          next();
+          parseOperand();
+          if(tokEquals(TokenType.ESCAPE)){
+            next();
+            match(TokenType.IDENT);
+          }
+          break;
+        case REGEXP:
+          next();
+          parseOperand();
+          break;
+      }
+    }
+  }
+
   private void parseOperand(){
     parseSummand();
     if(tokEquals(TokenType.BAR)){
       next();
       parseOperand();
-      //TODO: Add Condition Right Hand Side
+    }
+    if(!tokEquals(TokenType.EOF)){
+      parseConditionRHS();
     }
   }
 
