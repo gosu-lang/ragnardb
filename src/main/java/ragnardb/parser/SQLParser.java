@@ -260,13 +260,8 @@ public class SQLParser {
         } else {
           error(currentToken, "Expecting DELETE or UPDATE but found '" + currentToken.getText() + ".");
         }
-
-
       }
-
     }
-
-
   }
 
   private void parseReferentialAction() {
@@ -479,6 +474,10 @@ public class SQLParser {
       parseCondition();
     }
     parseOperand();
+    if (tokEquals(TokenType.IS) || tokEquals(TokenType.BETWEEN) || tokEquals(TokenType.IN) || tokEquals(TokenType.NOT)
+      || tokEquals(TokenType.LIKE) || tokEquals(TokenType.REGEXP) || isComparator()) {
+      parseConditionRHS();
+    }
   }
 
   private void parseConditionRHS() {
@@ -553,10 +552,6 @@ public class SQLParser {
     if (tokEquals(TokenType.BAR)) {
       next();
       parseOperand();
-    }
-    if (tokEquals(TokenType.IS) || tokEquals(TokenType.BETWEEN) || tokEquals(TokenType.IN) || tokEquals(TokenType.NOT)
-      || tokEquals(TokenType.LIKE) || tokEquals(TokenType.REGEXP) || isComparator()) {
-      parseConditionRHS();
     }
   }
 
