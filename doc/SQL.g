@@ -180,9 +180,12 @@ andcondition
 	;
 	
 condition
-	:	summand+ (conditionrightside)?
+	:	operand (conditionrightside)?
 	|	'NOT' condition
 	|	'EXISTS' '(' selectstmt ')'
+	;
+	
+operand	:	summand ('||' summand)*
 	;
 
 
@@ -206,11 +209,11 @@ casewhen:	('WHEN' expr 'THEN' expr)+ ('ELSE' expr)? 'END'
 	;
 
 conditionrightside
-	:	compare (summand+|('ALL'|'ANY'|'SOME') '(' selectstmt ')')
-	|	'IS' 'NOT'? ('DISTINCT' 'FROM')? summand+
-	|	'BETWEEN' summand+ 'AND' summand+
+	:	compare (operand|('ALL'|'ANY'|'SOME') '(' selectstmt ')')
+	|	'IS' 'NOT'? ('DISTINCT' 'FROM')? operand
+	|	'BETWEEN' operand 'AND' operand
 	|	'IN' '(' (selectstmt|expr (',' expr)*) ')'
-	|	'NOT' ('LIKE' summand+ ('ESCAPE' ID)?|'REGEXP' summand+)
+	|	'NOT'? ('LIKE' operand ('ESCAPE' ID)?|'REGEXP' operand)
 	;
 	
 compare	:	'comparator'

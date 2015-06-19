@@ -5,7 +5,7 @@ import java.util.Map;
 
 public enum TokenType {
   ABORT("abort"), ACTION("action"), ADD("add"), AFTER("after"), ALL("all"), ALTER("alter"), ANALYZE("analyze"),
-  AND("and"), AS("as"), ASC("asc"), ATTACH("attach"), AUTOINCREMENT("autoincrement"), BEFORE("before"),
+  AND("and"), ANY("any"), AS("as"), ASC("asc"), ATTACH("attach"), AUTOINCREMENT("autoincrement"), BEFORE("before"),
   BEGIN("begin"), BETWEEN("between"), BY("by"), CASCADE("cascade"), CASE("case"), CAST("cast"), CHECK("check"),
   COLLATE("collate"), COLUMN("column"), COMMIT("commit"), CONFLICT("conflict"), CONSTRAINT("constraint"),
   CREATE("create"), CROSS("cross"), CURRENT_DATE("current_date"), CURRENT_TIME("current_time"),
@@ -20,12 +20,12 @@ public enum TokenType {
   NULL("null"), OF("of"), OFFSET("offset"), ON("on"), OR("or"), ORDER("order"), OUTER("outer"), PLAN("plan"),
   PRAGMA("pragma"), PRIMARY("primary"), QUERY("query"), RAISE("raise"), RECURSIVE("recursive"),
   REFERENCES("references"), REGEXP("regexp"), REINDEX("reindex"), RELEASE("release"), RENAME("rename"),
-  REPLACE("replace"), RESTRICT("restrict"), RIGHT("right"), ROLLBACK("rollback"), ROW("row"), ROWID("rowid"), SAVEPOINT("savepoint"),
-  SELECT("select"), SET("set"), TABLE("table"), TEMP("temp"), TEMPORARY("temporary"), THEN("then"), TO("to"),
-  TRANSACTION("transaction"), TRIGGER("trigger"), UNION("union"), UNIQUE("unique"), UPDATE("update"), USING("using"),
-  VACUUM("vacuum"), VALUES("values"), VIEW("view"), VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"),
-  WITHOUT("without"), IDENTITY("identity"),HASH("hash"),
-  IDENT("identifier"), LONG("long"), DOUBLE("double"),
+  REPLACE("replace"), RESTRICT("restrict"), RIGHT("right"), ROLLBACK("rollback"), ROW("row"), ROWID("rowid"),
+  SAVEPOINT("savepoint"), SELECT("select"), SET("set"), SOME("some"), TABLE("table"), TEMP("temp"),
+  TEMPORARY("temporary"), THEN("then"), TO("to"), TRANSACTION("transaction"), TRIGGER("trigger"), UNION("union"),
+  UNIQUE("unique"), UPDATE("update"), USING("using"), VACUUM("vacuum"), VALUES("values"), VIEW("view"),
+  VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"), WITHOUT("without"),
+  IDENT("identifier"), LONG("long"), DOUBLE("double"), IDENTITY("identity"), HASH("hash"),
   LPAREN("("), RPAREN(")"), PLUS("+"), MINUS("-"), DOT("."), COMMA(","), SEMI(";"), SLASH("/"),TIMES("*"),MOD("%"),
   BAR("||"),EQ("="),NEQ("!="),GT(">"),LT("<"),GTE(">="),LTE("<="),OVL("&&"),
   EOF("End of file"), UNKNOWN,;
