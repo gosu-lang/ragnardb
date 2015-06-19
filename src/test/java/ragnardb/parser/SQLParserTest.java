@@ -2,6 +2,9 @@ package ragnardb.parser;
 
 import org.junit.Test;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.StringReader;
 
 import static org.junit.Assert.assertEquals;
@@ -52,6 +55,15 @@ public class SQLParserTest {
     }
   }
 
+  private void parseWithNoErrorsComputer(SQLParser parser, String statement) {
+    try {
+      parser.parse();
+    } catch (SQLParseError e) {
+      System.out.print("Failed on:" + statement + "\n");
+      e.printStackTrace();
+      fail();
+    }
+  }
 
   @Test
   public void testConstraints() {
@@ -240,7 +252,6 @@ public class SQLParserTest {
     }
   }
 
-  /*
   @Test
   public void foreignKeyClauseTest() {
     StringReader s = new StringReader("CREATE TABLE contacts(name varchar(255) CONSTRAINT cname REFERENCES " +
@@ -278,5 +289,12 @@ public class SQLParserTest {
 
  */
 
+    String[] outputs = output.split(";");
+    for(String statement: outputs){
+      tokenizer = new SQLTokenizer(new StringReader(statement));
+      parser = new SQLParser(tokenizer);
+      parseWithNoErrorsComputer(parser, statement);
+    }
+  }
 
 }

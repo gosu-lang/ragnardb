@@ -18,11 +18,12 @@ public class SQLParser {
     return expectedType == currentToken.getType();
   }
 
-  private void specialError(String s){
+  private void specialError(String s) {
     error(currentToken, "Expecting " + s + " but found '" + currentToken.getText() + ".");
   }
-  private void pass(TokenType passType){
-    if(passType == currentToken.getType()){
+
+  private void pass(TokenType passType) {
+    if (passType == currentToken.getType()) {
       next();
     }
   }
@@ -51,13 +52,13 @@ public class SQLParser {
   }
 
 
-  private boolean isNum(){
+  private boolean isNum() {
     return (currentToken.getType() == TokenType.LONG || currentToken.getType() == TokenType.DOUBLE);
   }
 
-  private void list(TokenType item){
+  private void list(TokenType item) {
     match(item);
-    while(tokEquals(TokenType.COMMA)){
+    while (tokEquals(TokenType.COMMA)) {
       next();
       match(item);
     }
@@ -78,7 +79,7 @@ public class SQLParser {
   private void parseCreateTable() {
     match(TokenType.CREATE);
     if (currentToken.getType() == TokenType.TEMP ||
-            currentToken.getType() == TokenType.TEMPORARY) {
+      currentToken.getType() == TokenType.TEMPORARY) {
       next();
     }
     match(TokenType.TABLE);
@@ -94,7 +95,7 @@ public class SQLParser {
       next();
       match(TokenType.IDENT);
     }
-    if(tokEquals(TokenType.LPAREN)) {
+    if (tokEquals(TokenType.LPAREN)) {
       next();
 
       parseColumnDef();
@@ -116,28 +117,29 @@ public class SQLParser {
       error(currentToken, "The statement has not terminated but the grammar has been exhausted.");
     }
 
-}
-  private void parseTypeName(){
+  }
+
+  private void parseTypeName() {
     match(TokenType.IDENT);
-    while(tokEquals(TokenType.IDENT)){
+    while (tokEquals(TokenType.IDENT)) {
       next();
     }
-    if(tokEquals(TokenType.LPAREN)){
+    if (tokEquals(TokenType.LPAREN)) {
       next();
-      if(currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE){
+      if (currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE) {
         next();
-        if(tokEquals(TokenType.COMMA)){
+        if (tokEquals(TokenType.COMMA)) {
           next();
-          if(currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE){
+          if (currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE) {
             next();
             match(TokenType.RPAREN);
           } else {
             error(currentToken, "Expecting LONG or DOUBLE but found '" + currentToken.getType() + "'.");
           }
-        } else{
+        } else {
           match(TokenType.RPAREN);
         }
-      }else{
+      } else {
         error(currentToken, "Expecting LONG or DOUBLE but found '" + currentToken.getType() + "'.");
       }
     }
@@ -177,7 +179,7 @@ public class SQLParser {
       next();
     }
 
-    if(tokEquals(TokenType.AUTO_INCREMENT) || tokEquals(TokenType.IDENTITY)){
+    if (tokEquals(TokenType.AUTOINCREMENT) || tokEquals(TokenType.IDENTITY)) {
       next();
       if(tokEquals(TokenType.LPAREN)){
         next();
@@ -577,9 +579,47 @@ public class SQLParser {
     }
   }
 
-  private void parseTerm(){
-    if(!(tokEquals(TokenType.DOUBLE)||tokEquals(TokenType.LONG))){
-      error(currentToken, "Expecting 'DOUBLE' or 'LONG' or ' but found '" + currentToken.getType().toString());
+  private void parseTerm() {
+    switch (currentToken.getType()) {
+      case IDENT:
+      case LONG:
+      case DOUBLE:
+        next();
+        break;
+      case QUESTION:
+        next();
+        if (tokEquals(TokenType.LONG)) {
+          next();
+        }
+        break;
+      case MINUS:
+      case PLUS:
+        next();
+        parseTerm();
+        break;
+      case LPAREN:
+        next();
+        if (tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT)
+          || tokEquals(TokenType.VALUES)) {
+          parseSelect();
+        } else {
+          parseExpr();
+          while (tokEquals(TokenType.COMMA)) {
+            next();
+            parseExpr();
+          }
+        }
+        match(TokenType.RPAREN);
+        break;
+      case CASE:
+        next();
+        if (tokEquals(TokenType.WHEN)) {
+          next();
+          parseCaseWhen();
+        } else {
+          parseCase();
+        }
+        break;
     }
     next();
   }
