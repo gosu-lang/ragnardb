@@ -17,8 +17,8 @@ public class SQLParserTest {
     parseWithNoErrors(parser);
 
     s = new StringReader("CREATE TABLE contacts( name varchar(255))");
-     tokenizer = new SQLTokenizer(s);
-     parser = new SQLParser(tokenizer);
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
     s = new StringReader("CREATE TEMP TABLE IF NOT EXISTS somedatabase.contacts( name varchar(255)) WITHOUT ROWID");
@@ -38,7 +38,7 @@ public class SQLParserTest {
     try {
       parser.parse();
       fail();
-    } catch(SQLParseError e) {
+    } catch (SQLParseError e) {
       assertEquals("[1, 8] - ERROR: Expecting 'table' but found 'hello'.", e.getMessage());
     }
   }
@@ -46,7 +46,7 @@ public class SQLParserTest {
   private void parseWithNoErrors(SQLParser parser) {
     try {
       parser.parse();
-    } catch(SQLParseError e) {
+    } catch (SQLParseError e) {
       e.printStackTrace();
       fail();
     }
@@ -70,7 +70,7 @@ public class SQLParserTest {
     try {
       parser.parse();
       fail();
-    } catch(SQLParseError e) {
+    } catch (SQLParseError e) {
       assertEquals("[1, 8] - ERROR: Expecting 'table' but found 'tempo'.", e.getMessage());
     }
 
@@ -80,7 +80,7 @@ public class SQLParserTest {
     try {
       parser.parse();
       fail();
-    } catch(SQLParseError e) {
+    } catch (SQLParseError e) {
       assertEquals("[1, 13] - ERROR: Expecting 'table' but found 'contacts'.", e.getMessage());
     }
   }
@@ -93,7 +93,7 @@ public class SQLParserTest {
     try {
       parser.parse();
       fail();
-    } catch(SQLParseError e) {
+    } catch (SQLParseError e) {
       assertEquals("[1, 23] - ERROR: The statement has not terminated but the grammar has been exhausted.", e.getMessage());
     }
 
@@ -108,7 +108,7 @@ public class SQLParserTest {
     try {
       parser.parse();
       fail();
-    } catch(SQLParseError e) {
+    } catch (SQLParseError e) {
       assertEquals("[1, 27] - ERROR: Expecting 'not' but found 'exists'.", e.getMessage());
     }
 
@@ -118,7 +118,7 @@ public class SQLParserTest {
     try {
       parser.parse();
       fail();
-    } catch(SQLParseError e) {
+    } catch (SQLParseError e) {
       assertEquals("[1, 21] - ERROR: Expecting 'exists' but found 'databae'.", e.getMessage());
     }
   }
@@ -136,7 +136,7 @@ public class SQLParserTest {
     try {
       parser.parse();
       fail();
-    } catch(SQLParseError e) {
+    } catch (SQLParseError e) {
       assertEquals("[1, 37] - ERROR: The statement has not terminated but the grammar has been exhausted.", e.getMessage());
     }
   }
@@ -148,12 +148,12 @@ public class SQLParserTest {
     SQLParser parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
-    s = new StringReader("CREATE TABLE contacts(ID int, PRIMARY KEY (col) ON CONFLICT ABORT)");
+    s = new StringReader("CREATE TABLE contacts(ID int, PRIMARY KEY (col) ON CONFLICT REPLACE)");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
-    s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT test UNIQUE (col) ON CONFLICT ABORT)");
+    s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT test UNIQUE (col) ON CONFLICT FAIL)");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
@@ -162,7 +162,95 @@ public class SQLParserTest {
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts(ID int, PRIMARY KEY (col, col COLLATE cname DESC, col COLLATE cname ASC, col COLLATE cname) ON CONFLICT IGNORE)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts(ID int, FOREIGN KEY (col) REFERENCES ftable)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts(ID int, PRIMARY (col) ON CONFLICT ABORT)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    try {
+      parser.parse();
+      fail();
+    } catch (SQLParseError e) {
+      assertEquals("[1, 39] - ERROR: Expecting 'key' but found '('.", e.getMessage());
+    }
+
+    s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT PRIMARY KEY (col) ON CONFLICT ABORT)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    try {
+      parser.parse();
+      fail();
+    } catch (SQLParseError e) {
+      assertEquals("[1, 42] - ERROR: Expecting 'identifier' but found 'primary'.", e.getMessage());
+    }
+
+    s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT name (col) ON CONFLICT)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    try {
+      parser.parse();
+      fail();
+    } catch (SQLParseError e) {
+      assertEquals("[1, 47] - ERROR: Expecting 'CONSTRAINT', 'PRIMARY', 'UNIQUE', 'CHECK' or 'FOREIGN' but found " +
+        "'LPAREN'.", e.getMessage());
+    }
+
+    s = new StringReader("CREATE TABLE contacts(ID int, PRIMARY KEY (col) ON CONFLICT)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    try {
+      parser.parse();
+      fail();
+    } catch (SQLParseError e) {
+      assertEquals("[1, 60] - ERROR: Expecting conflict action but found 'null'.", e.getMessage());
+    }
   }
+
+  @Test
+  public void foreignKeyClauseTest() {
+    StringReader s = new StringReader("CREATE TABLE contacts(name varchar(255) CONSTRAINT cname REFERENCES " +
+      "foreigntable (columnname, columnname) ON DELETE CASCADE ON UPDATE SET NULL MATCH anothername DEFERRABLE" +
+      " INITIALLY IMMEDIATE, ID int REFERENCES nexttable MATCH name ON UPDATE NO ACTION)");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    SQLParser parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts(name varchar(255) CONSTRAINT cname REFERENCES " +
+      "foreigntable (columnname, columnname) ON DELETE SET DEFAULT ON UPDATE RESTRICT MATCH anothername DEFERRABLE" +
+      " INITIALLY IMMEDIATE, ID int REFERENCES nexttable MATCH name ON UPDATE NO ACTION ON UPDATE RESTRICT ON UPDATE " +
+      "NO ACTION)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts(name varchar(255) CONSTRAINT cname REFERENCES " +
+      "foreigntable (columnname, columnname) ON DELETE SET DEFAULT ON UPDATE RESTRICT MATCH anothername DEFERRABLE" +
+      " INITIALLY IMMEDIATE, ID int REFERENCES nexttable MATCH name ON UPDATE NO ACTION ON UPDATE RESTRICT ON UPDATE " +
+      "NO ACTION NOT DEFERRABLE)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE contacts(name varchar(255) CONSTRAINT cname REFERENCES " +
+      "foreigntable (columnname, columnname) ON DELETE SET DEFAULT ON UPDATE RESTRICT MATCH anothername DEFERRABLE" +
+      " INITIALLY DEFERRED, ID int REFERENCES nexttable)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    //TODO: add some more tests for the foreign key clause
+  }
+
+
 
 
 }

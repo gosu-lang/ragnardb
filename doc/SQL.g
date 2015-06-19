@@ -67,7 +67,7 @@ columndef
         ;
         
 columnconstraint
-        :	'CONTRAINT' 'name' 
+        :	('CONSTRAINT' 'name')? 
                  (
                    'PRIMARY' 'KEY' ('ASC' 'DESC')? 'conflict-clause' ('AUTOINCREMENT')?
                    | 'NOT' 'NULL' 'conflict-clause'

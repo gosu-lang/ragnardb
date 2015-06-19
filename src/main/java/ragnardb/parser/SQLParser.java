@@ -186,7 +186,7 @@ public class SQLParser {
                 currentToken.getType() == TokenType.REPLACE) {
           next();
         } else {
-          error(currentToken, "Expecting Conflict but found '" + currentToken.getText() + "'.");
+          error(currentToken, "Expecting conflict action but found '" + currentToken.getText() + "'.");
         }
       }
     }
@@ -194,14 +194,15 @@ public class SQLParser {
     private void parseForeignKeyClause(){
       match(TokenType.REFERENCES);
       match(TokenType.IDENT);
-      if(tokEquals(TokenType.LPAREN)){
+      if(tokEquals(TokenType.LPAREN)) {
         next();
         match(TokenType.IDENT);
-        while(tokEquals(TokenType.IDENT)){
+        while (tokEquals(TokenType.COMMA)) {
           next();
-          match(TokenType.COMMA);
+          match(TokenType.IDENT);
         }
         match(TokenType.RPAREN);
+      }
         while(tokEquals(TokenType.ON) || tokEquals(TokenType.MATCH)){
           if (tokEquals(TokenType.ON)){
             next();
@@ -255,7 +256,7 @@ public class SQLParser {
 
         }
 
-      }
+
     }
   private void parseTableConstraint() {
     if(currentToken.getType() == TokenType.CONSTRAINT){
@@ -269,6 +270,7 @@ public class SQLParser {
         match(TokenType.LPAREN);
         parseIndexedColumn();
         while(currentToken.getType() == TokenType.COMMA){
+          next();
           parseIndexedColumn();
         }
         match(TokenType.RPAREN);
@@ -279,7 +281,8 @@ public class SQLParser {
         match(TokenType.LPAREN);
         parseIndexedColumn();
         while(currentToken.getType() == TokenType.COMMA){
-        parseIndexedColumn();
+          next();
+          parseIndexedColumn();
         }
         match(TokenType.RPAREN);
         parseConflictClause();
@@ -303,7 +306,7 @@ public class SQLParser {
         parseForeignKeyClause();
         break;
       default:
-        error(currentToken, "Expecting 'CONSTRAINT', 'PRIMARY', 'UNIQUE', 'CHECK' or 'FOREIGN' but found '" + currentToken.getType().toString());
+        error(currentToken, "Expecting 'CONSTRAINT', 'PRIMARY', 'UNIQUE', 'CHECK' or 'FOREIGN' but found '" + currentToken.getType().toString() + "'.");
         break;
     }
   }
