@@ -50,9 +50,20 @@ public class SQLTokenizer {
     }
   }
 
-
+  private Token temp;
+  public Token peek(){
+    if (temp==null){
+      temp = get();
+    }
+    return temp;
+  }
   public Token get() {
     Token tok;
+    if(temp!= null){
+      tok = temp;
+      temp = null;
+      return tok;
+    }
     while(!EOF && isBlank(ch)) {
       next();
     }

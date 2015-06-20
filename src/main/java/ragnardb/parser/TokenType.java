@@ -5,7 +5,7 @@ import java.util.Map;
 
 public enum TokenType {
   ABORT("abort"), ACTION("action"), ADD("add"), AFTER("after"), ALL("all"), ALTER("alter"), ANALYZE("analyze"),
-  AND("and"), AS("as"), ASC("asc"), ATTACH("attach"), AUTO_INCREMENT("auto_increment"), BEFORE("before"),
+  AND("and"), AS("as"), ANY("any"), ASC("asc"), ATTACH("attach"), AUTO_INCREMENT("auto_increment"), BEFORE("before"),
   BEGIN("begin"), BETWEEN("between"), BY("by"), CASCADE("cascade"), CASE("case"), CAST("cast"), CHECK("check"),
   COLLATE("collate"), COLUMN("column"), COMMIT("commit"), CONFLICT("conflict"), CONSTRAINT("constraint"),
   CREATE("create"), CROSS("cross"), CURRENT_DATE("current_date"), CURRENT_TIME("current_time"),

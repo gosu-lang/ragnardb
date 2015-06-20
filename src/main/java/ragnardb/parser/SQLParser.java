@@ -168,7 +168,7 @@ public class SQLParser {
     parseTypeName();
     if (tokEquals(TokenType.DEFAULT)) {
       next();
-      if(tokEquals(TokenType.LONG) || tokEquals(TokenType.DOUBLE) || tokEquals(TokenType.IDENT) || tokEquals(TokenType.NULL)){
+      if(tokEquals(TokenType.LONG) || tokEquals(TokenType.DOUBLE) || tokEquals(TokenType.IDENT) || tokEquals(TokenType.NULL)){ //Limited parse expression
         next();
       }
     }
@@ -275,17 +275,21 @@ public class SQLParser {
     switch (currentToken.getType()) {
       case CASCADE:
         next();
+        break;
       case RESTRICT:
         next();
+        break;
       case NO:
         next();
         match(TokenType.ACTION);
+        break;
       case SET:
         if (tokEquals(TokenType.DEFAULT) || tokEquals(TokenType.NULL)) {
           next();
         } else {
           specialError("DEFAULT or NULL");
         }
+        break;
       default:
         specialError("CASCADE or RESTRICT or NO or SET");
     }
@@ -487,6 +491,7 @@ public class SQLParser {
   }
 
   private void parseConditionRHS() {
+
     if (isComparator()) {
       next();
       if (tokEquals(TokenType.ALL) || tokEquals(TokenType.ANY) || tokEquals(TokenType.SOME)) {
