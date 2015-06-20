@@ -166,7 +166,18 @@ public class SQLParserTest {
       assertEquals("[1, 37] - ERROR: The statement has not terminated but the grammar has been exhausted.", e.getMessage());
     }
   }
+  @Test
+  public void complexColumns() {
+    StringReader s = new StringReader("CREATE TABLE contacts(ID int DEFAULT 555555  IDENTITY (5,6) PRIMARY KEY)");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    SQLParser parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
 
+    s = new StringReader("CREATE TABLE contacts(ID int DEFAULT 5 NOT NULL AUTO_INCREMENT (5) PRIMARY KEY)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+  }
   @Test
   public void tableConstraint() {
     StringReader s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT test PRIMARY KEY (col) ON CONFLICT ABORT)");
@@ -240,7 +251,7 @@ public class SQLParserTest {
       assertEquals("[1, 60] - ERROR: Expecting conflict action but found 'null'.", e.getMessage());
     }
   }
-
+/*
   @Test
   public void foreignKeyClauseTest() {
     StringReader s = new StringReader("CREATE TABLE contacts(name varchar(255) CONSTRAINT cname REFERENCES " +
@@ -276,29 +287,9 @@ public class SQLParserTest {
     //TODO: add some more tests for the foreign key clause
   }
 
-  @Test
-  public void computerGeneratedTests(){
-    String output = "";
-    SQLTokenizer tokenizer;
-    SQLParser parser;
-    try {
-      FileReader fileReader = new FileReader("C:\\Users\\klu\\IdeaProjects\\ragnardb\\doc\\createtablestatements.txt");
-      BufferedReader br = new BufferedReader(fileReader);
-      String line;
-      while((line = br.readLine()) != null){
-        output += line;
-      }
-    } catch (IOException e) {
-      System.out.println("Cannot open file properly");
-      e.printStackTrace();
-    }
+*/
 
-    String[] outputs = output.split(";");
-    for(String statement: outputs){
-      tokenizer = new SQLTokenizer(new StringReader(statement));
-      parser = new SQLParser(tokenizer);
-      parseWithNoErrorsComputer(parser, statement);
-    }
-  }
+
+
 
 }
