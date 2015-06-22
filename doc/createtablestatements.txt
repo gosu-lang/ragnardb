@@ -1,0 +1,194 @@
+CREATE TABLE suppliers
+( supplier_id number(10) NOT NULL,
+  supplier_name varchar2(50) NOT NULL,
+  contact_name varchar2(50)
+);
+CREATE TABLE suppliers
+( supplier_id number(10) NOT NULL,
+  supplier_name varchar2(50) NOT NULL,
+  contact_name varchar2(50),
+  CONSTRAINT suppliers_pk PRIMARY KEY (supplier_id)
+);
+CREATE TABLE customers
+( customer_id number(10) NOT NULL,
+  customer_name varchar2(50) NOT NULL,
+  address varchar2(50),
+  city varchar2(50),
+  state varchar2(25),
+  zip_code varchar2(10)
+);
+CREATE TABLE customers
+( customer_id number(10) NOT NULL,
+  customer_name varchar2(50) NOT NULL,
+  address varchar2(50),
+  city varchar2(50),
+  state varchar2(25),
+  zip_code varchar2(10),
+  CONSTRAINT customers_pk PRIMARY KEY (customer_id)
+);
+CREATE TABLE departments
+( department_id number(10) NOT NULL,
+  department_name varchar2(50) NOT NULL,
+  CONSTRAINT departments_pk PRIMARY KEY (department_id)
+);
+CREATE TABLE employees
+( employee_number number(10) NOT NULL,
+  employee_name varchar2(50) NOT NULL,
+  department_id number(10),
+  salary number(6),
+  CONSTRAINT employees_pk PRIMARY KEY (employee_number),
+  CONSTRAINT fk_departments
+    FOREIGN KEY (department_id)
+    REFERENCES departments(department_id)
+);
+CREATE TABLE CUSTOMERS(
+   ID   INT              NOT NULL,
+   NAME VARCHAR (20)     NOT NULL,
+   AGE  INT              NOT NULL,
+   ADDRESS  CHAR (25) ,
+   SALARY   DECIMAL (18, 2),       
+   PRIMARY KEY (ID)
+);
+CREATE TABLE films (
+    code        char(5) PRIMARY KEY,
+    title       varchar(40) NOT NULL,
+    did         integer NOT NULL,
+    date_prod   date,
+    kind        varchar(10),
+    len         integer
+);
+
+CREATE TABLE distributors (
+     did    integer PRIMARY KEY,
+     name   varchar(40) NOT NULL CHECK (name IS NOT NULL)
+);
+CREATE TABLE array_int (
+    vector  int
+);
+CREATE TABLE films (
+    code        char(5),
+    title       varchar(40),
+    did         integer,
+    date_prod   date,
+    kind        varchar(10),
+    len         integer,
+    CONSTRAINT production UNIQUE(date_prod)
+);
+CREATE TABLE distributors (
+    did     integer CHECK (did > 100),
+    name    varchar(40)
+);
+CREATE TABLE distributors (
+    did     integer,
+    name    varchar(40),
+    CONSTRAINT con1 CHECK (did > 100 AND name IS NOT NULL)
+);
+CREATE TABLE films (
+    code        char(5),
+    title       varchar(40),
+    did         integer,
+    date_prod   date,
+    kind        varchar(10),
+    len         integer,
+    CONSTRAINT code_title PRIMARY KEY(code,title)
+);
+CREATE TABLE distributors (
+    did     integer,
+    name    varchar(40),
+    PRIMARY KEY(did)
+);
+
+CREATE TABLE distributors (
+    did     integer PRIMARY KEY,
+    name    varchar(40)
+);
+CREATE TABLE distributors (
+    name      varchar(40) DEFAULT "Luso Films",
+    did       integer DEFAULT NULL,
+    modtime   timestamp DEFAULT current_timestamp
+);
+CREATE TABLE distributors (
+    did     integer CONSTRAINT nnull NOT NULL,
+    name    varchar(40) NOT NULL
+);
+CREATE TABLE distributors (
+    name      varchar(40) DEFAULT "Luso Films",
+    did       integer DEFAULT NULL,
+    modtime   timestamp DEFAULT current_timestamp
+);
+CREATE TABLE distributors (
+    did     integer CONSTRAINT nnull NOT NULL,
+    name    varchar(40) NOT NULL
+);
+CREATE TABLE distributors (
+    did     integer,
+    name    varchar(40) UNIQUE
+);
+CREATE TABLE distributors (
+    did     integer,
+    name    varchar(40),
+    UNIQUE(name)
+);
+CREATE TABLE distributors (
+    did     integer,
+    name    varchar(40),
+    UNIQUE(name)
+);
+
+CREATE TABLE cinemas (
+        id serial,
+        name text,
+        location text
+);
+
+CREATE TABLE employees (
+    PRIMARY KEY (name),
+    salary int DEFAULT 1000
+);
+CREATE TABLE employees_demo
+    ( employee_id    NUMBER(6)
+    , first_name     VARCHAR2(20)
+    , last_name      VARCHAR2(25) 
+         CONSTRAINT emp_last_name_nn_demo NOT NULL
+    , email          VARCHAR2(25) 
+         CONSTRAINT emp_email_nn_demo     NOT NULL
+    , phone_number   VARCHAR2(20)
+    , hire_date      DATE  DEFAULT SYSDATE 
+         CONSTRAINT emp_hire_date_nn_demo  NOT NULL
+    , job_id         VARCHAR2(10)
+       CONSTRAINT     emp_job_nn_demo  NOT NULL
+    , salary         NUMBER(8,2)
+       CONSTRAINT     emp_salary_nn_demo  NOT NULL
+    , commission_pct NUMBER(2,2)
+    , manager_id     NUMBER(6)
+    , department_id  NUMBER(4)
+    , dn             VARCHAR2(300)
+    , CONSTRAINT     emp_salary_min_demo
+                     CHECK (salary > 0) 
+    , CONSTRAINT     emp_email_uk_demo
+                     UNIQUE (email)
+    ) ;
+CREATE TABLE departments_demo
+    ( department_id    NUMBER(4)
+    , department_name  VARCHAR2(30)
+           CONSTRAINT  dept_name_nn  NOT NULL
+    , manager_id       NUMBER(6)
+    , location_id      NUMBER(4)
+    , dn               VARCHAR2(300)
+    ) ;
+CREATE TABLE departments_demo
+    ( department_id    NUMBER(4)   PRIMARY KEY
+    , department_name  VARCHAR2(30)
+           CONSTRAINT  dept_name_nn  NOT NULL
+    , manager_id       NUMBER(6)
+    , location_id      NUMBER(4)
+    , dn               VARCHAR2(300)
+    ) ;
+CREATE TABLE inventory
+(
+   id INT IDENTITY(1,1) PRIMARY KEY,
+   product VARCHAR(50) UNIQUE,
+   quantity INT,
+   price DECIMAL(18,2)
+);
+
