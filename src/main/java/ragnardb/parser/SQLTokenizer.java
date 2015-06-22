@@ -211,6 +211,11 @@ public class SQLTokenizer {
         tok.setDoubleNumber(decNum);
         return tok;
       }
+
+      /*Adds date/time handling*/
+      if((ch == ':' || ch == '-') && intNum != 0){
+        return dateTime((int)intNum, l, c);
+      }
     }
 
     if(ch == 'e' || ch == 'E') {
@@ -257,6 +262,28 @@ public class SQLTokenizer {
     return tok;
   }
 
+  private Token dateTime(int start, int l, int c){
+    StringBuilder sb = new StringBuilder(start);
+    Token output = new Token(TokenType.LONG, l, c);
+    if(ch == ':'){
+      while((isNumberOrDot(ch) && ch != '.') || ch == ':'){
+        sb.append(ch);
+        next();
+      }
+      output.setLongNumber(0);
+      output.setText(sb.toString());
+    }
+    else{
+      while((isNumberOrDot(ch) && ch != '.') || ch == '-'){
+        sb.append(ch);
+        next();
+      }
+      output.setLongNumber(0);
+      output.setText(sb.toString());
+    }
+    return output;
+  }
+
   private Token identifier() {
     StringBuilder sb = new StringBuilder();
     int l = line;
@@ -294,7 +321,7 @@ public class SQLTokenizer {
       sb.append(ch);
       next();
     }
-
+    next();
     String s = sb.toString();
     Token tok;
     tok = new Token(TokenType.IDENT, l, c);

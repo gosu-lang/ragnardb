@@ -302,6 +302,29 @@ public class SQLParserTest {
 
 */
 
+  @Test
+  public void computerGenerated() {
+
+    String currentLine;
+    String currentInput = "";
+    try{
+      FileReader f = new FileReader("doc/createtablestatements.txt");
+      BufferedReader br = new BufferedReader(f);
+      while((currentLine = br.readLine()) != null) {
+        currentInput += currentLine;
+      }
+      String[] inputs = currentInput.split(";");
+      for(String input: inputs){
+        SQLParser p = new SQLParser(new SQLTokenizer(new StringReader(input)));
+        parseWithNoErrorsComputer(p, input);
+      }
+    } catch (IOException e) {
+      System.out.println("Cannot read file.");
+      e.printStackTrace();
+      fail();
+    }
+  }
+
 
 
 

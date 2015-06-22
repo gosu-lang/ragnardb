@@ -109,7 +109,12 @@ public class SQLParser {
     if (tokEquals(TokenType.LPAREN)) {
       next();
 
-      parseColumnDef();
+      if(tokEquals(TokenType.IDENT)) {
+        parseColumnDef();
+      }
+      else{
+        parseTableConstraint();
+      }
       while (currentToken.getType() == TokenType.COMMA) {
         next();
         if (tokEquals(TokenType.IDENT)) {
@@ -176,9 +181,16 @@ public class SQLParser {
     parseTypeName();
     if (tokEquals(TokenType.DEFAULT)) {
       next();
-      if(tokEquals(TokenType.LONG) || tokEquals(TokenType.DOUBLE) || tokEquals(TokenType.IDENT) || tokEquals(TokenType.NULL)){ //Limited parse expression
+      if(tokEquals(TokenType.LONG) || tokEquals(TokenType.DOUBLE) || tokEquals(TokenType.IDENT)
+        || tokEquals(TokenType.NULL) || tokEquals(TokenType.CURRENT_DATE) || tokEquals(TokenType.CURRENT_TIME)
+        || tokEquals(TokenType.CURRENT_TIMESTAMP)){ //Limited parse expression
         next();
       }
+    }
+
+    if(tokEquals(TokenType.CONSTRAINT)){
+      next();
+      match(TokenType.IDENT);
     }
     //TODO: Add 'as' clause when select statements work
     if (tokEquals(TokenType.NOT)) {
@@ -269,13 +281,8 @@ public class SQLParser {
         } else {
           error(currentToken, "Expecting DELETE or UPDATE but found '" + currentToken.getText() + ".");
         }
-
-
       }
-
     }
-
-
   }
 
   private void parseReferentialAction() {
@@ -379,10 +386,7 @@ public class SQLParser {
           error(currentToken, "Expecting DEFERRED/IMMEDIATE but found '" + currentToken.getText() + "'.");
         }
       }
-
     }
-
-
   }
 
   private void parseTableConstraint() {
