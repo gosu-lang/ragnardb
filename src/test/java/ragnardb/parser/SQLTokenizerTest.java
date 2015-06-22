@@ -18,6 +18,20 @@ public class SQLTokenizerTest {
   }
 
   @Test
+  public void peekTest(){
+    StringReader s = new StringReader("hello FROM WHERE SELECT");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    assertEquals(TokenType.IDENT,tokenizer.peek().getType());
+    assertEquals(TokenType.IDENT,tokenizer.get().getType());
+    assertEquals(TokenType.FROM,tokenizer.get().getType());
+    assertEquals(TokenType.WHERE,tokenizer.peek().getType());
+    assertEquals(TokenType.WHERE,tokenizer.peek().getType());
+    assertEquals(TokenType.WHERE,tokenizer.peek().getType());
+    assertEquals(TokenType.WHERE,tokenizer.peek().getType());
+    assertEquals(TokenType.WHERE,tokenizer.get().getType());
+  }
+
+  @Test
   public void identifierTest() {
     StringReader s = new StringReader("hello HELLo SELECT sElEcT");
     SQLTokenizer tokenizer = new SQLTokenizer(s);
