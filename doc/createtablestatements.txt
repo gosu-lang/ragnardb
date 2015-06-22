@@ -191,4 +191,34 @@ CREATE TABLE inventory
    quantity INT,
    price DECIMAL(18,2)
 );
+create table Employee (
+    id integer not null primary key,
+    name varchar(40) not null,
+    departmentName varchar(20),
+    floor integer,
+    managerId integer,
+    salary decimal);
 
+create table Department (
+    name varchar(20) not null primary key,
+    managerId integer,
+    foreign key (managerId) references Employee(id));
+
+create table Project (
+    id integer not null primary key,
+    name varchar(30),
+    budget decimal);
+
+create table Assignment (
+    employeeId integer not null,
+    projectId integer not null,
+    role varchar(35),
+    primary key (employeeId, projectId),
+    foreign key (employeeId) references Employee(id),
+    foreign key (projectId) references Project(id));
+
+create table Report (
+    id integer not null primary key,
+    title varchar(128),
+    departmentName varchar(20),
+    foreign key (departmentName) references Department(name));
