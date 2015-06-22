@@ -120,7 +120,7 @@ public class SQLParserTest {
       parser.parse();
       fail();
     } catch (SQLParseError e) {
-      assertEquals("[1, 23] - ERROR: The statement has not terminated but the grammar has been exhausted.", e.getMessage());
+      assertEquals("[1, 23] - ERROR: Expecting 'SEMI' or 'EOF but found if", e.getMessage());
     }
 
     s = new StringReader("CREATE TABLE IF NOT EXISTS databae.contacts");
@@ -163,7 +163,8 @@ public class SQLParserTest {
       parser.parse();
       fail();
     } catch (SQLParseError e) {
-      assertEquals("[1, 37] - ERROR: The statement has not terminated but the grammar has been exhausted.", e.getMessage());
+      assertEquals("[1, 37] - ERROR: Expecting 'SEMI' or 'EOF but found identifier", e.getMessage());
+
     }
   }
   @Test
@@ -174,6 +175,18 @@ public class SQLParserTest {
     parseWithNoErrors(parser);
 
     s = new StringReader("CREATE TABLE contacts(ID int DEFAULT 5 NOT NULL AUTO_INCREMENT (5) PRIMARY KEY)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+  }
+  @Test
+  public void testBatches() {
+    StringReader s = new StringReader("CREATE TABLE contacts(id int PRIMARY KEY) ; CREATE TABLE buyers(name varchar(255))");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    SQLParser parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);

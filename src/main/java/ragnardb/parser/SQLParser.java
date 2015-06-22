@@ -69,7 +69,18 @@ public class SQLParser {
   }
 
   public void parse() {
-    parseCreateTable();
+    while(true) {
+      if (tokEquals(TokenType.EOF)) {
+        return; //Success state;
+      }
+      parseCreateTable();
+      if(!(tokEquals(TokenType.EOF)|tokEquals(TokenType.SEMI))){
+        error(currentToken, "Expecting 'SEMI' or 'EOF but found " + currentToken.getType().getName());
+      }
+      if(tokEquals(TokenType.SEMI)){
+        match(TokenType.SEMI);
+      }
+    }
   }
 
   private void parseSelect() {
@@ -112,9 +123,6 @@ public class SQLParser {
     if (tokEquals(TokenType.WITHOUT)) {
       next();
       match(TokenType.ROWID);
-    }
-    if (!tokEquals(TokenType.EOF)) {
-      error(currentToken, "The statement has not terminated but the grammar has been exhausted.");
     }
 
   }
