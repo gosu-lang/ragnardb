@@ -1,8 +1,10 @@
 package ragnardb.plugin;
 
 import gw.config.CommonServices;
+import gw.fs.FileFactory;
 import gw.fs.IDirectory;
 import gw.fs.IFile;
+import gw.fs.IncludeModuleDirectory;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.RefreshKind;
 import gw.lang.reflect.TypeLoaderBase;
@@ -12,6 +14,7 @@ import gw.util.GosuStringUtil;
 import gw.util.Pair;
 import gw.util.concurrent.LockingLazyVar;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,15 +59,27 @@ public class SQLPlugin extends TypeLoaderBase {
 
   public SQLPlugin(IModule module) {
     super(module);
-    initSources(module);
+    appendSqlSources();
+    initSources();
     init();
+  }
+
+  private void appendSqlSources() {
+    IDirectory moduleRoot = FileFactory.instance().getIDirectory(new File(""));
+    IDirectory sourceRootDir = moduleRoot.dir("src/main/java");
+    IDirectory testRootDir = moduleRoot.dir("src/test/java");
+
+    List<IDirectory> sourcePaths = new ArrayList<>(_module.getSourcePath());
+    sourcePaths.add(sourceRootDir);
+    sourcePaths.add(testRootDir);
+
+    _module.setSourcePath(sourcePaths);
   }
 
   /**
    * Populates _sqlSources from the provided IModule
-   * @param module Find *.ddl files in this module
    */
-  private void initSources(IModule module) {
+  private void initSources() {
     //leverage Streams API to basically cast Pair<String, IFile> to Pair<String, ISQLSource> in place
     _sqlSources = findAllFilesByExtension(FILE_EXTENSION)
         .stream()
