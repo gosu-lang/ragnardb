@@ -22,12 +22,12 @@ public enum TokenType {
   REFERENCES("references"), REGEXP("regexp"), REINDEX("reindex"), RELEASE("release"), RENAME("rename"),
   REPLACE("replace"), RESTRICT("restrict"), RIGHT("right"), ROLLBACK("rollback"), ROW("row"), ROWID("rowid"),
   SAVEPOINT("savepoint"), SELECT("select"), SET("set"), SOME("some"), TABLE("table"), TEMP("temp"),
-  TEMPORARY("temporary"), THEN("then"), TO("to"), TRANSACTION("transaction"), TRIGGER("trigger"), UNION("union"),
-  UNIQUE("unique"), UPDATE("update"), USING("using"), VACUUM("vacuum"), VALUES("values"), VIEW("view"),
-  VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"), WITHOUT("without"),
+  TEMPORARY("temporary"), THEN("then"), TO("to"), TRANSACTION("transaction"),
+  TRIGGER("trigger"), UNION("union"), UNIQUE("unique"), UPDATE("update"), USING("using"), VACUUM("vacuum"),
+  VALUES("values"), VIEW("view"), VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"), WITHOUT("without"),
   IDENT("identifier"), LONG("long"), DOUBLE("double"), IDENTITY("identity"), HASH("hash"),
-  LPAREN("("), RPAREN(")"), PLUS("+"), MINUS("-"), DOT("."), COMMA(","), SEMI(";"), SLASH("/"),TIMES("*"),MOD("%"),
-  BAR("||"),EQ("="),NEQ("!="),GT(">"),LT("<"),GTE(">="),LTE("<="),OVL("&&"), QUESTION("?"),
+  LPAREN("("), RPAREN(")"), PLUS("+"), MINUS("-"), DOT("."), COMMA(","), SEMI(";"), SLASH("/"), TIMES("*"), MOD("%"),
+  BAR("||"), EQ("="), NEQ("!="), GT(">"), LT("<"), GTE(">="), LTE("<="), OVL("&&"), QUESTION("?"),
   EOF("End of file"), UNKNOWN,;
 
   String _name;
@@ -36,12 +36,14 @@ public enum TokenType {
   private TokenType(String str) {
     _name = str;
   }
-  private TokenType() {}
+
+  private TokenType() {
+  }
 
   public static TokenType find(String name) {
-    if(keyword2TokType == null) {
+    if (keyword2TokType == null) {
       keyword2TokType = new HashMap<String, TokenType>();
-      for(TokenType t : values()) {
+      for (TokenType t : values()) {
         keyword2TokType.put(t._name, t);
       }
     }
