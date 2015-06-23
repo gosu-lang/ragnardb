@@ -3,10 +3,12 @@ package ragnardb.parser.ast;
 /**
  * Created by klu on 6/22/2015.
  */
-public interface Term {
+public abstract class Term {
 
   @Override
-  public String toString();
+  public abstract String toString();
 
-  public void setNegative(boolean isNeg);
+  public abstract void setNegative(boolean isNeg);
+
+  protected abstract String toString(String initial);
 }

@@ -3,22 +3,36 @@ package ragnardb.parser.ast;
 /**
  * Created by klu on 6/22/2015.
  */
-public class QuestionTerm implements Term{
+public class QuestionTerm extends Term {
   private long intNum;
 
-  public QuestionTerm(){}
+  public QuestionTerm() {
+  }
 
-  public QuestionTerm(long l){intNum = l;}
+  public QuestionTerm(long l) {
+    intNum = l;
+  }
 
-  public void setIntNum(int i){intNum = (long)i;}
+  public void setIntNum(int i) {
+    intNum = (long) i;
+  }
 
-  public void setIntNum(long i){intNum = i;}
+  public long getIntNum() {
+    return intNum;
+  }
 
-  public long getIntNum(){return intNum;}
+  public void setIntNum(long i) {
+    intNum = i;
+  }
 
-  public String toString(){
+  public String toString() {
     return "<Term> ? " + intNum + "\n";
   }
 
-  public void setNegative(boolean isNeg){}
+  protected String toString(String initial) {
+    return initial + toString();
+  }
+
+  public void setNegative(boolean isNeg) {
+  }
 }

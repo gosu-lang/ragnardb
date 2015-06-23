@@ -10,51 +10,69 @@ public class Summand {
   /*Contains data about the operators: FALSE - -; TRUE - +*/
   private ArrayList<Boolean> _operators;
 
-  public Summand(){
+  public Summand() {
     _factors = new ArrayList<Factor>();
     _operators = new ArrayList<Boolean>();
   }
 
-  public Summand(Factor f){
+  public Summand(Factor f) {
     _factors = new ArrayList<Factor>();
     _factors.add(f);
     _operators = new ArrayList<Boolean>();
   }
 
-  private void addFactor(Factor f){
+  private void addFactor(Factor f) {
     _factors.add(f);
   }
 
-  private void addOperator(boolean op){
+  private void addOperator(boolean op) {
     _operators.add(op);
   }
 
-  public void add(String operator, Factor f){
+  public void add(String operator, Factor f) {
     char op = operator.charAt(0);
-    if(op == '-'){
+    if (op == '-') {
       addOperator(false);
-    } else if(op == '+'){
+    } else if (op == '+') {
       addOperator(true);
     }
     addFactor(f);
   }
 
-  public ArrayList<Factor> getFactors(){return _factors;}
+  public ArrayList<Factor> getFactors() {
+    return _factors;
+  }
 
-  public ArrayList<Boolean> getOperators(){return _operators;}
+  public ArrayList<Boolean> getOperators() {
+    return _operators;
+  }
 
   @Override
-  public String toString(){
-    StringBuilder sb = new StringBuilder("<Factor>\n");
+  public String toString() {
+    StringBuilder sb = new StringBuilder("<Summand>\n");
     sb.append('\t');
     sb.append(_factors.get(0));
-    for(int i=0;i<_operators.size();i++){
-      if(_operators.get(i)){
+    for (int i = 0; i < _operators.size(); i++) {
+      if (_operators.get(i)) {
         sb.append("\t + ");
       } else {
         sb.append("\t - ");
       }
-      sb.append(_factors.get(i+1));
+      sb.append(_factors.get(i + 1));
+    }
+    return sb.toString();
+  }
+
+  protected String toString(String initial) {
+    StringBuilder sb = new StringBuilder(initial + "<Summand>\n");
+    sb.append(_factors.get(0).toString(initial + "\t"));
+    for (int i = 0; i < _operators.size(); i++) {
+      if (_operators.get(i)) {
+        sb.append(initial + "\t +\n");
+      } else {
+        sb.append(initial + "\t -\n");
+      }
+      sb.append(_factors.get(i + 1).toString(initial + "\t"));
     }
     return sb.toString();
   }

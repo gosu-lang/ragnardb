@@ -3,7 +3,7 @@ package ragnardb.parser.ast;
 /**
  * Created by klu on 6/22/2015.
  */
-public class CaseTerm implements Term {
+public class CaseTerm extends Term {
   private Case _case;
 
   public CaseTerm() {
@@ -14,12 +14,12 @@ public class CaseTerm implements Term {
     _case = c;
   }
 
-  public void setCase(Case c) {
-    _case = c;
-  }
-
   public Case getCase() {
     return _case;
+  }
+
+  public void setCase(Case c) {
+    _case = c;
   }
 
   public String toString() {
@@ -31,6 +31,14 @@ public class CaseTerm implements Term {
   }
 
   public void setNegative(boolean isNeg) {
+  }
+
+  protected String toString(String initial) {
+    StringBuilder sb = new StringBuilder(initial + "<Term>\n");
+    if (_case != null) {
+      sb.append(_case.toString(initial + "\t"));
+    }
+    return sb.toString();
   }
 
 }

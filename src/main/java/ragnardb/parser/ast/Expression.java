@@ -8,23 +8,37 @@ import java.util.ArrayList;
 public class Expression {
   private ArrayList<AndCondition> _conditions;
 
-  public Expression(){_conditions = new ArrayList<AndCondition>();}
+  public Expression() {
+    _conditions = new ArrayList<AndCondition>();
+  }
 
-  public Expression(AndCondition c){
+  public Expression(AndCondition c) {
     _conditions = new ArrayList<AndCondition>();
     _conditions.add(c);
   }
 
-  public void addCondition(AndCondition c){_conditions.add(c);}
+  public void addCondition(AndCondition c) {
+    _conditions.add(c);
+  }
 
-  public ArrayList<AndCondition> getConditions(){return _conditions;}
+  public ArrayList<AndCondition> getConditions() {
+    return _conditions;
+  }
 
   @Override
-  public String toString(){
+  public String toString() {
     StringBuilder sb = new StringBuilder("<AndCondition>\n");
-    for(AndCondition c: _conditions){
+    for (AndCondition c : _conditions) {
       sb.append('\t');
       sb.append(c);
+    }
+    return sb.toString();
+  }
+
+  protected String toString(String initial) {
+    StringBuilder sb = new StringBuilder(initial + "<AndCondition>\n");
+    for (AndCondition c : _conditions) {
+      sb.append(c.toString(initial + "\t"));
     }
     return sb.toString();
   }
