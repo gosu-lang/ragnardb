@@ -95,6 +95,7 @@ public class SQLParserTest {
     parser = new SQLParser(tokenizer);
     try {
       parser.parse();
+
       fail();
     } catch (SQLParseError e) {
       assertEquals("[1, 8] - ERROR: Expecting 'table' but found 'tempo'.", e.getMessage());
@@ -179,6 +180,27 @@ public class SQLParserTest {
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
   }
+
+  @Test
+  public void testForeignKeys() {
+    StringReader s = new StringReader("CREATE TABLE contacts(id int , parent int, FOREIGN KEY (parent) REFERENCES parents (id) )  ");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    SQLParser parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE providences(id int, countryName int, countryId varchar(255), " +
+            "FOREIGN KEY (countryName , countryId) REFERENCES countries (name, id) ON DELETE CASCADE ON UPDATE SET NULL)");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+    s = new StringReader("CREATE TABLE tasks (id int, FOREIGN KEY ( id ) REFERENCES )");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    parseWithNoErrors(parser);
+
+  }
+
   @Test
   public void testBatches() {
     StringReader s = new StringReader("CREATE TABLE contacts(id int PRIMARY KEY) ; CREATE TABLE buyers(name varchar(255))");

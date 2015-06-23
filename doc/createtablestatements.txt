@@ -136,7 +136,7 @@ CREATE TABLE distributors (
 );
 
 CREATE TABLE cinemas (
-        id serial,
+        id int,
         name text,
         location text
 );

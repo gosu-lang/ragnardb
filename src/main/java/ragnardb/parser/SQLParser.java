@@ -1,6 +1,14 @@
 package ragnardb.parser;
 
+import sun.font.CreatedFontTracker;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class SQLParser {
+
+
 
   private SQLTokenizer _tokenizer;
   private Token currentToken;
@@ -111,9 +119,9 @@ public class SQLParser {
 
       if(tokEquals(TokenType.IDENT)) {
         parseColumnDef();
-      }
-      else{
-        parseTableConstraint();
+      } else{
+        parseConstraint();
+        //parseTableConstraint();
       }
       while (currentToken.getType() == TokenType.COMMA) {
         next();
@@ -133,38 +141,110 @@ public class SQLParser {
   }
 
   private void parseTypeName() {
-    match(TokenType.IDENT);
-    while (tokEquals(TokenType.IDENT)) {
-      next();
-    }
-    if (tokEquals(TokenType.LPAREN)) {
-      next();
-      if (currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE) {
-        next();
-        if (tokEquals(TokenType.COMMA)) {
-          next();
-          if (currentToken.getType() == TokenType.LONG | currentToken.getType() == TokenType.DOUBLE) {
-            next();
-            match(TokenType.RPAREN);
-          } else {
-            error(currentToken, "Expecting LONG or DOUBLE but found '" + currentToken.getType() + "'.");
-          }
-        } else {
-          match(TokenType.RPAREN);
-        }
-      } else {
-        error(currentToken, "Expecting LONG or DOUBLE but found '" + currentToken.getType() + "'.");
-      }
-    }
-  }
-  private boolean isConstraint(){
+    //match(TokenType.IDENT);
 
-    return tokEquals(TokenType.CONSTRAINT) ||
-            tokEquals(TokenType.PRIMARY) ||
-            tokEquals(TokenType.UNIQUE) ||
-            tokEquals(TokenType.CHECK) ||
-            tokEquals(TokenType.FOREIGN) ;
+    if(currentToken.getType()!=TokenType.IDENT){
+      error(currentToken, "Expecting IDENT (datatype) but found '" + currentToken.getType() + "'.");
+    }
+
+    String type = currentToken.getText();
+
+    if(Arrays.asList("int","integer","mediumint","int4","signed").contains(type)){
+      next();
+    }
+    else if(Arrays.asList("boolean","bit","bool").contains(type)){
+      next();
+    } else if(Arrays.asList("tinyint").contains(type)){
+      next();
+    } else if(Arrays.asList("smallint","int2","year").contains(type)){
+      next();
+    } else if(Arrays.asList("bigint","int8").contains(type)){
+      next();
+    } else if(Arrays.asList("identity").contains(type)){
+      next();
+    } else if(Arrays.asList("decimal","number","dec","numeric").contains(type)){
+      next();
+      match(TokenType.LPAREN);
+      matchNum();
+      if (tokEquals(TokenType.COMMA)) {
+        next();
+        matchNum();
+      }
+      match(TokenType.RPAREN);
+
+    } else if(Arrays.asList("double","float","float8").contains(type)){
+        if(type == "double"){
+          next();
+          if(currentToken.toString()=="precision"){
+            next();
+          }
+        }
+        else{
+          next();
+        }
+    } else if(Arrays.asList("real","float4").contains(type)){
+      next();
+    } else if(Arrays.asList("time").contains(type)) {
+      next();
+    } else if(Arrays.asList("date").contains(type)) {
+      next();
+    } else if(Arrays.asList("timestamp","datetime","smalldatetime").contains(type)) {
+      next();
+    } else if(Arrays.asList("other").contains(type)) {
+      next();
+    } else if(Arrays.asList("varchar","longvarchar","varchar2","nvarchar","nvarchar2",
+            "varchar_casesensitive").contains(type)) {
+      next();
+      if(tokEquals(TokenType.LPAREN)){
+        next();
+        matchNum();
+        match(TokenType.RPAREN);
+      }
+    } else if(Arrays.asList("varchar_ignorecase").contains(type)) {
+      next();
+      if(tokEquals(TokenType.LPAREN)){
+        next();
+        matchNum();
+        match(TokenType.RPAREN);
+      }
+    } else if(Arrays.asList("char","character","nchar").contains(type)) {
+      next();
+      if(tokEquals(TokenType.LPAREN)){
+        next();
+        matchNum();
+        match(TokenType.RPAREN);
+      }
+    } else if(Arrays.asList("blob","tinyblob","mediumblob","longblob","image","oid").contains(type)) {
+      next();
+      if(tokEquals(TokenType.LPAREN)){
+        next();
+        matchNum();
+        match(TokenType.RPAREN);
+      }
+    } else if(Arrays.asList("clob","tinytext","text","mediumtext","longtext","ntext","nclob").contains(type)) {
+      next();
+      if(tokEquals(TokenType.LPAREN)){
+        next();
+        matchNum();
+        match(TokenType.RPAREN);
+      }
+    } else{
+      error(currentToken,"Type not resolved");
+    }
+
+
+
+
+
+
+
+
+
+
+
+
   }
+
 
   private boolean isComparator() {
     return tokEquals(TokenType.EQ) ||
@@ -176,7 +256,7 @@ public class SQLParser {
       tokEquals(TokenType.OVL);
   }
 
-  private void parseColumnDef() { //Also does constraint
+  private void parseColumnDef() {
     match(TokenType.IDENT);
     parseTypeName();
     if (tokEquals(TokenType.DEFAULT)) {
@@ -328,7 +408,7 @@ public class SQLParser {
 
   private void parseForeignKeyClause() {
     match(TokenType.REFERENCES);
-    match(TokenType.IDENT);
+    pass(TokenType.IDENT);
     if (tokEquals(TokenType.LPAREN)) {
       next();
       match(TokenType.IDENT);
