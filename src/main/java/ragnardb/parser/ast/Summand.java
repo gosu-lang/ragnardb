@@ -1,0 +1,61 @@
+package ragnardb.parser.ast;
+
+import java.util.ArrayList;
+
+/**
+ * Created by klu on 6/22/2015.
+ */
+public class Summand {
+  private ArrayList<Factor> _factors;
+  /*Contains data about the operators: FALSE - -; TRUE - +*/
+  private ArrayList<Boolean> _operators;
+
+  public Summand(){
+    _factors = new ArrayList<Factor>();
+    _operators = new ArrayList<Boolean>();
+  }
+
+  public Summand(Factor f){
+    _factors = new ArrayList<Factor>();
+    _factors.add(f);
+    _operators = new ArrayList<Boolean>();
+  }
+
+  private void addFactor(Factor f){
+    _factors.add(f);
+  }
+
+  private void addOperator(boolean op){
+    _operators.add(op);
+  }
+
+  public void add(String operator, Factor f){
+    char op = operator.charAt(0);
+    if(op == '-'){
+      addOperator(false);
+    } else if(op == '+'){
+      addOperator(true);
+    }
+    addFactor(f);
+  }
+
+  public ArrayList<Factor> getFactors(){return _factors;}
+
+  public ArrayList<Boolean> getOperators(){return _operators;}
+
+  @Override
+  public String toString(){
+    StringBuilder sb = new StringBuilder("<Factor>\n");
+    sb.append('\t');
+    sb.append(_factors.get(0));
+    for(int i=0;i<_operators.size();i++){
+      if(_operators.get(i)){
+        sb.append("\t + ");
+      } else {
+        sb.append("\t - ");
+      }
+      sb.append(_factors.get(i+1));
+    }
+    return sb.toString();
+  }
+}

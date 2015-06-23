@@ -1,14 +1,10 @@
 package ragnardb.parser;
 
-import sun.font.CreatedFontTracker;
+import ragnardb.parser.ast.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class SQLParser {
-
-
 
   private SQLTokenizer _tokenizer;
   private Token currentToken;
@@ -59,6 +55,14 @@ public class SQLParser {
     }
   }
 
+  private boolean matchIn(TokenType...list){
+    for(TokenType t: list){
+      if(currentToken.getType() == t){
+        return true;
+      }
+    }
+    return false;
+  }
 
   private boolean isNum() {
     return (currentToken.getType() == TokenType.LONG || currentToken.getType() == TokenType.DOUBLE);
@@ -92,6 +96,43 @@ public class SQLParser {
   }
 
   private void parseSelect() {
+    if(tokEquals(TokenType.WITH)){
+      next();
+      if(tokEquals(TokenType.RECURSIVE)){
+        next();
+      }
+      parseCommonTableExpression();
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        parseCommonTableExpression();
+      }
+    }
+    parseSelectSub();
+    while(matchIn(TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT)){
+      if(tokEquals(TokenType.UNION)){
+        next();
+        if(tokEquals(TokenType.ALL)){
+          next();
+        }
+      } else {
+        next();
+      }
+      parseSelectSub();
+    }
+    if(tokEquals(TokenType.ORDER)){
+      next();
+      match(TokenType.BY);
+      parseOrderingTerm();
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        parseOrderingTerm();
+      }
+    }
+    if(tokEquals(TokenType.LIMIT)){
+      next();
+      match(TokenType.LONG);
+      list(TokenType.OFFSET);
+      match(TokenType.LONG);
 
   }
 
@@ -231,20 +272,188 @@ public class SQLParser {
     } else{
       error(currentToken,"Type not resolved");
     }
-
-
-
-
-
-
-
-
-
-
-
-
   }
 
+  private void parseSelectSub() {
+    if(tokEquals(TokenType.SELECT)) {
+      next();
+      if (tokEquals(TokenType.DISTINCT) || tokEquals(TokenType.ALL)) {
+        next();
+        parseResultColumn();
+        while (tokEquals(TokenType.COMMA)) {
+          next();
+          parseResultColumn();
+        }
+      }
+      if (tokEquals(TokenType.FROM)) {
+        next();
+        parseTableOrSubquery();
+        parseJoinClause();
+      }
+      if (tokEquals(TokenType.WHERE)) {
+        next();
+        parseExpr();
+      }
+      if (tokEquals(TokenType.GROUP)) {
+        next();
+        match(TokenType.BY);
+        parseExpr();
+        while (tokEquals(TokenType.COMMA)) {
+          next();
+          parseExpr();
+        }
+        if (tokEquals(TokenType.HAVING)) {
+          next();
+          parseExpr();
+        }
+      }
+    } else if(tokEquals(TokenType.VALUES)){
+      next();
+      match(TokenType.LPAREN);
+      parseExpr();
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        parseExpr();
+      }
+      match(TokenType.RPAREN);
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        match(TokenType.LPAREN);
+        parseExpr();
+        while(tokEquals(TokenType.COMMA)){
+          next();
+          parseExpr();
+        }
+        match(TokenType.RPAREN);
+      }
+    } else {
+      error(currentToken, "Expecting 'select' or 'values' but found '" + currentToken.getType() + "'.");
+    }
+  }
+
+  private void parseCommonTableExpression() {
+    match(TokenType.IDENT);
+    if(tokEquals(TokenType.LPAREN)){
+      next();
+      list(TokenType.IDENT);
+      match(TokenType.RPAREN);
+    }
+    match(TokenType.AS);
+    match(TokenType.LPAREN);
+    parseSelect();
+    match(TokenType.RPAREN);
+  }
+
+  private void parseOrderingTerm() {
+    parseExpr();
+    if(tokEquals(TokenType.COLLATE)){
+      next();
+      match(TokenType.IDENT);
+    }
+    if(matchIn(TokenType.ASC, TokenType.DESC)){
+      next();
+    }
+  }
+
+  private void parseResultColumn() {
+    if(tokEquals(TokenType.TIMES)){
+      next();
+    } else if(tokEquals(TokenType.IDENT)){
+      next();
+      match(TokenType.DOT);
+      match(TokenType.TIMES);
+    } else {
+      parseExpr();
+      if(tokEquals(TokenType.AS)){
+        next();
+      }
+      match(TokenType.IDENT);
+    }
+  }
+
+  private void parseTableOrSubquery(){
+    if(tokEquals(TokenType.LPAREN)){
+      if(matchIn(TokenType.WITH, TokenType.RECURSIVE, TokenType.SELECT, TokenType.VALUES)){
+        parseSelect();
+        match(TokenType.RPAREN);
+        if(tokEquals(TokenType.AS)){
+          next();
+          match(TokenType.IDENT);
+        }
+      } else {
+        parseJoinClause();
+        match(TokenType.RPAREN);
+      }
+    } else if(tokEquals(TokenType.IDENT)){
+      next();
+      if(tokEquals(TokenType.DOT)){
+        next();
+        match(TokenType.IDENT);
+      }
+      if(tokEquals(TokenType.AS)){
+        next();
+        match(TokenType.IDENT);
+      }
+      if(tokEquals(TokenType.INDEXED)){
+        next();
+        match(TokenType.BY);
+        match(TokenType.IDENT);
+      } else if(tokEquals(TokenType.NOT)){
+        next();
+        match(TokenType.INDEXED);
+      }
+    } else {
+      error(currentToken, "Expecting Table Name or '(' but found '" + currentToken.getType() + "'.");
+    }
+  }
+
+  private void parseJoinClause(){
+    parseTableOrSubquery();
+    while(matchIn(TokenType.COMMA, TokenType.NATURAL, TokenType.LEFT, TokenType.INNER, TokenType.CROSS)) {
+      if (tokEquals(TokenType.COMMA)) {
+        next();
+      } else {
+        if (tokEquals(TokenType.NATURAL)) {
+          next();
+        }
+        switch (currentToken.getType()) {
+          case LEFT:
+            next();
+            if (tokEquals(TokenType.OUTER)) {
+              next();
+            }
+            break;
+          case INNER:
+          case CROSS:
+            next();
+            break;
+          default:
+            error(currentToken, "Expection join operation or ',' but found '" + currentToken.getType() + "'.");
+            break;
+        }
+        match(TokenType.JOIN);
+      }
+      parseTableOrSubquery();
+      if(tokEquals(TokenType.ON)){
+        next();
+        parseExpr();
+      } else if(tokEquals(TokenType.USING)){
+        next();
+        match(TokenType.LPAREN);
+        list(TokenType.IDENT);
+        match(TokenType.RPAREN);
+      }
+    }
+  }
+
+  private boolean isConstraint(){
+
+    return tokEquals(TokenType.CONSTRAINT) ||
+            tokEquals(TokenType.PRIMARY) ||
+            tokEquals(TokenType.UNIQUE) ||
+            tokEquals(TokenType.CHECK) ||
+            tokEquals(TokenType.FOREIGN) ;
+  }
 
   private boolean isComparator() {
     return tokEquals(TokenType.EQ) ||
