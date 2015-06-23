@@ -1,8 +1,13 @@
 package ragnardb.parser;
 
-
+import gw.lang.reflect.IType;
+import gw.lang.reflect.java.IJavaType;
 import ragnardb.parser.ast.*;
+import gw.lang.reflect.java.JavaTypes;
+import ragnardb.plugin.ColumnDefinition;
 
+import java.lang.reflect.Type;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -90,13 +95,14 @@ public class SQLParser {
     throw new SQLParseError("[" + token.getLine() + ", " + token.getCol() + "] - ERROR: " + message);
   }
 
-  public void parse() {
+  public DDL parse() {
+    DDL statements = new DDL();
     while(true) {
       if (tokEquals(TokenType.EOF)) {
-        return; //Success state;
+        return statements;
       }
-      parseCreateTable();
-      if(!(tokEquals(TokenType.EOF)||tokEquals(TokenType.SEMI))){
+      statements.append(parseCreateTable());
+      if(!(tokEquals(TokenType.EOF)|tokEquals(TokenType.SEMI))){
         error(currentToken, "Expecting 'SEMI' or 'EOF but found " + currentToken.getType().getName());
       }
       if(tokEquals(TokenType.SEMI)){
@@ -146,7 +152,7 @@ public class SQLParser {
 
     }
   }
-  private void parseCreateTable() {
+  private CreateTable parseCreateTable() {
     match(TokenType.CREATE);
     if (currentToken.getType() == TokenType.TEMP ||
       currentToken.getType() == TokenType.TEMPORARY) {
@@ -159,6 +165,7 @@ public class SQLParser {
       match(TokenType.EXISTS);
     }
 
+    CreateTable table = new CreateTable(currentToken.getText());
     match(TokenType.IDENT);
 
     if (currentToken.getType() == TokenType.DOT) {
@@ -169,7 +176,7 @@ public class SQLParser {
       next();
 
       if(tokEquals(TokenType.IDENT)) {
-        parseColumnDef();
+        table.append(parseColumnDef());
       } else{
         parseConstraint();
         //parseTableConstraint();
@@ -188,12 +195,13 @@ public class SQLParser {
       next();
       match(TokenType.ROWID);
     }
+    return table;
 
   }
 
-  private void parseTypeName() {
-    //match(TokenType.IDENT);
+  private int parseTypeName() {
 
+    int datatype;
     if(currentToken.getType()!=TokenType.IDENT){
       error(currentToken, "Expecting IDENT (datatype) but found '" + currentToken.getType() + "'.");
     }
@@ -202,18 +210,25 @@ public class SQLParser {
 
     if(Arrays.asList("int","integer","mediumint","int4","signed").contains(type)){
       next();
+      datatype = Types.INTEGER;
     }
     else if(Arrays.asList("boolean","bit","bool").contains(type)){
+      datatype = Types.BOOLEAN;
       next();
     } else if(Arrays.asList("tinyint").contains(type)){
+      datatype = Types.TINYINT;
       next();
     } else if(Arrays.asList("smallint","int2","year").contains(type)){
+      datatype = Types.SMALLINT;
       next();
     } else if(Arrays.asList("bigint","int8").contains(type)){
+      datatype = Types.BIGINT;
       next();
     } else if(Arrays.asList("identity").contains(type)){
+      datatype = Types.BIGINT;
       next();
     } else if(Arrays.asList("decimal","number","dec","numeric").contains(type)){
+      datatype = Types.DECIMAL;
       next();
       match(TokenType.LPAREN);
       matchNum();
@@ -224,6 +239,7 @@ public class SQLParser {
       match(TokenType.RPAREN);
 
     } else if(Arrays.asList("double","float","float8").contains(type)){
+      datatype = Types.DOUBLE;
         if(type == "double"){
           next();
           if(currentToken.toString()=="precision"){
@@ -234,17 +250,23 @@ public class SQLParser {
           next();
         }
     } else if(Arrays.asList("real","float4").contains(type)){
+      datatype = Types.FLOAT;
       next();
     } else if(Arrays.asList("time").contains(type)) {
+      datatype = Types.TIME;
       next();
     } else if(Arrays.asList("date").contains(type)) {
+      datatype = Types.DATE;
       next();
     } else if(Arrays.asList("timestamp","datetime","smalldatetime").contains(type)) {
+      datatype = Types.TIMESTAMP;
       next();
     } else if(Arrays.asList("other").contains(type)) {
+      datatype = Types.OTHER;
       next();
     } else if(Arrays.asList("varchar","longvarchar","varchar2","nvarchar","nvarchar2",
             "varchar_casesensitive").contains(type)) {
+      datatype = Types.NVARCHAR;
       next();
       if(tokEquals(TokenType.LPAREN)){
         next();
@@ -252,6 +274,7 @@ public class SQLParser {
         match(TokenType.RPAREN);
       }
     } else if(Arrays.asList("varchar_ignorecase").contains(type)) {
+      datatype = Types.NVARCHAR;
       next();
       if(tokEquals(TokenType.LPAREN)){
         next();
@@ -259,6 +282,7 @@ public class SQLParser {
         match(TokenType.RPAREN);
       }
     } else if(Arrays.asList("char","character","nchar").contains(type)) {
+      datatype = Types.NCHAR;
       next();
       if(tokEquals(TokenType.LPAREN)){
         next();
@@ -266,6 +290,7 @@ public class SQLParser {
         match(TokenType.RPAREN);
       }
     } else if(Arrays.asList("blob","tinyblob","mediumblob","longblob","image","oid").contains(type)) {
+      datatype = Types.BLOB;
       next();
       if(tokEquals(TokenType.LPAREN)){
         next();
@@ -273,6 +298,7 @@ public class SQLParser {
         match(TokenType.RPAREN);
       }
     } else if(Arrays.asList("clob","tinytext","text","mediumtext","longtext","ntext","nclob").contains(type)) {
+      datatype = Types.CLOB;
       next();
       if(tokEquals(TokenType.LPAREN)){
         next();
@@ -280,8 +306,10 @@ public class SQLParser {
         match(TokenType.RPAREN);
       }
     } else{
+      datatype = Types.OTHER;
       error(currentToken,"Type not resolved");
     }
+    return datatype;
   }
 
   private void parseSelectSub() {
@@ -466,9 +494,10 @@ public class SQLParser {
       tokEquals(TokenType.OVL);
   }
 
-  private void parseColumnDef() {
+  private ColumnDefinition parseColumnDef() {
+    String name = currentToken.getText();
     match(TokenType.IDENT);
-    parseTypeName();
+    int datatype = parseTypeName();
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.DOUBLE) || tokEquals(TokenType.IDENT)
@@ -515,6 +544,7 @@ public class SQLParser {
       next();
       parseCondition();
     }
+    return new ColumnDefinition(name,1);
   }
 
   private void parseConstraint() {
