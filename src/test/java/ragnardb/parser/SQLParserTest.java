@@ -189,10 +189,11 @@ public class SQLParserTest {
     parseWithNoErrors(parser);
 
     s = new StringReader("CREATE TABLE providences(id int, countryName int, countryId varchar(255), " +
-            "FOREIGN KEY (countryName , countryId) REFERENCES countries (name, id) ON DELETE CASCADE ON UPDATE SET NULL)");
+            "FOREIGN KEY (countryName , countryId) REFERENCES countries (name, id ) ON DELETE CASCADE ON UPDATE SET NULL)");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
+
 
     s = new StringReader("CREATE TABLE tasks (id int, FOREIGN KEY ( id ) REFERENCES )");
     tokenizer = new SQLTokenizer(s);
@@ -213,7 +214,7 @@ public class SQLParserTest {
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
   }
-  @Test
+  /*@Test
   public void tableConstraint() {
     StringReader s = new StringReader("CREATE TABLE contacts(ID int, CONSTRAINT test PRIMARY KEY (col) ON CONFLICT ABORT)");
     SQLTokenizer tokenizer = new SQLTokenizer(s);
@@ -319,7 +320,6 @@ public class SQLParserTest {
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
-    //TODO: add some more tests for the foreign key clause
   }
 
 */
