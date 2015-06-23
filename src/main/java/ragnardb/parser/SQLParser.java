@@ -87,7 +87,7 @@ public class SQLParser {
         return; //Success state;
       }
       parseCreateTable();
-      if(!(tokEquals(TokenType.EOF)|tokEquals(TokenType.SEMI))){
+      if(!(tokEquals(TokenType.EOF)||tokEquals(TokenType.SEMI))){
         error(currentToken, "Expecting 'SEMI' or 'EOF but found " + currentToken.getType().getName());
       }
       if(tokEquals(TokenType.SEMI)){
@@ -764,35 +764,54 @@ public class SQLParser {
     }
   }
 
-  private void parseExpr() {
-    parseAndCondition();
-    if (tokEquals(TokenType.OR)) {
+  private Expression parseExpr() {
+    Expression expression;
+    AndCondition condition = parseAndCondition();
+    expression = new Expression(condition);
+    while (tokEquals(TokenType.OR)) {
       next();
-      parseExpr();
+      condition = parseAndCondition();
+      expression.addCondition(condition);
     }
+    return expression;
   }
 
-  private void parseAndCondition() {
-    parseCondition();
-    if (tokEquals(TokenType.AND)) {
+  private AndCondition parseAndCondition() {
+    AndCondition andCondition;
+    Condition c = parseCondition();
+    andCondition = new AndCondition(c);
+    while (tokEquals(TokenType.AND)) {
       next();
-      parseAndCondition();
+      c = parseCondition();
+      andCondition.addCondition(c);
     }
+    return andCondition;
   }
 
-  private void parseCondition() { //Ommiting EXISTS (select)
-    while (tokEquals(TokenType.NOT)) {
+  private Condition parseCondition() {
+    Condition condition;
+    if (tokEquals(TokenType.NOT)) {
       next();
-      parseCondition();
+      return parseCondition();
     }
-    parseOperand();
-    if (tokEquals(TokenType.IS) || tokEquals(TokenType.BETWEEN) || tokEquals(TokenType.IN) || tokEquals(TokenType.NOT)
-      || tokEquals(TokenType.LIKE) || tokEquals(TokenType.REGEXP) || isComparator()) {
-      parseConditionRHS();
+    if(tokEquals(TokenType.EXISTS)){
+      next();
+      match(TokenType.LPAREN);
+      parseSelect();
+      condition = null; //TODO: Deal with this BS too
+      match(TokenType.RPAREN);
+    } else {
+      Operand o = parseOperand();
+      condition = new Condition(o);
+      if (tokEquals(TokenType.IS) || tokEquals(TokenType.BETWEEN) || tokEquals(TokenType.IN) || tokEquals(TokenType.NOT)
+        || tokEquals(TokenType.LIKE) || tokEquals(TokenType.REGEXP) || isComparator()) {
+        parseConditionRHS(condition);
+      }
     }
+    return condition;
   }
 
-  private void parseConditionRHS() {
+  private void parseConditionRHS(Condition existing) {
 
     if (isComparator()) {
       next();
@@ -800,9 +819,11 @@ public class SQLParser {
         next();
         match(TokenType.LPAREN);
         parseSelect();
+        //TODO: fix this
         match(TokenType.RPAREN);
       } else {
-        parseOperand();
+        Operand o = parseOperand();
+        existing.setSecond(o);
       }
     } else {
       switch (currentToken.getType()) {
@@ -816,12 +837,14 @@ public class SQLParser {
           } else {
             match(TokenType.DISTINCT);
             match(TokenType.FROM);
-            parseOperand();
+            Operand o = parseOperand();
+            existing.setSecond(o);
           }
           break;
         case BETWEEN:
           next();
-          parseOperand();
+          Operand o = parseOperand();
+          existing.setSecond(o);
           match(TokenType.AND);
           break;
         case IN:
@@ -830,11 +853,14 @@ public class SQLParser {
           if (tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT)
             || tokEquals(TokenType.VALUES)) {
             parseSelect();
+            //TODO: FIX
           } else {
             parseExpr();
+            //TODO: FIX
             while (tokEquals(TokenType.COMMA)) {
               next();
               parseExpr();
+              //TODO: FIX
             }
           }
           match(TokenType.RPAREN);
@@ -843,7 +869,8 @@ public class SQLParser {
           next();
         case LIKE:
           next();
-          parseOperand();
+          o = parseOperand();
+          existing.setSecond(o);
           if (tokEquals(TokenType.ESCAPE)) {
             next();
             match(TokenType.IDENT);
@@ -851,7 +878,8 @@ public class SQLParser {
           break;
         case REGEXP:
           next();
-          parseOperand();
+          o = parseOperand();
+          existing.setSecond(o);
           break;
         default:
           specialError("Comparator, IS, BETWEEN, IN, NOT, LIKE, or REGEXP");
@@ -860,96 +888,175 @@ public class SQLParser {
     }
   }
 
-  private void parseOperand() {
-    parseSummand();
-    if (tokEquals(TokenType.BAR)) {
+  private Operand parseOperand() {
+    Operand operand;
+    Summand s = parseSummand();
+    operand = new Operand(s);
+    while (tokEquals(TokenType.BAR)) {
       next();
-      parseOperand();
+      s = parseSummand();
+      operand.addSummand(s);
     }
+    return operand;
   }
 
-  private void parseSummand() {
-    parseFactor();
-    if (tokEquals(TokenType.PLUS) || tokEquals(TokenType.MINUS)) {
+  private Summand parseSummand() {
+    Summand summand;
+    Factor f = parseFactor();
+    summand = new Summand(f);
+    while (tokEquals(TokenType.PLUS) || tokEquals(TokenType.MINUS)) {
+      String nextOp = currentToken.toString();
       next();
-      parseSummand();
+      f = parseFactor();
+      summand.add(nextOp, f);
     }
+    return summand;
   }
 
-  private void parseFactor() {
-    parseTerm();
-    if (tokEquals(TokenType.SLASH) || tokEquals(TokenType.TIMES) || tokEquals(TokenType.MOD)) {
+  private Factor parseFactor() {
+    Factor factor;
+    Term t = parseTerm();
+    factor = new Factor(t);
+    while (tokEquals(TokenType.SLASH) || tokEquals(TokenType.TIMES) || tokEquals(TokenType.MOD)) {
+      String nextOp = currentToken.toString();
       next();
-      parseFactor();
+      t = parseTerm();
+      factor.add(nextOp, t);
     }
+    return factor;
   }
 
-  private void parseTerm() {
+  private Term parseTerm() {
+    Term t = null;
     switch (currentToken.getType()) {
       case IDENT:
+        t = new StringTerm(currentToken.getText());
+        next();
+        break;
       case LONG:
       case DOUBLE:
+        t = currentToken.getLongNumber()!=0?new AlgebraicTerm(currentToken.getLongNumber())
+          :new AlgebraicTerm(currentToken.getDoubleNumber());
         next();
         break;
       case QUESTION:
         next();
-        if (tokEquals(TokenType.LONG)) {
+        long l;
+        if(tokEquals(TokenType.MINUS)){
+          l = -1*currentToken.getLongNumber();
           next();
+          t = new QuestionTerm(l);
+        } else if(tokEquals(TokenType.PLUS)){
+          next();
+          t = new QuestionTerm(currentToken.getLongNumber());
+          next();
+        } else if(tokEquals(TokenType.LONG)){
+          t = new QuestionTerm(currentToken.getLongNumber());
+          next();
+        } else {
+          t = new QuestionTerm();
         }
         break;
-      case MINUS:
       case PLUS:
         next();
-        parseTerm();
+        t = parseLimitedTerm(false);
+        break;
+      case MINUS:
+        next();
+        t = parseLimitedTerm(true);
         break;
       case LPAREN:
         next();
         if (tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT)
           || tokEquals(TokenType.VALUES)) {
           parseSelect();
+          t = new GeneralTerm(new SelectStatement()); //TODO: Fix this BS
         } else {
-          parseExpr();
-          while (tokEquals(TokenType.COMMA)) {
-            next();
-            parseExpr();
-          }
+          Expression e = parseExpr();
+          t = new GeneralTerm(e);
         }
         match(TokenType.RPAREN);
         break;
       case CASE:
         next();
+        Case c;
         if (tokEquals(TokenType.WHEN)) {
           next();
-          parseCaseWhen();
+          c = parseCaseWhen();
         } else {
-          parseCase();
+          c = parseCase();
         }
+        t = new CaseTerm(c);
         break;
       default:
         specialError("Any term");
         break;
     }
+    return t;
   }
 
-  private void parseCase() {
-    parseExpr();
-    parseCaseWhen();
+  private Term parseLimitedTerm(boolean isNegative) {
+    Term t = null;
+    if(tokEquals(TokenType.LONG)){
+      t = new AlgebraicTerm(currentToken.getLongNumber());
+      next();
+    }else if(tokEquals(TokenType.DOUBLE)){
+      t = new AlgebraicTerm(currentToken.getDoubleNumber());
+      next();
+    }else if(tokEquals(TokenType.LPAREN)){
+      Expression e = parseExpr();
+      t = new GeneralTerm(e);
+    }else{
+      specialError("Algebraic Term");
+      return null;
+    }
+    t.setNegative(isNegative);
+    return t;
   }
 
-  private void parseCaseWhen() {
+  private Case parseCase() {
+    Case _case = new Case();
+    Expression init = parseExpr();
+    _case.setInitial(init);
+    parseCaseWhen(_case);
+    return _case;
+  }
+
+  private Case parseCaseWhen() {
+    Case _case = new Case();
     match(TokenType.WHEN);
-    parseExpr();
+    Expression when = parseExpr();
     match(TokenType.THEN);
-    parseExpr();
+    Expression then = parseExpr();
+    _case.addWhenThen(when, then);
     if (tokEquals(TokenType.WHEN)) {
-      parseCaseWhen();
+      parseCaseWhen(_case);
     } else {
       if (tokEquals(TokenType.ELSE)) {
         next();
-        parseExpr();
+        Expression fin = parseExpr();
+        _case.setElse(fin);
+      }
+      match(TokenType.END);
+    }
+    return _case;
+  }
+
+  private void parseCaseWhen(Case _case) {
+    match(TokenType.WHEN);
+    Expression when = parseExpr();
+    match(TokenType.THEN);
+    Expression then = parseExpr();
+    _case.addWhenThen(when, then);
+    if (tokEquals(TokenType.WHEN)) {
+      parseCaseWhen(_case);
+    } else {
+      if (tokEquals(TokenType.ELSE)) {
+        next();
+        Expression fin = parseExpr();
+        _case.setElse(fin);
       }
       match(TokenType.END);
     }
   }
-
 }
