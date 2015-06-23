@@ -3,6 +3,7 @@ package ragnardb.parser;
 import ragnardb.parser.ast.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class SQLParser {
 
@@ -96,22 +97,22 @@ public class SQLParser {
   }
 
   private void parseSelect() {
-    if(tokEquals(TokenType.WITH)){
+    if (tokEquals(TokenType.WITH)) {
       next();
-      if(tokEquals(TokenType.RECURSIVE)){
+      if (tokEquals(TokenType.RECURSIVE)) {
         next();
       }
       parseCommonTableExpression();
-      while(tokEquals(TokenType.COMMA)){
+      while (tokEquals(TokenType.COMMA)) {
         next();
         parseCommonTableExpression();
       }
     }
     parseSelectSub();
-    while(matchIn(TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT)){
-      if(tokEquals(TokenType.UNION)){
+    while (matchIn(TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT)) {
+      if (tokEquals(TokenType.UNION)) {
         next();
-        if(tokEquals(TokenType.ALL)){
+        if (tokEquals(TokenType.ALL)) {
           next();
         }
       } else {
@@ -119,23 +120,23 @@ public class SQLParser {
       }
       parseSelectSub();
     }
-    if(tokEquals(TokenType.ORDER)){
+    if (tokEquals(TokenType.ORDER)) {
       next();
       match(TokenType.BY);
       parseOrderingTerm();
-      while(tokEquals(TokenType.COMMA)){
+      while (tokEquals(TokenType.COMMA)) {
         next();
         parseOrderingTerm();
       }
     }
-    if(tokEquals(TokenType.LIMIT)){
+    if (tokEquals(TokenType.LIMIT)) {
       next();
       match(TokenType.LONG);
       list(TokenType.OFFSET);
       match(TokenType.LONG);
 
+    }
   }
-
   private void parseCreateTable() {
     match(TokenType.CREATE);
     if (currentToken.getType() == TokenType.TEMP ||

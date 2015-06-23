@@ -197,7 +197,7 @@ create table Employee (
     departmentName varchar(20),
     floor integer,
     managerId integer,
-    salary decimal);
+    salary decimal(20));
 
 create table Department (
     name varchar(20) not null primary key,
@@ -207,7 +207,7 @@ create table Department (
 create table Project (
     id integer not null primary key,
     name varchar(30),
-    budget decimal);
+    budget decimal(20));
 
 create table Assignment (
     employeeId integer not null,
