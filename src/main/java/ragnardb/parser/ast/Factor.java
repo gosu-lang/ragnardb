@@ -28,13 +28,13 @@ public class Factor {
 
   private void addOperator(char operator) {
     switch (operator) {
-      case '*':
+      case 'T':
         _operators.add(0);
         break;
-      case '/':
+      case 'S':
         _operators.add(1);
         break;
-      case '%':
+      case 'M':
         _operators.add(2);
         break;
       default:

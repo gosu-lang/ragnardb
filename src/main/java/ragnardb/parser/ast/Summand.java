@@ -31,9 +31,9 @@ public class Summand {
 
   public void add(String operator, Factor f) {
     char op = operator.charAt(0);
-    if (op == '-') {
+    if (op == 'M') {
       addOperator(false);
-    } else if (op == '+') {
+    } else if (op == 'P') {
       addOperator(true);
     }
     addFactor(f);
