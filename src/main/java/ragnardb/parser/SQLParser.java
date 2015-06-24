@@ -95,7 +95,7 @@ public class SQLParser {
   }
 
   public DDL parse() {
-    if(tokEquals(TokenType.CREATE)) {
+    if(tokEquals(TokenType.CREATE) || tokEquals(TokenType.EOF)) {
       DDL statements = new DDL();
       while (true) {
         if (tokEquals(TokenType.EOF)) {
