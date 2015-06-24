@@ -99,6 +99,7 @@ public class SQLParser {
     DDL statements = new DDL();
     while(true) {
       if (tokEquals(TokenType.EOF)) {
+
         return statements;
       }
       statements.append(parseCreateTable());
@@ -184,7 +185,7 @@ public class SQLParser {
       while (currentToken.getType() == TokenType.COMMA) {
         next();
         if (tokEquals(TokenType.IDENT)) {
-          parseColumnDef();
+          table.append(parseColumnDef());
         } else {
           parseConstraint();
         }
@@ -905,7 +906,7 @@ public class SQLParser {
         _case.setElse(fin);
       }
       match(TokenType.END);
-    }
+  }
     return _case;
   }
 
