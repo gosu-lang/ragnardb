@@ -10,6 +10,7 @@ import java.lang.reflect.Type;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class SQLParser {
 
@@ -200,117 +201,34 @@ public class SQLParser {
 
   }
 
-  private int parseTypeName() {
+  private ColumnDefinition parseTypeName(String name) {
 
     int datatype;
+
     if(currentToken.getType()!=TokenType.IDENT){
       error(currentToken, "Expecting IDENT (datatype) but found '" + currentToken.getType() + "'.");
     }
 
-    String type = currentToken.getText();
+    datatype = ColumnDefinition.lookUp.get(currentToken.getText());
+    ColumnDefinition column = new ColumnDefinition(name,datatype);
+    next();
 
-    if(Arrays.asList("int","integer","mediumint","int4","signed").contains(type)){
+    if((datatype == Types.NVARCHAR || datatype == Types.NCHAR || datatype == Types.BLOB || datatype == Types.CLOB || datatype == Types.DECIMAL )
+            && tokEquals(TokenType.LPAREN)){
       next();
-      datatype = Types.INTEGER;
-    }
-    else if(Arrays.asList("boolean","bit","bool").contains(type)){
-      datatype = Types.BOOLEAN;
-      next();
-    } else if(Arrays.asList("tinyint").contains(type)){
-      datatype = Types.TINYINT;
-      next();
-    } else if(Arrays.asList("smallint","int2","year").contains(type)){
-      datatype = Types.SMALLINT;
-      next();
-    } else if(Arrays.asList("bigint","int8").contains(type)){
-      datatype = Types.BIGINT;
-      next();
-    } else if(Arrays.asList("identity").contains(type)){
-      datatype = Types.BIGINT;
-      next();
-    } else if(Arrays.asList("decimal","number","dec","numeric").contains(type)){
-      datatype = Types.DECIMAL;
-      next();
-      match(TokenType.LPAREN);
+      column.setStartInt( (int) currentToken.getLongNumber());
       matchNum();
-      if (tokEquals(TokenType.COMMA)) {
-        next();
-        matchNum();
+      if( datatype == Types.DECIMAL){
+        if(tokEquals(TokenType.COMMA)){
+          next();
+          column.setIncrementInt((int) currentToken.getLongNumber());
+          matchNum();
+        }
       }
       match(TokenType.RPAREN);
-
-    } else if(Arrays.asList("double","float","float8").contains(type)){
-      datatype = Types.DOUBLE;
-        if(type.equals("double")){
-          next();
-          if(currentToken.toString().equals("precision")){
-            next();
-          }
-        }
-        else{
-          next();
-        }
-    } else if(Arrays.asList("real","float4").contains(type)){
-      datatype = Types.FLOAT;
-      next();
-    } else if(Arrays.asList("time").contains(type)) {
-      datatype = Types.TIME;
-      next();
-    } else if(Arrays.asList("date").contains(type)) {
-      datatype = Types.DATE;
-      next();
-    } else if(Arrays.asList("timestamp","datetime","smalldatetime").contains(type)) {
-      datatype = Types.TIMESTAMP;
-      next();
-    } else if(Arrays.asList("other").contains(type)) {
-      datatype = Types.OTHER;
-      next();
-    } else if(Arrays.asList("varchar","longvarchar","varchar2","nvarchar","nvarchar2",
-            "varchar_casesensitive").contains(type)) {
-      datatype = Types.NVARCHAR;
-      next();
-      if(tokEquals(TokenType.LPAREN)){
-        next();
-        matchNum();
-        match(TokenType.RPAREN);
-      }
-    } else if(Arrays.asList("varchar_ignorecase").contains(type)) {
-      datatype = Types.NVARCHAR;
-      next();
-      if(tokEquals(TokenType.LPAREN)){
-        next();
-        matchNum();
-        match(TokenType.RPAREN);
-      }
-    } else if(Arrays.asList("char","character","nchar").contains(type)) {
-      datatype = Types.NCHAR;
-      next();
-      if(tokEquals(TokenType.LPAREN)){
-        next();
-        matchNum();
-        match(TokenType.RPAREN);
-      }
-    } else if(Arrays.asList("blob","tinyblob","mediumblob","longblob","image","oid").contains(type)) {
-      datatype = Types.BLOB;
-      next();
-      if(tokEquals(TokenType.LPAREN)){
-        next();
-        matchNum();
-        match(TokenType.RPAREN);
-      }
-    } else if(Arrays.asList("clob","tinytext","text","mediumtext","longtext","ntext","nclob").contains(type)) {
-      datatype = Types.CLOB;
-      next();
-      if(tokEquals(TokenType.LPAREN)){
-        next();
-        matchNum();
-        match(TokenType.RPAREN);
-      }
-    } else{
-      datatype = Types.OTHER;
-      error(currentToken,"Type not resolved");
     }
-    return datatype;
+    return column;
+
   }
 
   private void parseSelectSub() {
@@ -496,10 +414,11 @@ public class SQLParser {
   }
 
   private ColumnDefinition parseColumnDef() {
+
+
     String name = currentToken.getText();
     match(TokenType.IDENT);
-    int datatype = parseTypeName();
-    ColumnDefinition column = new ColumnDefinition(name,datatype);
+    ColumnDefinition column = parseTypeName(name);
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.DOUBLE) || tokEquals(TokenType.IDENT)
@@ -538,7 +457,7 @@ public class SQLParser {
 
         if (tokEquals(TokenType.COMMA)) {
           next();
-          column.setIncrementInt((int)currentToken.getLongNumber());
+          column.setIncrementInt((int) currentToken.getLongNumber());
           matchNum();
         }
         match(TokenType.RPAREN);

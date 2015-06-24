@@ -72,7 +72,7 @@ public class SQLParserTest {
     SQLParser parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
-    s = new StringReader("CREATE TABLE contacts( id int NOT NULL PRIMARY KEY  , name varchar(255))");
+    s = new StringReader("CREATE TABLE contacts( id int NOT NULL PRIMARY KEY  , name varchar(255), num decimal(50,60))");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
