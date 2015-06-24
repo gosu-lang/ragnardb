@@ -22,6 +22,9 @@ public class CreateTable {
   public List<ColumnDefinition> getColumnDefnitions(){
     return columns;
   }
+  public String getName(){
+    return name;
+  }
 
 
 }
