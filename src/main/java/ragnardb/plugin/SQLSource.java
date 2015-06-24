@@ -11,6 +11,7 @@ import ragnardb.parser.ast.DDL;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,7 +31,7 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
     Set<String> returnSet = new HashSet<>();
     SQLParser p = null;
     try {
-      p = new SQLParser(new SQLTokenizer( new FileReader(this._path.getFileSystemPathString())));
+      p = new SQLParser(new SQLTokenizer(getReader()));
     } catch (FileNotFoundException e) {
       e.printStackTrace();
     }
@@ -40,6 +41,11 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
           returnSet.add(Character.toUpperCase(name.charAt(0)) + name.substring(1));
     }
     return returnSet;
+  }
+
+  @Override
+  public Reader getReader() throws FileNotFoundException {
+    return new FileReader(this._path.getFileSystemPathString());
   }
 
 }
