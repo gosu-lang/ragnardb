@@ -545,7 +545,7 @@ public class SQLParser {
       next();
       parseCondition();
     }
-    return new ColumnDefinition(name,1);
+    return new ColumnDefinition(name,datatype);
   }
 
   private void parseConstraint() {
