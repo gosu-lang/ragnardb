@@ -245,9 +245,9 @@ public class SQLParser {
 
     } else if(Arrays.asList("double","float","float8").contains(type)){
       datatype = Types.DOUBLE;
-        if(type == "double"){
+        if(type.equals("double")){
           next();
-          if(currentToken.toString()=="precision"){
+          if(currentToken.toString().equals("precision")){
             next();
           }
         }
@@ -503,6 +503,7 @@ public class SQLParser {
     String name = currentToken.getText();
     match(TokenType.IDENT);
     int datatype = parseTypeName();
+    ColumnDefinition column = new ColumnDefinition(name,datatype);
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.DOUBLE) || tokEquals(TokenType.IDENT)
@@ -520,17 +521,28 @@ public class SQLParser {
     if (tokEquals(TokenType.NOT)) {
       next();
       match(TokenType.NULL);
+      column.setNotNull(true);
     } else if (tokEquals(TokenType.NULL)) {
       next();
+      column.setNull(true);
     }
 
     if (tokEquals(TokenType.AUTO_INCREMENT) || tokEquals(TokenType.IDENTITY)) {
+      if(tokEquals(TokenType.AUTO_INCREMENT)){
+        column.setAutoIncrement(true);
+      }
+      else{
+        column.setIdentity(true);
+      }
       next();
       if (tokEquals(TokenType.LPAREN)) {
         next();
+        column.setStartInt((int)currentToken.getLongNumber());
         matchNum();
+
         if (tokEquals(TokenType.COMMA)) {
           next();
+          column.setIncrementInt((int)currentToken.getLongNumber());
           matchNum();
         }
         match(TokenType.RPAREN);
@@ -538,18 +550,23 @@ public class SQLParser {
     }
     //Implement Selectivity, Comment?
     if (tokEquals(TokenType.UNIQUE)) {
+      column.setUnique(true);
       next();
     } else if (tokEquals(TokenType.PRIMARY)) {
+      column.setPrimaryKey(true);
       next();
       match(TokenType.KEY);
-      pass(TokenType.HASH);
+      if(tokEquals(TokenType.HASH)){
+        next();
+        column.setHash(true);
+      }
     }
 
     if (tokEquals(TokenType.CHECK)) {
       next();
       parseCondition();
     }
-    return new ColumnDefinition(name,datatype);
+    return column;
   }
 
   private Constraint parseConstraint() {
