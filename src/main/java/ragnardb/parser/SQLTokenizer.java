@@ -92,6 +92,12 @@ public class SQLTokenizer {
       tok = identifier();
     } else if(isNumberOrDot(ch)) {
       tok = numberOrDot();
+    } else if(ch == '@'){
+      tok = new Token(TokenType.AT, line, col);
+      next();
+    } else if(ch == ':'){
+      tok = new Token(TokenType.COLON, line, col);
+      next();
     } else if(ch == '(') {
       tok = new Token(TokenType.LPAREN, line, col);
       next();
@@ -213,9 +219,9 @@ public class SQLTokenizer {
       }
 
       /*Adds date/time handling*/
-      if((ch == ':' || ch == '-') && intNum != 0){
+      /*if((ch == ':' || ch == '-') && intNum != 0){
         return dateTime((int)intNum, l, c);
-      }
+      }*/
     }
 
     if(ch == 'e' || ch == 'E') {

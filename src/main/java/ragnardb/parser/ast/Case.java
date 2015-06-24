@@ -79,11 +79,11 @@ public class Case {
     for (WhenThen wt : _whenThens) {
       sb.append(initial + "\tWHEN\n");
       sb.append(wt._when.toString(initial + "\t"));
-      sb.append("\tTHEN\n");
+      sb.append(initial + "\tTHEN\n");
       sb.append(wt._then.toString(initial + "\t"));
     }
     if (_else != null) {
-      sb.append("\tELSE\n");
+      sb.append(initial + "\tELSE\n");
       sb.append(_else.toString(initial + "\t"));
     }
     return sb.toString();

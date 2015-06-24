@@ -83,12 +83,16 @@ public class SQLParser {
     return (currentToken.getType() == TokenType.LONG || currentToken.getType() == TokenType.DOUBLE);
   }
 
-  private void list(TokenType item) {
-    match(item);
+  private ArrayList<String> list(TokenType item) {
+    ArrayList<String> items = new ArrayList<String>();
+    String _item = match(item);
+    items.add(_item);
     while (tokEquals(TokenType.COMMA)) {
       next();
-      match(item);
+      _item = match(item);
+      items.add(_item);
     }
+    return items;
   }
 
   private void error(Token token, String message) {
@@ -467,7 +471,7 @@ public class SQLParser {
             next();
             break;
           default:
-            error(currentToken, "Expection join operation or ',' but found '" + currentToken.getType() + "'.");
+            error(currentToken, "Expecting join operation or ',' but found '" + currentToken.getType() + "'.");
             break;
         }
         match(TokenType.JOIN);
@@ -548,7 +552,9 @@ public class SQLParser {
     return new ColumnDefinition(name,datatype);
   }
 
-  private void parseConstraint() {
+  private Constraint parseConstraint() {
+    Constraint _constraint = null;
+    String s = "";
     if (tokEquals(TokenType.CONSTRAINT)) {
       next();
       if (tokEquals(TokenType.IF)) {
@@ -556,18 +562,23 @@ public class SQLParser {
         match(TokenType.NOT);
         match(TokenType.EXISTS);
       }
-      match(TokenType.IDENT);
+      s= match(TokenType.IDENT);
     }
     if (tokEquals(TokenType.CHECK)) {
       next();
-      parseExpr();
+      _constraint = new CheckConstraint(s);
+      Expression e = parseExpr();
+      _constraint.setExpression(e);
     } else if (tokEquals(TokenType.UNIQUE)) {
+      String t;
       next();
       match(TokenType.LPAREN);
-      match(TokenType.IDENT);
+      t = match(TokenType.IDENT);
+      _constraint = new ColumnConstraint(s, t, false);
       while (tokEquals(TokenType.COMMA)) {
         next();
-        match(TokenType.IDENT);
+        t = match(TokenType.IDENT);
+        _constraint.addColumnName(t);
       }
       match(TokenType.RPAREN);
     } else if (tokEquals(TokenType.PRIMARY)) {
@@ -575,23 +586,29 @@ public class SQLParser {
       match(TokenType.KEY);
       pass(TokenType.HASH);
       match(TokenType.LPAREN);
-      match(TokenType.IDENT);
+      String t = match(TokenType.IDENT);
+      _constraint = new ColumnConstraint(s, t, true);
       while (tokEquals(TokenType.COMMA)) {
         next();
-        match(TokenType.IDENT);
+        t = match(TokenType.IDENT);
+        _constraint.addColumnName(t);
       }
       match(TokenType.RPAREN);
     } else if (tokEquals(TokenType.FOREIGN)) {
       next();
       match(TokenType.KEY);
       match(TokenType.LPAREN);
-      list(TokenType.IDENT);
+      ArrayList<String> fKs = list(TokenType.IDENT);
+      _constraint = new ReferentialConstraint(s, fKs);
       match(TokenType.RPAREN);
       match(TokenType.REFERENCES);
       pass(TokenType.IDENT);
       if (tokEquals(TokenType.LPAREN)) {
         next();
-        list(TokenType.IDENT);
+        ArrayList<String> refs = list(TokenType.IDENT);
+        for(String r: refs){
+          _constraint.addColumnName(r+"~");
+        }
         match(TokenType.RPAREN);
       }
       while (tokEquals(TokenType.ON)) {
@@ -604,6 +621,7 @@ public class SQLParser {
         }
       }
     }
+    return _constraint;
   }
 
   private void parseReferentialAction() {
@@ -632,7 +650,7 @@ public class SQLParser {
     }
   }
 
-  private Expression parseExpr() {
+  public Expression parseExpr() {
     Expression expression;
     AndCondition condition = parseAndCondition();
     expression = new Expression(condition);
@@ -849,7 +867,6 @@ public class SQLParser {
         next();
         Case c;
         if (tokEquals(TokenType.WHEN)) {
-          next();
           c = parseCaseWhen();
         } else {
           c = parseCase();

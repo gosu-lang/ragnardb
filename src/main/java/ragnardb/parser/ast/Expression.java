@@ -27,16 +27,15 @@ public class Expression {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("<AndCondition>\n");
+    StringBuilder sb = new StringBuilder("<Expression>\n");
     for (AndCondition c : _conditions) {
-      sb.append('\t');
-      sb.append(c);
+      sb.append(c.toString("\t"));
     }
     return sb.toString();
   }
 
   protected String toString(String initial) {
-    StringBuilder sb = new StringBuilder(initial + "<AndCondition>\n");
+    StringBuilder sb = new StringBuilder(initial + "<Expression>\n");
     for (AndCondition c : _conditions) {
       sb.append(c.toString(initial + "\t"));
     }
