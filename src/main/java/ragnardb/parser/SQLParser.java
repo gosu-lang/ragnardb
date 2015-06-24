@@ -241,9 +241,9 @@ public class SQLParser {
 
     } else if(Arrays.asList("double","float","float8").contains(type)){
       datatype = Types.DOUBLE;
-        if(type == "double"){
+        if(type.equals("double")){
           next();
-          if(currentToken.toString()=="precision"){
+          if(currentToken.toString().equals("precision")){
             next();
           }
         }
