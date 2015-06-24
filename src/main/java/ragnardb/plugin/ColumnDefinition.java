@@ -1,7 +1,5 @@
 package ragnardb.plugin;
 
-import com.sun.istack.internal.NotNull;
-
 public class ColumnDefinition {
   private String _columnName;
   private int _sqlType; // see java.sql.Types: http://docs.oracle.com/javase/8/docs/api/index.html?java/sql/Types.html
