@@ -95,19 +95,24 @@ public class SQLParser {
   }
 
   public DDL parse() {
-    DDL statements = new DDL();
-    while(true) {
-      if (tokEquals(TokenType.EOF)) {
+    if(tokEquals(TokenType.CREATE)) {
+      DDL statements = new DDL();
+      while (true) {
+        if (tokEquals(TokenType.EOF)) {
 
-        return statements;
+          return statements;
+        }
+        statements.append(parseCreateTable());
+        if (!(tokEquals(TokenType.EOF) | tokEquals(TokenType.SEMI))) {
+          error(currentToken, "Expecting 'SEMI' or 'EOF but found " + currentToken.getType().getName());
+        }
+        if (tokEquals(TokenType.SEMI)) {
+          match(TokenType.SEMI);
+        }
       }
-      statements.append(parseCreateTable());
-      if(!(tokEquals(TokenType.EOF)|tokEquals(TokenType.SEMI))){
-        error(currentToken, "Expecting 'SEMI' or 'EOF but found " + currentToken.getType().getName());
-      }
-      if(tokEquals(TokenType.SEMI)){
-        match(TokenType.SEMI);
-      }
+    } else { //for now we will treat everything else as a select statement
+      parseSelect();
+      return null;
     }
   }
 
@@ -147,9 +152,10 @@ public class SQLParser {
     if (tokEquals(TokenType.LIMIT)) {
       next();
       match(TokenType.LONG);
-      list(TokenType.OFFSET);
-      match(TokenType.LONG);
-
+      if(tokEquals(TokenType.OFFSET) || tokEquals(TokenType.COMMA)){
+        next();
+        match(TokenType.LONG);
+      }
     }
   }
   private CreateTable parseCreateTable() {
@@ -238,34 +244,13 @@ public class SQLParser {
       next();
       if (tokEquals(TokenType.DISTINCT) || tokEquals(TokenType.ALL)) {
         next();
+      }
+      parseResultColumn();
+      while (tokEquals(TokenType.COMMA)) {
+        next();
         parseResultColumn();
-        while (tokEquals(TokenType.COMMA)) {
-          next();
-          parseResultColumn();
-        }
       }
-      if (tokEquals(TokenType.FROM)) {
-        next();
-        parseTableOrSubquery();
-        parseJoinClause();
-      }
-      if (tokEquals(TokenType.WHERE)) {
-        next();
-        parseExpr();
-      }
-      if (tokEquals(TokenType.GROUP)) {
-        next();
-        match(TokenType.BY);
-        parseExpr();
-        while (tokEquals(TokenType.COMMA)) {
-          next();
-          parseExpr();
-        }
-        if (tokEquals(TokenType.HAVING)) {
-          next();
-          parseExpr();
-        }
-      }
+      parseSelectSub2();
     } else if(tokEquals(TokenType.VALUES)){
       next();
       match(TokenType.LPAREN);
@@ -287,6 +272,30 @@ public class SQLParser {
       }
     } else {
       error(currentToken, "Expecting 'select' or 'values' but found '" + currentToken.getType() + "'.");
+    }
+  }
+
+  private void parseSelectSub2(){
+    if (tokEquals(TokenType.FROM)) {
+      next();
+      parseJoinClause();
+    }
+    if (tokEquals(TokenType.WHERE)) {
+      next();
+      parseExpr();
+    }
+    if (tokEquals(TokenType.GROUP)) {
+      next();
+      match(TokenType.BY);
+      parseExpr();
+      while (tokEquals(TokenType.COMMA)) {
+        next();
+        parseExpr();
+      }
+      if (tokEquals(TokenType.HAVING)) {
+        next();
+        parseExpr();
+      }
     }
   }
 
@@ -319,8 +328,28 @@ public class SQLParser {
       next();
     } else if(tokEquals(TokenType.IDENT)){
       next();
-      match(TokenType.DOT);
-      match(TokenType.TIMES);
+      if(tokEquals(TokenType.DOT)){
+        next();
+        if(tokEquals(TokenType.TIMES)){
+          next();
+        } else if(tokEquals(TokenType.IDENT)){
+          next();
+        } else {
+          error(currentToken, "Expecting tablename.(columnname) but found '" + currentToken.getType() + "'.");
+        }
+      } else if(tokEquals(TokenType.FROM)){
+        parseSelectSub2();
+      } else {
+        error(currentToken, "Expecting tablename.* or column but found '" + currentToken.getType() + "'.");
+      }
+    } else if(tokEquals(TokenType.LPAREN)){
+      next();
+      parseExpr();
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        parseExpr();
+      }
+      match(TokenType.RPAREN);
     } else {
       parseExpr();
       if(tokEquals(TokenType.AS)){
@@ -416,8 +445,6 @@ public class SQLParser {
   }
 
   private ColumnDefinition parseColumnDef() {
-
-
     String name = currentToken.getText();
     match(TokenType.IDENT);
     ColumnDefinition column = parseTypeName(name);
@@ -454,7 +481,7 @@ public class SQLParser {
       next();
       if (tokEquals(TokenType.LPAREN)) {
         next();
-        column.setStartInt((int)currentToken.getLongNumber());
+        column.setStartInt((int) currentToken.getLongNumber());
         matchNum();
 
         if (tokEquals(TokenType.COMMA)) {
@@ -750,8 +777,13 @@ public class SQLParser {
     Term t = null;
     switch (currentToken.getType()) {
       case IDENT:
-        t = new StringTerm(currentToken.getText());
-        next();
+        String x = match(TokenType.IDENT);
+        if(tokEquals(TokenType.DOT)){
+          next();
+          x += ".";
+          x += match(TokenType.IDENT);
+        }
+        t = new StringTerm(x);
         break;
       case LONG:
       case INTERNALDOUBLE:

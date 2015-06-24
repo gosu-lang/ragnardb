@@ -1,0 +1,83 @@
+
+select * from t1
+where filed1 in (select field1 from tempTable)
+and filed2 in (select field2 from tempTable)
+and filed3 in (select field3 from tempTable);
+
+SELECT
+  *
+FROM
+  yourTable
+INNER JOIN
+  (SELECT c1, c2, c3 FROM anotherQuery) AS filter
+    ON  yourTable.c1 = filter.c1
+    AND yourTable.c2 = filter.c2
+    AND yourTable.c3 = filter.c3;
+
+
+SELECT Country FROM Producers  UNION ALL SELECT Country FROM Receivers ORDER BY Country;
+
+SELECT ProName FROM Producers WHERE Country IN (SELECT Country  FROM Receivers WHERE ContactName="Angela");
+
+SELECT "column-name1" FROM "table-name1" WHERE EXISTS (SELECT * FROM "table-name2" WHERE condition);
+
+SELECT * FROM PARCELS
+WHERE PARCELID NOT IN
+(SELECT PARCELID
+FROM FIRES);
+
+SELECT *
+FROM PARCELS P
+WHERE NOT EXISTS
+(SELECT NULL
+FROM FIRES F
+WHERE P.PARCELID = F.PARCELID); 
+
+SELECT *
+FROM PARCELS
+WHERE (PID, WPB) NOT IN
+(SELECT PID, WPB
+FROM PERMITS); 
+
+SELECT a2.*
+ FROM User_Higher_Than_200 a1, User_Address a2
+ WHERE a1.User_ID = a2.ZIP_CODE
+ GROUP BY a2.ZIP_CODE;
+
+SELECT ACTOR FROM CASTC
+ WHERE NOT EXISTS
+  (SELECT * 
+   FROM MA, M1, MA, M2
+   WHERE M1.A=C.A
+     AND M2.A=C.A
+     AND M1.Y-3>M2.Y
+     AND NOT EXISTS
+     (SELECT *
+      FROM MA, M3
+      WHERE M3.A=C.A
+        AND M1.Y>M3.Y
+        AND M3.Y>M2.Y));
+
+SELECT A 
+FROM AD T1
+WHERE
+  (SELECT CT FROM AD T2
+   WHERE T2.D='Spielberg'
+     AND T2.A=T1.A)
+  >ALL
+  (SELECT CT FROM AD T2
+   WHERE T2.D<>'Spielberg'
+     AND T2.A=T1.A);
+
+SELECT E1.NAME
+ FROM EMP E1
+WHERE 99>= (SELECT COUNT(DISTINCT SALARY)
+	    FROM EMP E2
+	    WHERE E2.SALARY>E1.SALARY);
+
+select users.user_id, users.email, classified_ads.posted
+from users, classified_ads
+where users.user_id = classified_ads.user_id
+group by users.user_id, users.email
+order by upper(users.email);
+
