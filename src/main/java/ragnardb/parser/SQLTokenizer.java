@@ -213,7 +213,7 @@ public class SQLTokenizer {
 
       if(ch == '.' && isDecimal) {
         decNum = intNum * Math.pow(10, e);
-        tok = new Token(TokenType.DOUBLE, l, c);
+        tok = new Token(TokenType.INTERNALDOUBLE, l, c);
         tok.setDoubleNumber(decNum);
         return tok;
       }
@@ -249,7 +249,7 @@ public class SQLTokenizer {
 
       if(ch == '.' || (!isNumberOrDot(ch) && !(EOF || isBlank(ch)))) {
         e += negativeExp * expNum;
-        tok = new Token(TokenType.DOUBLE, l, c);
+        tok = new Token(TokenType.INTERNALDOUBLE, l, c);
         decNum = intNum * Math.pow(10, e);
         tok.setDoubleNumber(decNum);
         return tok;
@@ -259,7 +259,7 @@ public class SQLTokenizer {
     }
     decNum = intNum * Math.pow(10, e);
     if(isDecimal) {
-      tok = new Token(TokenType.DOUBLE, l, c);
+      tok = new Token(TokenType.INTERNALDOUBLE, l, c);
       tok.setDoubleNumber(decNum);
     } else {
       tok = new Token(TokenType.LONG, l, c);

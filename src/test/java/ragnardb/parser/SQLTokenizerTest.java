@@ -132,42 +132,42 @@ public class SQLTokenizerTest {
     tokenizer = new SQLTokenizer(s);
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(100.023, tok.getDoubleNumber(), 0.01);
 
     s = new StringReader(".2");
     tokenizer = new SQLTokenizer(s);
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(.2, tok.getDoubleNumber(), 0.01);
 
     s = new StringReader("3.");
     tokenizer = new SQLTokenizer(s);
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(3, tok.getDoubleNumber(), 0.01);
 
     s = new StringReader("1e2");
     tokenizer = new SQLTokenizer(s);
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(100.0, tok.getDoubleNumber(), 0.01);
 
     s = new StringReader("1.02e1");
     tokenizer = new SQLTokenizer(s);
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(10.2, tok.getDoubleNumber(), 0.01);
 
     s = new StringReader("109.05e-2");
     tokenizer = new SQLTokenizer(s);
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(1.0905, tok.getDoubleNumber(), 0.01);
 
     /*Exceptional Number handling*/
@@ -175,17 +175,17 @@ public class SQLTokenizerTest {
     tokenizer = new SQLTokenizer(s);
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(109.57, tok.getDoubleNumber(), 0.01);
 
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(.234, tok.getDoubleNumber(), 0.01);
 
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(.41, tok.getDoubleNumber(), 0.01);
 
     tok = tokenizer.get();
@@ -196,7 +196,7 @@ public class SQLTokenizerTest {
     tokenizer = new SQLTokenizer(s);
     tok = tokenizer.get();
 
-    assertEquals(TokenType.DOUBLE, tok.getType());
+    assertEquals(TokenType.INTERNALDOUBLE, tok.getType());
     assertEquals(13., tok.getDoubleNumber(), 0.01);
 
     tok = tokenizer.get();

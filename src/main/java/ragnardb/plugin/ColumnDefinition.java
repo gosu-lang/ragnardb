@@ -1,10 +1,7 @@
 package ragnardb.plugin;
 
-import com.sun.istack.internal.NotNull;
-
 import java.sql.Types;
 import java.util.HashMap;
-import java.util.IntSummaryStatistics;
 
 public class ColumnDefinition {
   private String _columnName;

@@ -1,16 +1,10 @@
 package ragnardb.parser;
 
-import gw.lang.reflect.IType;
-import gw.lang.reflect.java.IJavaType;
 import ragnardb.parser.ast.*;
-import gw.lang.reflect.java.JavaTypes;
 import ragnardb.plugin.ColumnDefinition;
 
-import java.lang.reflect.Type;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 
 public class SQLParser {
 
@@ -63,11 +57,11 @@ public class SQLParser {
 
   private void matchNum() {
     TokenType currentType = currentToken.getType();
-    if (currentType == TokenType.LONG || currentType == TokenType.DOUBLE) {
+    if (currentType == TokenType.LONG || currentType == TokenType.INTERNALDOUBLE) {
       next();
     } else {
       String name = currentType.getName();
-      error(currentToken, "Expecting 'LONG' or 'DOUBLE' but found '" + name + "'.");
+      error(currentToken, "Expecting 'LONG' or 'INTERNALDOUBLE' but found '" + name + "'.");
     }
   }
 
@@ -81,7 +75,7 @@ public class SQLParser {
   }
 
   private boolean isNum() {
-    return (currentToken.getType() == TokenType.LONG || currentToken.getType() == TokenType.DOUBLE);
+    return (currentToken.getType() == TokenType.LONG || currentToken.getType() == TokenType.INTERNALDOUBLE);
   }
 
   private ArrayList<String> list(TokenType item) {
@@ -216,6 +210,10 @@ public class SQLParser {
     datatype = ColumnDefinition.lookUp.get(currentToken.getText());
     ColumnDefinition column = new ColumnDefinition(name,datatype);
     next();
+
+    if(tokEquals(TokenType.IDENT) && "precision".equals(currentToken.getText())){
+      next();
+    }
 
     if((datatype == Types.NVARCHAR || datatype == Types.NCHAR || datatype == Types.BLOB || datatype == Types.CLOB || datatype == Types.DECIMAL )
             && tokEquals(TokenType.LPAREN)){
@@ -425,7 +423,7 @@ public class SQLParser {
     ColumnDefinition column = parseTypeName(name);
     if (tokEquals(TokenType.DEFAULT)) {
       next();
-      if(tokEquals(TokenType.LONG) || tokEquals(TokenType.DOUBLE) || tokEquals(TokenType.IDENT)
+      if(tokEquals(TokenType.LONG) || tokEquals(TokenType.INTERNALDOUBLE) || tokEquals(TokenType.IDENT)
         || tokEquals(TokenType.NULL) || tokEquals(TokenType.CURRENT_DATE) || tokEquals(TokenType.CURRENT_TIME)
         || tokEquals(TokenType.CURRENT_TIMESTAMP)){ //Limited parse expression
         next();
@@ -756,7 +754,7 @@ public class SQLParser {
         next();
         break;
       case LONG:
-      case DOUBLE:
+      case INTERNALDOUBLE:
         t = currentToken.getLongNumber()!=0?new AlgebraicTerm(currentToken.getLongNumber())
           :new AlgebraicTerm(currentToken.getDoubleNumber());
         next();
@@ -821,7 +819,7 @@ public class SQLParser {
     if(tokEquals(TokenType.LONG)){
       t = new AlgebraicTerm(currentToken.getLongNumber());
       next();
-    }else if(tokEquals(TokenType.DOUBLE)){
+    }else if(tokEquals(TokenType.INTERNALDOUBLE)){
       t = new AlgebraicTerm(currentToken.getDoubleNumber());
       next();
     }else if(tokEquals(TokenType.LPAREN)){
