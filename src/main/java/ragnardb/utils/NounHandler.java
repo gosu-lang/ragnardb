@@ -12,12 +12,12 @@ import java.util.Map;
  * Created by klu on 6/17/2015.
  * This class is used for singularizing and converting names to things that look like java class names.
  */
-public class NounSingularizer {
+public class NounHandler {
   private String input;
   private HashMap<String, String> specialPlurals = new HashMap<>();
 
 
-  public NounSingularizer(String in) {
+  public NounHandler(String in) {
     input = in;
     exceptionalPlurals();
   }
@@ -27,7 +27,7 @@ public class NounSingularizer {
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     String input;
     input = br.readLine();
-    NounSingularizer n = new NounSingularizer(input);
+    NounHandler n = new NounHandler(input);
     System.out.println(n.getSingular());
 
 
@@ -251,6 +251,24 @@ public class NounSingularizer {
       }
     }
     output += Character.toUpperCase(finalout.charAt(0))+finalout.substring(1);
+    return output;
+  }
+
+  public String getCamelCased() {
+    String[] strings = getWords(input);
+    String finalword = getFinalWord(strings);
+    if (strings.length == 1) {
+      return finalword;
+    }
+    String output = "";
+    output += Character.toLowerCase(strings[0].charAt(0)) + (strings[0].length() > 1 ? strings[0].substring(1) : "");
+    for (int i = 1; i < strings.length - 1; i++) {
+      if(!strings[i].equals("")) {
+        String nextpart = Character.toUpperCase(strings[i].charAt(0)) + (strings[i].length() > 1 ? strings[i].substring(1) : "");
+        output += nextpart;
+      }
+    }
+    output += Character.toUpperCase(finalword.charAt(0))+finalword.substring(1);
     return output;
   }
 
