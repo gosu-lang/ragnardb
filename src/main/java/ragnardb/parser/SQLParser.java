@@ -2,6 +2,7 @@ package ragnardb.parser;
 
 import ragnardb.parser.ast.*;
 import ragnardb.plugin.ColumnDefinition;
+import ragnardb.utils.NounHandler;
 
 import java.sql.Types;
 import java.util.ArrayList;
@@ -445,14 +446,14 @@ public class SQLParser {
   }
 
   private ColumnDefinition parseColumnDef() {
-    String name = currentToken.getText();
     match(TokenType.IDENT);
-    ColumnDefinition column = parseTypeName(name);
+    //ColumnDefinition column = parseTypeName(NounHandler.getCamelCased(currentToken.getCasedText()));
+    ColumnDefinition column = parseTypeName(currentToken.getCasedText());
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.INTERNALDOUBLE) || tokEquals(TokenType.IDENT)
         || tokEquals(TokenType.NULL) || tokEquals(TokenType.CURRENT_DATE) || tokEquals(TokenType.CURRENT_TIME)
-        || tokEquals(TokenType.CURRENT_TIMESTAMP)){ //Limited parse expression
+        || tokEquals(TokenType.CURRENT_TIMESTAMP)){ //Limited parse expressions
         next();
       }
     }

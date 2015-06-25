@@ -311,6 +311,7 @@ public class SQLTokenizer {
     } else {
       tok = new Token(TokenType.IDENT, l, c);
       tok.setText(s);
+      tok.setCasedText(sb.toString());
     }
     return tok;
   }
