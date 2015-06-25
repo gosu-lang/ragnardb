@@ -18,8 +18,25 @@ import java.util.Set;
 
 public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
 
+  private DDL parseTree;
+
+  private void setParseTree(){
+    SQLParser p = null;
+    try {
+     p = new SQLParser(new SQLTokenizer(getReader()));
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    parseTree = p.parse();
+  }
+
   public SQLSource(ResourcePath path, IPhysicalFileSystem backingFileSystem) {
     super(path, backingFileSystem);
+    setParseTree();
+  }
+
+  public DDL getParseTree(){
+    return parseTree;
   }
 
   public SQLSource(ResourcePath path) {
@@ -27,16 +44,10 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
   }
 
   @Override
-  public Set<String> getTypeNames() { //TODO incorporate parser output here
+  public Set<String> getTypeNames() {
     Set<String> returnSet = new HashSet<>();
-    SQLParser p = null;
-    try {
-      p = new SQLParser(new SQLTokenizer(getReader()));
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    }
-    DDL DDLfile = p.parse();
-    for (CreateTable table: DDLfile.getList()){
+
+    for (CreateTable table: parseTree.getList()){
           String name = table.getName();
           returnSet.add(Character.toUpperCase(name.charAt(0)) + name.substring(1));
     }

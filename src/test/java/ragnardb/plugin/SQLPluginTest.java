@@ -61,7 +61,7 @@ public class SQLPluginTest {
     List<ColumnDefinition> colDefs = result.getColumnDefinitions();
     assertNotNull(colDefs);
 
-    Set<String> expectedColumnNames = Stream.of("UserId", "LastName", "FirstName", "Age").collect(Collectors.toSet());
+    Set<String> expectedColumnNames = Stream.of("userid", "lastname", "firstname", "age").collect(Collectors.toSet());
     Set<String> actualColumnNames = colDefs.stream().map(ColumnDefinition::getColumnName).collect(Collectors.toSet());
 
     assertEquals(expectedColumnNames, actualColumnNames);
@@ -79,13 +79,13 @@ public class SQLPluginTest {
     assertEquals("Contacts", ti.getName());
 
     //make a set of expected Name/IJavaType pairs
-    Set<String> expectedPropertyNames = Stream.of("UserId", "LastName", "FirstName", "Age").collect(Collectors.toSet());
+    Set<String> expectedPropertyNames = Stream.of("userid", "lastname", "firstname", "age").collect(Collectors.toSet());
     Map<String, IJavaType> expectedPropertyNameAndType = new HashMap<>(expectedPropertyNames.size());
 
-    expectedPropertyNameAndType.put("UserId", JavaTypes.pINT());
-    expectedPropertyNameAndType.put("LastName", JavaTypes.STRING());
-    expectedPropertyNameAndType.put("FirstName", JavaTypes.STRING());
-    expectedPropertyNameAndType.put("Age", JavaTypes.pINT());
+    expectedPropertyNameAndType.put("userid", JavaTypes.pINT());
+    expectedPropertyNameAndType.put("lastname", JavaTypes.STRING());
+    expectedPropertyNameAndType.put("firstname", JavaTypes.STRING());
+    expectedPropertyNameAndType.put("age", JavaTypes.pINT());
 
     //number of properties is what we expect
     assertEquals(expectedPropertyNameAndType.size(), ti.getProperties().size());

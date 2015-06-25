@@ -6,8 +6,16 @@ import gw.lang.reflect.ITypeLoader;
 import gw.lang.reflect.TypeBase;
 import gw.util.GosuClassUtil;
 import gw.util.concurrent.LockingLazyVar;
+import ragnardb.parser.SQLParser;
+import ragnardb.parser.SQLTokenizer;
+import ragnardb.parser.ast.CreateTable;
+import ragnardb.parser.ast.DDL;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.Reader;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +24,7 @@ public class SQLType extends TypeBase implements ISQLType {
 
   private final SQLPlugin _plugin;
   private final String _name;
+  private final ISQLSource _parent;
   private LockingLazyVar<ITypeInfo> _typeInfo = new LockingLazyVar<ITypeInfo>()
   {
     @Override
@@ -25,9 +34,10 @@ public class SQLType extends TypeBase implements ISQLType {
     }
   };
 
-  public SQLType(SQLPlugin plugin, String name) {
+  public SQLType(SQLPlugin plugin, String name , ISQLSource parent){
     _plugin = plugin;
     _name = name;
+    _parent = parent;
   }
 
   @Override
@@ -67,6 +77,18 @@ public class SQLType extends TypeBase implements ISQLType {
 
   public List<ColumnDefinition> getColumnDefinitions() {
 
+    List<ColumnDefinition> defs = new ArrayList<>();
+
+    DDL DDLfile = ((SQLSource) _parent).getParseTree();
+    for (CreateTable table: DDLfile.getList()){
+      for(ColumnDefinition def : table.getColumnDefinitions()){
+       defs.add(def);
+      }
+    }
+
+    return defs;
+
+    /*
     //TODO mock implementation; remove these once we hook up with the parser
     ColumnDefinition userId = new ColumnDefinition("UserId", Types.INTEGER);
     ColumnDefinition lastName = new ColumnDefinition("LastName", Types.NVARCHAR);
@@ -79,6 +101,7 @@ public class SQLType extends TypeBase implements ISQLType {
       case "": return Collections.emptyList();
       default: throw new Error("Unknown sqlType: " + getName());
     }
+    */
   }
 
 }

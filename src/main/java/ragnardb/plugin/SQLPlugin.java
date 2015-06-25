@@ -97,7 +97,7 @@ public class SQLPlugin extends TypeLoaderBase {
     if(_sqlSourcesByPackage.get().keySet().contains(packageName)) {
       ISQLSource ddlFile = new SQLSource(_sqlSourcesByPackage.get().get(packageName).getPath());
       if(ddlFile.getTypeNames().contains(typeName)) {
-        return TypeSystem.getOrCreateTypeReference(new SQLType(this, fullyQualifiedName));
+        return TypeSystem.getOrCreateTypeReference(new SQLType(this, fullyQualifiedName,ddlFile));
       }
     }
     return null;
