@@ -81,6 +81,34 @@ public class NounHandler {
     return finalSplit;
   }
 
+  private static String[] getWordsStatic(String word) {
+    String[] finalSplit = new String[1];
+    String[] initialSplit = word.split("[^A-Za-z0-9']");
+    ArrayList<String> currentList = new ArrayList<>(Arrays.asList(initialSplit));
+
+    /*splits on capital letters and numbers*/
+    int k = 0;
+    for (int i = 0; i < initialSplit.length; i++) {
+      String currentWord = initialSplit[i];
+      for (int j = 0; j < currentWord.length(); j++) {
+        char c = currentWord.charAt(j);
+        if ('A' <= c && 'Z' >= c) {
+          currentList.add(i + k + 1, currentList.get(i + k).substring(j));
+          currentList.set(i + k, currentList.get(i + k).substring(0, j));
+          k++;
+        }
+        if (Character.isDigit(c)) {
+          currentList.add(i + k + 1, currentList.get(i + k).substring(j));
+          currentList.set(i + k, currentList.get(i + k).substring(0, j));
+          k++;
+        }
+      }
+    }
+
+    finalSplit = currentList.toArray(finalSplit);
+    return finalSplit;
+  }
+
   private String singularize(String word) {
     char[] chars = word.toCharArray();
     char last = chars[chars.length - 1];
@@ -254,9 +282,9 @@ public class NounHandler {
     return output;
   }
 
-  public String getCamelCased() {
-    String[] strings = getWords(input);
-    String finalword = getFinalWord(strings);
+  public static String getCamelCased(String s) {
+    String[] strings = getWordsStatic(s);
+    String finalword = strings[strings.length-1];
     if (strings.length == 1) {
       return finalword;
     }
