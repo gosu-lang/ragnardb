@@ -11,4 +11,8 @@ public abstract class Term {
   public abstract void setNegative(boolean isNeg);
 
   protected abstract String toString(String initial);
+
+  public String getName(){return "This is not a variable :(";}
+
+  public String getType(){return "This is not a variable :(";}
 }

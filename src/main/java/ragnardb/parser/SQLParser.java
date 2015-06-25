@@ -785,6 +785,22 @@ public class SQLParser {
         }
         t = new StringTerm(x);
         break;
+      case AT:
+        next();
+        String name = match(TokenType.IDENT);
+        JavaVar variable = new JavaVar(name);
+        if(tokEquals(TokenType.COLON)){
+          next();
+          String _type = match(TokenType.IDENT);
+          while(tokEquals(TokenType.DOT)){
+            _type += '.';
+            next();
+            _type += match(TokenType.IDENT);
+          }
+          variable.setVarType(_type);
+        }
+        t = new VariableTerm(variable);
+        break;
       case LONG:
       case INTERNALDOUBLE:
         t = currentToken.getLongNumber()!=0?new AlgebraicTerm(currentToken.getLongNumber())
