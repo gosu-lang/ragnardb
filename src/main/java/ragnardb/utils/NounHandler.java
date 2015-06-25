@@ -283,6 +283,9 @@ public class NounHandler {
   }
 
   public static String getCamelCased(String s) {
+    if(s.equals("")){
+      return s;
+    }
     String[] strings = getWordsStatic(s);
     String finalword = strings[strings.length-1];
     if (strings.length == 1) {
