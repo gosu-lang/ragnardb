@@ -54,6 +54,8 @@ public class Token
     _longNumber = longNumber;
   }
 
+
+
   @Override
   public String toString() {
     return _type.toString();

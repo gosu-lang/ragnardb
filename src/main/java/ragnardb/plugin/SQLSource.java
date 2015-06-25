@@ -35,6 +35,10 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
     setParseTree();
   }
 
+  public DDL getParseTree(){
+    return parseTree;
+  }
+
   public SQLSource(ResourcePath path) {
     this(path, FileFactory.instance().getDefaultPhysicalFileSystem());
   }
