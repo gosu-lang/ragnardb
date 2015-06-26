@@ -4,7 +4,6 @@ import gw.config.CommonServices;
 import gw.fs.FileFactory;
 import gw.fs.IDirectory;
 import gw.fs.IFile;
-import gw.fs.IncludeModuleDirectory;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.RefreshKind;
 import gw.lang.reflect.TypeLoaderBase;
@@ -89,22 +88,33 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public IType getType(final String fullyQualifiedName) {
+    if(_sqlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //hence, a ddltype
+      return TypeSystem.getOrCreateTypeReference(new SqlDdlType(this, _sqlSourcesByPackage.get().get(fullyQualifiedName)));
+    }
+
     String[] packagesAndType = fullyQualifiedName.split("\\.");
     String[] packages = Arrays.copyOfRange(packagesAndType, 0, packagesAndType.length - 1);
     String typeName = packagesAndType[packagesAndType.length - 1];
     String packageName = String.join(".", packages);
 
     if(_sqlSourcesByPackage.get().keySet().contains(packageName)) {
-      ISQLSource ddlFile = new SQLSource(_sqlSourcesByPackage.get().get(packageName).getPath());
-      if(ddlFile.getTypeNames().contains(typeName)) {
-        return TypeSystem.getOrCreateTypeReference(new SQLType(this, fullyQualifiedName,ddlFile));
-      }
+      ISqlDdlType sourceFile = (ISqlDdlType) TypeSystem.getByFullName(packageName);
+      return sourceFile.getInnerClass(typeName);
     }
     return null;
   }
 
   @Override
   public Set<? extends CharSequence> getAllNamespaces() {
+//    if (_namespaces == null) {
+//      try {
+//        _namespaces = TypeSystem.getNamespacesFromTypeNames(getAllTypeNames(), new HashSet<>());
+//      } catch (NullPointerException e) {
+//        //!! hack to get past dependency issue with tests
+//        return Collections.emptySet();
+//      }
+//    }
+//    return _namespaces;
     return Collections.emptySet();
   }
 
@@ -125,6 +135,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public boolean hasNamespace(String s) {
+//    return _sqlSourcesByPackage.get().keySet().contains(s);
     return false;
   }
 

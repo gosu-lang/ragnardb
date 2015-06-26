@@ -15,12 +15,12 @@ public class SQLTypeInfo extends BaseTypeInfo {
   private List<IPropertyInfo> _propertiesList;
   private Map<String, IPropertyInfo> _propertiesMap;
 
-  public SQLTypeInfo(ISQLType type) {
+  public SQLTypeInfo(ISqlTableType type) {
     super(type);
     resolveProperties(type);
   }
 
-  private void resolveProperties(ISQLType type) {
+  private void resolveProperties(ISqlTableType type) {
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
     List<ColumnDefinition> columns = type.getColumnDefinitions();

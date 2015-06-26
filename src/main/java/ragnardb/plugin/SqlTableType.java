@@ -1,43 +1,34 @@
 package ragnardb.plugin;
 
+import gw.fs.IFile;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.ITypeInfo;
 import gw.lang.reflect.ITypeLoader;
 import gw.lang.reflect.TypeBase;
 import gw.util.GosuClassUtil;
 import gw.util.concurrent.LockingLazyVar;
-import ragnardb.parser.SQLParser;
-import ragnardb.parser.SQLTokenizer;
 import ragnardb.parser.ast.CreateTable;
 import ragnardb.parser.ast.DDL;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
-import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-public class SQLType extends TypeBase implements ISQLType {
+public class SqlTableType extends TypeBase implements ISqlTableType {
 
-  private final SQLPlugin _plugin;
   private final String _name;
-  private final ISQLSource _parent;
+  private final ISqlDdlType _enclosingType;
   private LockingLazyVar<ITypeInfo> _typeInfo = new LockingLazyVar<ITypeInfo>()
   {
     @Override
     protected ITypeInfo init()
     {
-      return new SQLTypeInfo( SQLType.this );
+      return new SQLTypeInfo( SqlTableType.this );
     }
   };
 
-  public SQLType(SQLPlugin plugin, String name , ISQLSource parent){
-    _plugin = plugin;
+  public SqlTableType(ISqlDdlType parent, String name){
     _name = name;
-    _parent = parent;
+    _enclosingType = parent;
   }
 
   @Override
@@ -57,12 +48,17 @@ public class SQLType extends TypeBase implements ISQLType {
 
   @Override
   public ITypeLoader getTypeLoader() {
-    return _plugin;
+    return _enclosingType.getTypeLoader();
   }
 
   @Override
   public IType getSupertype() {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public ISqlDdlType getEnclosingType() {
+    return _enclosingType;
   }
 
   @Override
@@ -79,8 +75,8 @@ public class SQLType extends TypeBase implements ISQLType {
 
     List<ColumnDefinition> defs = new ArrayList<>();
 
-    DDL DDLfile = ((SQLSource) _parent).getParseTree();
-    for (CreateTable table: DDLfile.getList()){
+    DDL ddlFile = getEnclosingType().getSqlSource();
+    for (CreateTable table: ddlFile.getList()){
       for(ColumnDefinition def : table.getColumnDefinitions()){
        defs.add(def);
       }
@@ -104,4 +100,8 @@ public class SQLType extends TypeBase implements ISQLType {
     */
   }
 
+  @Override
+  public IFile[] getSourceFiles() {
+    return _enclosingType.getSourceFiles();
+  }
 }
