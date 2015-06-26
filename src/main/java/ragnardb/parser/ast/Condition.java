@@ -1,11 +1,18 @@
 package ragnardb.parser.ast;
 
+import ragnardb.parser.Token;
+
+import java.util.ArrayList;
+
 /**
  * Created by klu on 6/22/2015.
  */
 public class Condition {
   /*We express condition as a relationship between two operands, regardless of what the relationship is*/
   private Operand first, second;
+  /*This is to keep track of which tokens we have to swallow/pass through*/
+  private ArrayList<Token> swallowedTokens;
+
 
   public Condition() {
     first = null;
@@ -37,6 +44,10 @@ public class Condition {
   public void setSecond(Operand o) {
     second = o;
   }
+
+  public void addToken(Token t){swallowedTokens.add(t);}
+
+  public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
   @Override
   public String toString() {

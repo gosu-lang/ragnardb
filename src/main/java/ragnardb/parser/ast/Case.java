@@ -1,5 +1,7 @@
 package ragnardb.parser.ast;
 
+import ragnardb.parser.Token;
+
 import java.util.ArrayList;
 
 /**
@@ -9,6 +11,8 @@ public class Case {
   private Expression _initial;
   private ArrayList<WhenThen> _whenThens;
   private Expression _else;
+  /*This is to keep track of which tokens we have to swallow/pass through*/
+  private ArrayList<Token> swallowedTokens;
 
   public Case() {
     _initial = null;
@@ -50,6 +54,10 @@ public class Case {
   public void setElse(Expression el) {
     _else = el;
   }
+
+  public void addToken(Token t){swallowedTokens.add(t);}
+
+  public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
   @Override
   public String toString() {

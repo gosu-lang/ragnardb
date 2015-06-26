@@ -1,5 +1,7 @@
 package ragnardb.parser.ast;
 
+import ragnardb.parser.Token;
+
 import java.util.ArrayList;
 
 /**
@@ -7,6 +9,8 @@ import java.util.ArrayList;
  */
 public class Operand {
   private ArrayList<Summand> _summands;
+  /*This is to keep track of which tokens we have to swallow/pass through*/
+  private ArrayList<Token> swallowedTokens;
 
   public Operand() {
     _summands = new ArrayList<Summand>();
@@ -24,6 +28,10 @@ public class Operand {
   public ArrayList<Summand> getSummands() {
     return _summands;
   }
+
+  public void addToken(Token t){swallowedTokens.add(t);}
+
+  public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
   @Override
   public String toString() {

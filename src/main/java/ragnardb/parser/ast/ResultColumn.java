@@ -1,5 +1,7 @@
 package ragnardb.parser.ast;
 
+import ragnardb.parser.Token;
+
 import java.util.ArrayList;
 
 /**
@@ -8,6 +10,8 @@ import java.util.ArrayList;
 public class ResultColumn {
   private String result;
   private ArrayList<Expression> resultExpressions;
+  /*This is to keep track of which tokens we have to swallow/pass through*/
+  private ArrayList<Token> swallowedTokens;
 
   public ResultColumn(String s){
     result = s;
@@ -25,6 +29,10 @@ public class ResultColumn {
   }
 
   public ArrayList<Expression> getResultExpressions(){return resultExpressions;}
+
+  public void addToken(Token t){swallowedTokens.add(t);}
+
+  public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
   public String toString(){
     if(resultExpressions == null){

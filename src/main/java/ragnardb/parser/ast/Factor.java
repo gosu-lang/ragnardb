@@ -1,5 +1,7 @@
 package ragnardb.parser.ast;
 
+import ragnardb.parser.Token;
+
 import java.util.ArrayList;
 
 /**
@@ -7,6 +9,8 @@ import java.util.ArrayList;
  */
 public class Factor {
   private ArrayList<Term> _terms;
+  /*This is to keep track of which tokens we have to swallow/pass through*/
+  private ArrayList<Token> swallowedTokens;
 
   /*Contains data about operators in this factor: 0-TIMES; 1-DIVIDE; 2-MOD*/
   private ArrayList<Integer> _operators;
@@ -56,6 +60,10 @@ public class Factor {
   public ArrayList<Integer> getOperators() {
     return _operators;
   }
+
+  public void addToken(Token t){swallowedTokens.add(t);}
+
+  public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
   @Override
   public String toString() {

@@ -1,5 +1,7 @@
 package ragnardb.parser.ast;
 
+import ragnardb.parser.Token;
+
 import java.util.ArrayList;
 
 /**
@@ -9,6 +11,9 @@ public class SelectStatement {
   private boolean isRecursive, isValues;
   private ArrayList<CommonTableExpression> recursiveTables;
   private ArrayList<ResultColumn> results;
+
+  /*This is to keep track of which tokens we have to swallow/pass through*/
+  private ArrayList<Token> swallowedTokens = new ArrayList<>();
 
   private class SelectExpression {
     private Expression containedExpression;
@@ -89,6 +94,10 @@ public class SelectStatement {
     }
     return _expressions;
   }
+
+  public void addToken(Token t){swallowedTokens.add(t);}
+
+  public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
   public String toString(){
     StringBuilder sb = new StringBuilder("<Select>\n");

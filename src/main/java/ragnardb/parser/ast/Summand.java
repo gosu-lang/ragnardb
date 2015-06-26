@@ -1,5 +1,7 @@
 package ragnardb.parser.ast;
 
+import ragnardb.parser.Token;
+
 import java.util.ArrayList;
 
 /**
@@ -9,6 +11,8 @@ public class Summand {
   private ArrayList<Factor> _factors;
   /*Contains data about the operators: FALSE - -; TRUE - +*/
   private ArrayList<Boolean> _operators;
+  /*This is to keep track of which tokens we have to swallow/pass through*/
+  private ArrayList<Token> swallowedTokens;
 
   public Summand() {
     _factors = new ArrayList<Factor>();
@@ -46,6 +50,10 @@ public class Summand {
   public ArrayList<Boolean> getOperators() {
     return _operators;
   }
+
+  public void addToken(Token t){swallowedTokens.add(t);}
+
+  public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
   @Override
   public String toString() {
