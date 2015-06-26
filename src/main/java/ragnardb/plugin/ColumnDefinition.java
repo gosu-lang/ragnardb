@@ -15,6 +15,8 @@ public class ColumnDefinition {
   private boolean primaryKey;
   private boolean hash;
   private boolean unique;
+  private int line;
+  private int col;
 
 
   static public HashMap<String,Integer> lookUp = new HashMap<String,Integer>();
@@ -151,6 +153,19 @@ public class ColumnDefinition {
   }
   public boolean getUnique(){
     return unique;
+  }
+
+  public void setLoc(int _line, int _col){
+    line = _line;
+    col = _col;
+  }
+
+  public int getLine(){
+    return line;
+  }
+
+  public int getCol(){
+    return col;
   }
 
 }
