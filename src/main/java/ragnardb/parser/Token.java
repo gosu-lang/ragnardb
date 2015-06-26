@@ -11,6 +11,7 @@ public class Token
   private String _text;
   private int _line;
   private int _col;
+  private String _casedText;
 
   public Token(TokenType type, int line, int col) {
     _type = type;
@@ -52,6 +53,14 @@ public class Token
 
   public void setLongNumber(long longNumber) {
     _longNumber = longNumber;
+  }
+
+  public String getCasedText(){
+    return _casedText;
+  }
+
+  public void setCasedText(String text){
+    _casedText = text;
   }
 
 

@@ -292,14 +292,14 @@ public class NounHandler {
       return finalword;
     }
     String output = "";
-    output += Character.toLowerCase(strings[0].charAt(0)) + (strings[0].length() > 1 ? strings[0].substring(1) : "");
+    output += strings[0].equals("")?"":Character.toLowerCase(strings[0].charAt(0)) + (strings[0].length() > 1 ? strings[0].substring(1) : "");
     for (int i = 1; i < strings.length - 1; i++) {
       if(!strings[i].equals("")) {
         String nextpart = Character.toUpperCase(strings[i].charAt(0)) + (strings[i].length() > 1 ? strings[i].substring(1) : "");
         output += nextpart;
       }
     }
-    output += Character.toUpperCase(finalword.charAt(0))+finalword.substring(1);
+    output += finalword.equals("")?"":(Character.toUpperCase(finalword.charAt(0))+finalword.substring(1));
     return output;
   }
 

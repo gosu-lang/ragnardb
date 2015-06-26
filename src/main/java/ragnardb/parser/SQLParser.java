@@ -2,9 +2,12 @@ package ragnardb.parser;
 
 import ragnardb.parser.ast.*;
 import ragnardb.plugin.ColumnDefinition;
+import ragnardb.utils.NounHandler;
 
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SQLParser {
 
@@ -443,16 +446,26 @@ public class SQLParser {
       tokEquals(TokenType.LTE) ||
       tokEquals(TokenType.OVL);
   }
-
+  private String toCamelCase(String str){
+    Pattern p = Pattern.compile("_(.)");
+    Matcher m = p.matcher(str);
+    StringBuffer sb = new StringBuffer();
+    while (m.find()) {
+      m.appendReplacement(sb, m.group(1).toUpperCase());
+    }
+    m.appendTail(sb);
+    return sb.toString();
+  }
   private ColumnDefinition parseColumnDef() {
-    String name = currentToken.getText();
+    String name = currentToken.getCasedText();
     match(TokenType.IDENT);
-    ColumnDefinition column = parseTypeName(name);
+    ColumnDefinition column = parseTypeName(toCamelCase(name));
+
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.INTERNALDOUBLE) || tokEquals(TokenType.IDENT)
         || tokEquals(TokenType.NULL) || tokEquals(TokenType.CURRENT_DATE) || tokEquals(TokenType.CURRENT_TIME)
-        || tokEquals(TokenType.CURRENT_TIMESTAMP)){ //Limited parse expression
+        || tokEquals(TokenType.CURRENT_TIMESTAMP)){ //Limited parse expressions
         next();
       }
     }
