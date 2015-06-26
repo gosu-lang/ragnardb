@@ -12,8 +12,9 @@ public class CreateTable {
   private List<ColumnDefinition> columns;
   private List<Constraint> constraints;
   private String name;
-  private int line;
-  private int col;
+  private int _line;
+  private int _col;
+  private int _offset;
   //private List<Constraint> Constraints;
 
   public CreateTable(String _name){
@@ -49,18 +50,22 @@ public class CreateTable {
     return null;
   }
 
-  public void setLoc(int _line, int _col){
-    line = _line;
-    col = _col;
+  public void setLoc(int line, int col, int offset){
+    _line = line;
+    _col = col;
+    _offset = offset;
   }
 
   public int getLine(){
-    return line;
+    return _line;
   }
 
   public int getCol(){
-    return col;
+    return _col;
   }
 
+  public int getOffset() {
+    return _offset;
+  }
 
 }

@@ -11,12 +11,14 @@ public class Token
   private String _text;
   private int _line;
   private int _col;
+  private int _offset;
   private String _casedText;
 
-  public Token(TokenType type, int line, int col) {
+  public Token(TokenType type, int line, int col, int offset) {
     _type = type;
     _line = line;
     _col = col;
+    _offset = offset;
   }
 
   public String getText() {
@@ -33,6 +35,10 @@ public class Token
 
   public int getCol() {
     return _col;
+  }
+
+  public int getOffset() {
+    return _offset;
   }
 
   public TokenType getType() {

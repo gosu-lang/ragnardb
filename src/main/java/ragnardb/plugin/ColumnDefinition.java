@@ -155,7 +155,7 @@ public class ColumnDefinition {
     return unique;
   }
 
-  public void setLoc(int _line, int _col){
+  public void setLoc(int _line, int _col, int offset){
     line = _line;
     col = _col;
   }

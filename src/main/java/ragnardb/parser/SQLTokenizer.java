@@ -8,6 +8,7 @@ public class SQLTokenizer {
   private BufferedReader reader;
   private int line;
   private int col;
+  private int offset;
   private char ch;
   private boolean EOF;
 
@@ -15,6 +16,7 @@ public class SQLTokenizer {
     reader = new BufferedReader(r);
     line = 1;
     col = 0;
+    offset = 0;
     EOF = false;
     next();
   }
@@ -69,14 +71,14 @@ public class SQLTokenizer {
     }
 
     if(EOF) {
-      tok = new Token(TokenType.EOF, line, col);
+      tok = new Token(TokenType.EOF, line, col, offset);
     } else if(ch == '/') { //Need to add in // Comments
       next();
       if(ch == '*') {
         comment();
         return get();
       } else {
-        tok = new Token(TokenType.SLASH, line, col - 1);
+        tok = new Token(TokenType.SLASH, line, col - 1, offset - 1);
       }
     } else if(ch == '-') {
       next();
@@ -84,7 +86,7 @@ public class SQLTokenizer {
         hComment();
         return get();
       } else {
-        tok = new Token(TokenType.MINUS, line, col - 1);
+        tok = new Token(TokenType.MINUS, line, col - 1, offset - 1);
       }
     } else if(ch == '"') {
       tok = stringLiteralIdentifier();
@@ -93,86 +95,86 @@ public class SQLTokenizer {
     } else if(isNumberOrDot(ch)) {
       tok = numberOrDot();
     } else if(ch == '@'){
-      tok = new Token(TokenType.AT, line, col);
+      tok = new Token(TokenType.AT, line, col, offset);
       next();
     } else if(ch == ':'){
-      tok = new Token(TokenType.COLON, line, col);
+      tok = new Token(TokenType.COLON, line, col, offset);
       next();
     } else if(ch == '(') {
-      tok = new Token(TokenType.LPAREN, line, col);
+      tok = new Token(TokenType.LPAREN, line, col, offset);
       next();
     } else if(ch == ')') {
-      tok = new Token(TokenType.RPAREN, line, col);
+      tok = new Token(TokenType.RPAREN, line, col, offset);
       next();
     } else if(ch == '+') {
-      tok = new Token(TokenType.PLUS, line, col);
+      tok = new Token(TokenType.PLUS, line, col, offset);
       next();
     } else if(ch == ',') {
-      tok = new Token(TokenType.COMMA, line, col);
+      tok = new Token(TokenType.COMMA, line, col, offset);
       next();
     } else if(ch == ';') {
-      tok = new Token(TokenType.SEMI, line, col);
+      tok = new Token(TokenType.SEMI, line, col, offset);
       next();
     } else if(ch == '*') {
-      tok = new Token(TokenType.TIMES, line, col);
+      tok = new Token(TokenType.TIMES, line, col, offset);
       next();
     } else if(ch == '%') {
-      tok = new Token(TokenType.MOD, line, col);
+      tok = new Token(TokenType.MOD, line, col, offset);
       next();
     } else if(ch == '<') {
       next();
       if(ch == '>'){
-        tok = new Token(TokenType.NEQ,line,col);
+        tok = new Token(TokenType.NEQ,line,col, offset);
         next();
       }
       else if(ch == '='){
-        tok = new Token(TokenType.GTE,line,col);
+        tok = new Token(TokenType.GTE,line,col, offset);
         next();
       }
       else{
-        tok = new Token(TokenType.GT,line,col-1);
+        tok = new Token(TokenType.GT,line,col - 1, offset - 1);
       }
     } else if(ch == '>') {
       next();
       if(ch == '='){
-        tok = new Token(TokenType.LTE,line,col);
+        tok = new Token(TokenType.LTE,line,col, offset);
         next();
       }
       else{
-        tok = new Token(TokenType.LT,line-1,col);
+        tok = new Token(TokenType.LT,line-1,col, offset);
       }
     } else if(ch == '!'){
       next();
       if(ch == '='){
-        tok = new Token(TokenType.NEQ,line,col);
+        tok = new Token(TokenType.NEQ,line,col, offset);
         next();
       }
       else{
-        tok = new Token(TokenType.UNKNOWN,line,col);
+        tok = new Token(TokenType.UNKNOWN,line,col, offset);
       }
     } else if(ch == '=') {
-      tok = new Token(TokenType.EQ, line, col);
+      tok = new Token(TokenType.EQ, line, col, offset);
       next();
     } else if(ch == '&'){
       next();
       if(ch == '&'){
-        tok = new Token(TokenType.OVL, line, col);
+        tok = new Token(TokenType.OVL, line, col, offset);
         next();
       }
       else{
-        tok = new Token(TokenType.UNKNOWN, line, col);
+        tok = new Token(TokenType.UNKNOWN, line, col, offset);
       }
     } else if(ch == '|'){
       next();
       if(ch == '|'){
-        tok = new Token(TokenType.BAR, line, col);
+        tok = new Token(TokenType.BAR, line, col, offset);
         next();
       }
       else{
-        tok = new Token(TokenType.UNKNOWN, line, col);
+        tok = new Token(TokenType.UNKNOWN, line, col, offset);
       }
     } else {
-      tok = new Token(TokenType.UNKNOWN, line, col);
+      tok = new Token(TokenType.UNKNOWN, line, col, offset);
       next();
     }
     return tok;
@@ -184,8 +186,8 @@ public class SQLTokenizer {
 
   private Token numberOrDot() {
     Token tok;
-    int l = line;
-    int c = col;
+    final int l = line;
+    final int c = col;
     long intNum = 0;
     double decNum;
     boolean isDecimal = false;
@@ -199,7 +201,7 @@ public class SQLTokenizer {
         isDecimal = true;
         next();
         if(!isNumberOrDot(ch) && intNum == 0) {
-          return new Token(TokenType.DOT, line, col - 1);
+          return new Token(TokenType.DOT, line, col - 1, offset - 1);
         }
       }
 
@@ -213,7 +215,7 @@ public class SQLTokenizer {
 
       if(ch == '.' && isDecimal) {
         decNum = intNum * Math.pow(10, e);
-        tok = new Token(TokenType.INTERNALDOUBLE, l, c);
+        tok = new Token(TokenType.INTERNALDOUBLE, l, c, offset);
         tok.setDoubleNumber(decNum);
         return tok;
       }
@@ -249,7 +251,7 @@ public class SQLTokenizer {
 
       if(ch == '.' || (!isNumberOrDot(ch) && !(EOF || isBlank(ch)))) {
         e += negativeExp * expNum;
-        tok = new Token(TokenType.INTERNALDOUBLE, l, c);
+        tok = new Token(TokenType.INTERNALDOUBLE, l, c, offset);
         decNum = intNum * Math.pow(10, e);
         tok.setDoubleNumber(decNum);
         return tok;
@@ -259,10 +261,10 @@ public class SQLTokenizer {
     }
     decNum = intNum * Math.pow(10, e);
     if(isDecimal) {
-      tok = new Token(TokenType.INTERNALDOUBLE, l, c);
+      tok = new Token(TokenType.INTERNALDOUBLE, l, c, offset);
       tok.setDoubleNumber(decNum);
     } else {
-      tok = new Token(TokenType.LONG, l, c);
+      tok = new Token(TokenType.LONG, l, c, offset);
       tok.setLongNumber(intNum);
     }
     return tok;
@@ -270,7 +272,7 @@ public class SQLTokenizer {
 
   private Token dateTime(int start, int l, int c){
     StringBuilder sb = new StringBuilder(start);
-    Token output = new Token(TokenType.LONG, l, c);
+    Token output = new Token(TokenType.LONG, l, c, offset);
     if(ch == ':'){
       while((isNumberOrDot(ch) && ch != '.') || ch == ':'){
         sb.append(ch);
@@ -292,8 +294,8 @@ public class SQLTokenizer {
 
   private Token identifier() {
     StringBuilder sb = new StringBuilder();
-    int l = line;
-    int c = col;
+    final int l = line;
+    final int c = col;
 
 
     sb.append(ch);
@@ -307,9 +309,9 @@ public class SQLTokenizer {
     Token tok;
     TokenType type = TokenType.find(s);
     if(type != null) {
-      tok = new Token(type, l, c);
+      tok = new Token(type, l, c, offset);
     } else {
-      tok = new Token(TokenType.IDENT, l, c);
+      tok = new Token(TokenType.IDENT, l, c, offset);
       tok.setText(s);
       tok.setCasedText(sb.toString());
     }
@@ -331,7 +333,7 @@ public class SQLTokenizer {
     next();
     String s = sb.toString();
     Token tok;
-    tok = new Token(TokenType.IDENT, l, c);
+    tok = new Token(TokenType.IDENT, l, c, offset);
     tok.setText(s);
     return tok;
   }
@@ -345,9 +347,11 @@ public class SQLTokenizer {
     }
     if(c == '\n') {
       col = 1;
+      offset++;
       line++;
     } else if(c != -1) {
       col++;
+      offset++;
     } else {
       EOF = true;
       c = 0;

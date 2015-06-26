@@ -179,6 +179,7 @@ public class SQLParser {
   private CreateTable parseCreateTable() {
     int line = currentToken.getLine();
     int col = currentToken.getCol();
+    int offset = currentToken.getOffset();
     match(TokenType.CREATE);
     if (currentToken.getType() == TokenType.TEMP ||
       currentToken.getType() == TokenType.TEMPORARY) {
@@ -192,7 +193,7 @@ public class SQLParser {
     }
 
     CreateTable table = new CreateTable(currentToken.getText());
-    table.setLoc(line,col);
+    table.setLoc( line, col, offset );
     match(TokenType.IDENT);
 
     if (currentToken.getType() == TokenType.DOT) {
@@ -525,10 +526,11 @@ public class SQLParser {
     String typeName = currentToken.getCasedText();
     typeName = toCamelCase(typeName);
     int col = currentToken.getCol();
+    int offset = currentToken.getOffset();
     int line = currentToken.getLine();
     match(TokenType.IDENT);
     ColumnDefinition column = parseTypeName(typeName);
-    column.setLoc(line,col);
+    column.setLoc(line,col, offset);
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.INTERNALDOUBLE) || tokEquals(TokenType.IDENT)
