@@ -187,15 +187,15 @@ public class SQLParser {
       if(tokEquals(TokenType.IDENT)) {
         table.append(parseColumnDef());
       } else{
-        parseConstraint();
-        //parseTableConstraint();
+        table.append(parseConstraint());
+
       }
       while (currentToken.getType() == TokenType.COMMA) {
         next();
         if (tokEquals(TokenType.IDENT)) {
           table.append(parseColumnDef());
         } else {
-          parseConstraint();
+          table.append(parseConstraint());
         }
       }
       match(TokenType.RPAREN);
