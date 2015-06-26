@@ -117,19 +117,25 @@ public class SQLParser {
     }
   }
 
-  private void parseSelect() {
+  private SelectStatement parseSelect() {
+    SelectStatement _ss = null;
     if (tokEquals(TokenType.WITH)) {
       next();
       if (tokEquals(TokenType.RECURSIVE)) {
         next();
       }
-      parseCommonTableExpression();
+      CommonTableExpression cte = parseCommonTableExpression();
+      _ss = new SelectStatement(cte);
       while (tokEquals(TokenType.COMMA)) {
         next();
-        parseCommonTableExpression();
+        cte = parseCommonTableExpression();
+        _ss.addCommonTableExpression(cte);
       }
     }
-    parseSelectSub();
+    if(_ss == null){
+      _ss = new SelectStatement();
+    }
+    parseSelectSub(_ss);
     while (matchIn(TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT)) {
       if (tokEquals(TokenType.UNION)) {
         next();
@@ -139,7 +145,7 @@ public class SQLParser {
       } else {
         next();
       }
-      parseSelectSub();
+      parseSelectSub(_ss);
     }
     if (tokEquals(TokenType.ORDER)) {
       next();
@@ -158,6 +164,7 @@ public class SQLParser {
         match(TokenType.LONG);
       }
     }
+    return _ss;
   }
   private CreateTable parseCreateTable() {
     match(TokenType.CREATE);
@@ -240,34 +247,42 @@ public class SQLParser {
 
   }
 
-  private void parseSelectSub() {
+  private void parseSelectSub(SelectStatement current) {
     if(tokEquals(TokenType.SELECT)) {
       next();
+      current.setValues(false);
       if (tokEquals(TokenType.DISTINCT) || tokEquals(TokenType.ALL)) {
         next();
       }
-      parseResultColumn();
+      ResultColumn rc = parseResultColumn(current);
+      current.addResultColumn(rc);
       while (tokEquals(TokenType.COMMA)) {
         next();
-        parseResultColumn();
+        rc = parseResultColumn(current);
+        current.addResultColumn(rc);
       }
-      parseSelectSub2();
+      parseSelectSub2(current);
     } else if(tokEquals(TokenType.VALUES)){
       next();
+      current.setValues(true);
       match(TokenType.LPAREN);
-      parseExpr();
+      Expression e = parseExpr();
+      current.addExpression(e, "VALUES");
       while(tokEquals(TokenType.COMMA)){
         next();
-        parseExpr();
+        e = parseExpr();
+        current.addExpression(e, "VALUES");
       }
       match(TokenType.RPAREN);
       while(tokEquals(TokenType.COMMA)){
         next();
         match(TokenType.LPAREN);
-        parseExpr();
+        e = parseExpr();
+        current.addExpression(e, "VALUES");
         while(tokEquals(TokenType.COMMA)){
           next();
-          parseExpr();
+          e = parseExpr();
+          current.addExpression(e, "VALUES");
         }
         match(TokenType.RPAREN);
       }
@@ -276,41 +291,52 @@ public class SQLParser {
     }
   }
 
-  private void parseSelectSub2(){
+  private void parseSelectSub2(SelectStatement current){
     if (tokEquals(TokenType.FROM)) {
       next();
       parseJoinClause();
     }
     if (tokEquals(TokenType.WHERE)) {
       next();
-      parseExpr();
+      Expression e = parseExpr();
+      current.addExpression(e,"WHERE");
     }
     if (tokEquals(TokenType.GROUP)) {
       next();
       match(TokenType.BY);
-      parseExpr();
+      Expression e = parseExpr();
+      current.addExpression(e, "GROUP BY");
       while (tokEquals(TokenType.COMMA)) {
         next();
-        parseExpr();
+        e = parseExpr();
+        current.addExpression(e, "GROUP BY");
       }
       if (tokEquals(TokenType.HAVING)) {
         next();
-        parseExpr();
+        e = parseExpr();
+        current.addExpression(e, "HAVING");
       }
     }
   }
 
-  private void parseCommonTableExpression() {
-    match(TokenType.IDENT);
+  private CommonTableExpression parseCommonTableExpression() {
+    CommonTableExpression _cte;
+    String s = match(TokenType.IDENT);
+    _cte = new CommonTableExpression(s);
     if(tokEquals(TokenType.LPAREN)){
       next();
-      list(TokenType.IDENT);
+      ArrayList<String> sx = list(TokenType.IDENT);
+      for(String ss: sx){
+        _cte.addColumn(ss);
+      }
       match(TokenType.RPAREN);
     }
     match(TokenType.AS);
     match(TokenType.LPAREN);
-    parseSelect();
+    SelectStatement _select = parseSelect();
+    _cte.setSelect(_select);
     match(TokenType.RPAREN);
+    return _cte;
   }
 
   private void parseOrderingTerm() {
@@ -324,40 +350,49 @@ public class SQLParser {
     }
   }
 
-  private void parseResultColumn() {
+  private ResultColumn parseResultColumn(SelectStatement current) {
+    ResultColumn _rc = null;
     if(tokEquals(TokenType.TIMES)){
       next();
+      _rc = new ResultColumn("*");
     } else if(tokEquals(TokenType.IDENT)){
-      next();
+      String tempname = match(TokenType.IDENT);
       if(tokEquals(TokenType.DOT)){
         next();
         if(tokEquals(TokenType.TIMES)){
           next();
+          _rc = new ResultColumn(tempname+".*");
         } else if(tokEquals(TokenType.IDENT)){
+          _rc = new ResultColumn(tempname+"."+currentToken.getText());
           next();
         } else {
           error(currentToken, "Expecting tablename.(columnname) but found '" + currentToken.getType() + "'.");
         }
       } else if(tokEquals(TokenType.FROM)){
-        parseSelectSub2();
+        _rc = new ResultColumn(tempname);
+        parseSelectSub2(current);
       } else {
         error(currentToken, "Expecting tablename.* or column but found '" + currentToken.getType() + "'.");
       }
     } else if(tokEquals(TokenType.LPAREN)){
       next();
-      parseExpr();
+      Expression e = parseExpr();
+      _rc = new ResultColumn(e);
       while(tokEquals(TokenType.COMMA)){
         next();
-        parseExpr();
+        e = parseExpr();
+        _rc.addExpression(e);
       }
       match(TokenType.RPAREN);
     } else {
-      parseExpr();
+      Expression e = parseExpr();
+      _rc = new ResultColumn(e);
       if(tokEquals(TokenType.AS)){
         next();
       }
       match(TokenType.IDENT);
     }
+    return _rc;
   }
 
   private void parseTableOrSubquery(){
@@ -446,9 +481,10 @@ public class SQLParser {
   }
 
   private ColumnDefinition parseColumnDef() {
+    String typeName = currentToken.getCasedText();
+    typeName = NounHandler.getCamelCased(typeName);
     match(TokenType.IDENT);
-    //ColumnDefinition column = parseTypeName(NounHandler.getCamelCased(currentToken.getCasedText()));
-    ColumnDefinition column = parseTypeName(currentToken.getCasedText());
+    ColumnDefinition column = parseTypeName(typeName);
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.INTERNALDOUBLE) || tokEquals(TokenType.IDENT)

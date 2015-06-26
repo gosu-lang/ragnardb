@@ -87,26 +87,18 @@ public class NounHandler {
     ArrayList<String> currentList = new ArrayList<>(Arrays.asList(initialSplit));
 
     /*splits on capital letters and numbers*/
-    int k = 0;
-    for (int i = 0; i < initialSplit.length; i++) {
-      String currentWord = initialSplit[i];
-      for (int j = 0; j < currentWord.length(); j++) {
-        char c = currentWord.charAt(j);
-        if ('A' <= c && 'Z' >= c) {
-          currentList.add(i + k + 1, currentList.get(i + k).substring(j));
-          currentList.set(i + k, currentList.get(i + k).substring(0, j));
-          k++;
-        }
-        if (Character.isDigit(c)) {
-          currentList.add(i + k + 1, currentList.get(i + k).substring(j));
-          currentList.set(i + k, currentList.get(i + k).substring(0, j));
-          k++;
-        }
+    ArrayList<String[]> nextList = new ArrayList<String[]>();
+    for(int i = 0; i<currentList.size();i++){
+      String[] next = currentList.get(i).split("(?=[A-Z0-9])|(?<=[A-Z0-9])");
+      nextList.add(next);
+    }
+    ArrayList<String> finalList = new ArrayList<>();
+    for(String[] ss: nextList){
+      for(String s: ss){
+        finalList.add(s);
       }
     }
-
-    finalSplit = currentList.toArray(finalSplit);
-    return finalSplit;
+    return finalList.toArray(new String[finalList.size()]);
   }
 
   private String singularize(String word) {
