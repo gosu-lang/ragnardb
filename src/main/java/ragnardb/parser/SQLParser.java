@@ -583,7 +583,7 @@ public class SQLParser {
       next();
       _constraint.setType(Constraint.constraintType.CHECK);
       Expression e = parseExpr();
-      //_constraint.setExpression(e);
+      _constraint.setExpr(e);
     } else if (tokEquals(TokenType.UNIQUE)) {
       String t;
       next();
@@ -640,10 +640,14 @@ public class SQLParser {
       }
       while (tokEquals(TokenType.ON)) {
         next();
-        if (tokEquals(TokenType.DELETE) || tokEquals(TokenType.UPDATE)) {
+        if (tokEquals(TokenType.DELETE)) {
           next();
-          parseReferentialAction();
-        } else {
+          _constraint.setOnDelete(parseReferentialAction());
+        } else if(tokEquals(TokenType.UPDATE)){
+          next();
+          _constraint.setOnUpdate(parseReferentialAction());
+        }
+        else {
           error(currentToken, "Expecting DELETE or UPDATE but found '" + currentToken.getText() + ".");
         }
       }
@@ -651,23 +655,28 @@ public class SQLParser {
     return _constraint;
   }
 
-  private void parseReferentialAction() {
+  private Constraint.referentialAction parseReferentialAction() {
+
 
     switch (currentToken.getType()) {
       case CASCADE:
         next();
-        break;
+        return Constraint.referentialAction.CASCADE;
       case RESTRICT:
         next();
-        break;
+        return Constraint.referentialAction.RESTRICT;
       case NO:
         next();
         match(TokenType.ACTION);
-        break;
+        return Constraint.referentialAction.NO_ACTION;
       case SET:
         next();
-        if (tokEquals(TokenType.DEFAULT) || tokEquals(TokenType.NULL)) {
+        if (tokEquals(TokenType.DEFAULT)) {
           next();
+          return Constraint.referentialAction.SET_DEFAULT;
+        } else if(tokEquals(TokenType.NULL)){
+          next();
+          return Constraint.referentialAction.SET_NULL;
         } else {
           specialError("DEFAULT or NULL");
         }
@@ -675,6 +684,7 @@ public class SQLParser {
       default:
         specialError("CASCADE or RESTRICT or NO or SET");
     }
+    return Constraint.referentialAction.RESTRICT;
   }
 
   public Expression parseExpr() {

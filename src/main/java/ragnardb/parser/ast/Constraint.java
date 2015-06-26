@@ -8,12 +8,36 @@ import java.util.List;
  */
 public class Constraint {
   public enum constraintType{CHECK,UNIQUE,FOREIGN,PRIMARY,PRIMARYHASH};
-  //private Expression
+  public enum referentialAction{CASCADE,RESTRICT,NO_ACTION,SET_DEFAULT,SET_NULL};
+  private Expression expr;
   private List<String> columnNames;
   private List<String> referentialColumnNames;
   private constraintType type;
   private String name;
   private String referentialName;
+  private referentialAction onDelete;
+  private referentialAction onUpdate;
+
+  public void setOnUpdate(referentialAction onUpdate) {
+    this.onUpdate = onUpdate;
+  }
+
+  public void setOnDelete(referentialAction onDelete) {
+
+    this.onDelete = onDelete;
+  }
+
+  public referentialAction getOnDelete() {
+
+    return onDelete;
+  }
+
+  public referentialAction getOnUpdate() {
+
+    return onUpdate;
+  }
+
+
 
 
   public Constraint(){
@@ -61,6 +85,10 @@ public class Constraint {
     columnNames = l;
   }
 
+  public Expression getExpr() {
+    return expr;
+  }
+
   public List<String> getColumnNames(){
     return columnNames;
   }
@@ -69,4 +97,7 @@ public class Constraint {
     return referentialColumnNames;
   }
 
+  public void setExpr(Expression expr) {
+    this.expr = expr;
+  }
 }
