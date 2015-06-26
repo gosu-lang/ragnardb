@@ -1,6 +1,9 @@
 package ragnardb.plugin;
 
+import gw.fs.IFile;
 import gw.fs.IResource;
+import gw.lang.reflect.module.IModule;
+import ragnardb.parser.ast.DDL;
 
 import java.io.FileNotFoundException;
 import java.io.Reader;
@@ -16,4 +19,9 @@ public interface ISQLSource extends IResource {
 
   Reader getReader() throws FileNotFoundException;
 
+  String getTypeName( IModule module );
+
+  DDL getParseTree();
+
+  IFile getFile();
 }

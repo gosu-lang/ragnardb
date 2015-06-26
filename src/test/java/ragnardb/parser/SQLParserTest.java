@@ -62,6 +62,10 @@ public class SQLParserTest {
       System.out.print("Failed on:" + statement + "\n");
       e.printStackTrace();
       fail();
+    } catch (Exception e) {
+      System.out.print("Failed on: " + statement + "\n");
+      e.printStackTrace();
+      fail();
     }
   }
 
