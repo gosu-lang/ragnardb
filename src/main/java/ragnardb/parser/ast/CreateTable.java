@@ -10,19 +10,28 @@ import java.util.List;
  */
 public class CreateTable {
   private List<ColumnDefinition> columns;
+  private List<Constraint> constraints;
   private String name;
   //private List<Constraint> Constraints;
 
   public CreateTable(String _name){
     columns = new ArrayList<ColumnDefinition>();
+    constraints = new ArrayList<>();
     name = _name;
   }
   public void append(ColumnDefinition c){
     columns.add(c);
   }
 
+  public void append(Constraint c){
+    constraints.add(c);
+  }
+
   public List<ColumnDefinition> getColumnDefinitions(){
     return columns;
+  }
+  public List<Constraint> getConstraints(){
+    return constraints;
   }
 
   public String getName(){
