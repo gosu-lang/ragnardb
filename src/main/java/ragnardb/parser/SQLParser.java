@@ -493,7 +493,7 @@ public class SQLParser {
   }
   private ColumnDefinition parseColumnDef() {
     String typeName = currentToken.getCasedText();
-    typeName = NounHandler.getCamelCased(typeName);
+    typeName = toCamelCase(typeName);
     match(TokenType.IDENT);
     ColumnDefinition column = parseTypeName(typeName);
     if (tokEquals(TokenType.DEFAULT)) {
