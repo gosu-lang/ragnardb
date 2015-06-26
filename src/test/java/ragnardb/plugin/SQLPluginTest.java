@@ -68,6 +68,8 @@ public class SQLPluginTest {
     Set<String> actualColumnNames = colDefs.stream().map(ColumnDefinition::getColumnName).collect(Collectors.toSet());
 
     assertEquals(expectedColumnNames, actualColumnNames);
+
+    //TODO check columndef positions in the source files
   }
 
   @Test
