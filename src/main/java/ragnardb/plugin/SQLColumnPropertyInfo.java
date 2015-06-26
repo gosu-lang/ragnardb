@@ -17,8 +17,10 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
   private String _propName;
   private IType _propType;
   private IPropertyAccessor _accessor;
+  private final int _offset;
+  private final int _length;
 
-  protected SQLColumnPropertyInfo( String columnName, String propName, IType propertyType, ITypeInfo container )
+  protected SQLColumnPropertyInfo(String columnName, String propName, IType propertyType, ITypeInfo container, int offset, int length)
   {
     super( container );
     _columnName = columnName;
@@ -38,7 +40,8 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
         ((SQLResult)obj).setRawValue( _propName, val );
       }
     };
-
+    _offset = offset;
+    _length = length;
   }
 
   public String getColumnName()
@@ -80,5 +83,15 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
   public IType getFeatureType()
   {
     return _propType;
+  }
+
+  @Override
+  public int getOffset() {
+    return _offset;
+  }
+
+  @Override
+  public int getTextLength() {
+    return _length;
   }
 }

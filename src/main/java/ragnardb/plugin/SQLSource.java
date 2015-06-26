@@ -15,8 +15,8 @@ import ragnardb.parser.ast.CreateTable;
 import ragnardb.parser.ast.DDL;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
 
@@ -34,7 +34,7 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
 
   @Override
   public IFile getFile() {
-    return _file == null ? _file = CommonServices.getFileSystem().getIFile( new File( _path.getFileSystemPathString() ) ) : _file;
+    return _file == null ? _file = CommonServices.getFileSystem().getIFile(new File(_path.getFileSystemPathString())) : _file;
   }
 
   public SQLSource(ResourcePath path) {
@@ -52,14 +52,14 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
   }
 
   @Override
-  public Set<String> getTypeNames() {
-    Set<String> returnSet = new HashSet<>();
-
-    for (CreateTable table: parseTree.getList()){
-          String name = table.getName();
-          returnSet.add(Character.toUpperCase(name.charAt(0)) + name.substring(1));
-    }
-    return returnSet;
+  public List<CreateTable> getTables() {
+    return parseTree.getList().stream().collect(Collectors.toList());
+//    List<CreateTable> returnSet = new ArrayList<>();
+//
+//    for (CreateTable table : parseTree.getList()){
+//          returnSet.add(table);
+//    }
+//    return returnSet;
   }
 
   @Override

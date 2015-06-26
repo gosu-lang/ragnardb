@@ -17,6 +17,7 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
 
   private final String _name;
   private final ISqlDdlType _enclosingType;
+  private final CreateTable _table;
   private LockingLazyVar<ITypeInfo> _typeInfo = new LockingLazyVar<ITypeInfo>()
   {
     @Override
@@ -26,9 +27,15 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
     }
   };
 
-  public SqlTableType(ISqlDdlType parent, String name){
+  public SqlTableType(ISqlDdlType parent, CreateTable table, String name){
     _name = name;
+    _table = table;
     _enclosingType = parent;
+  }
+
+  @Override
+  public CreateTable getTable() {
+    return _table;
   }
 
   @Override

@@ -188,6 +188,7 @@ public class SQLTokenizer {
     Token tok;
     final int l = line;
     final int c = col;
+    final int o = offset;
     long intNum = 0;
     double decNum;
     boolean isDecimal = false;
@@ -215,7 +216,7 @@ public class SQLTokenizer {
 
       if(ch == '.' && isDecimal) {
         decNum = intNum * Math.pow(10, e);
-        tok = new Token(TokenType.INTERNALDOUBLE, l, c, offset);
+        tok = new Token(TokenType.INTERNALDOUBLE, l, c, o);
         tok.setDoubleNumber(decNum);
         return tok;
       }
@@ -251,7 +252,7 @@ public class SQLTokenizer {
 
       if(ch == '.' || (!isNumberOrDot(ch) && !(EOF || isBlank(ch)))) {
         e += negativeExp * expNum;
-        tok = new Token(TokenType.INTERNALDOUBLE, l, c, offset);
+        tok = new Token(TokenType.INTERNALDOUBLE, l, c, o);
         decNum = intNum * Math.pow(10, e);
         tok.setDoubleNumber(decNum);
         return tok;
@@ -261,18 +262,18 @@ public class SQLTokenizer {
     }
     decNum = intNum * Math.pow(10, e);
     if(isDecimal) {
-      tok = new Token(TokenType.INTERNALDOUBLE, l, c, offset);
+      tok = new Token(TokenType.INTERNALDOUBLE, l, c, o);
       tok.setDoubleNumber(decNum);
     } else {
-      tok = new Token(TokenType.LONG, l, c, offset);
+      tok = new Token(TokenType.LONG, l, c, o);
       tok.setLongNumber(intNum);
     }
     return tok;
   }
 
-  private Token dateTime(int start, int l, int c){
+  private Token dateTime(int start, int l, int c, int o){
     StringBuilder sb = new StringBuilder(start);
-    Token output = new Token(TokenType.LONG, l, c, offset);
+    Token output = new Token(TokenType.LONG, l, c, o);
     if(ch == ':'){
       while((isNumberOrDot(ch) && ch != '.') || ch == ':'){
         sb.append(ch);
@@ -296,7 +297,7 @@ public class SQLTokenizer {
     StringBuilder sb = new StringBuilder();
     final int l = line;
     final int c = col;
-
+    final int o = offset;
 
     sb.append(ch);
     next();
@@ -309,9 +310,9 @@ public class SQLTokenizer {
     Token tok;
     TokenType type = TokenType.find(s);
     if(type != null) {
-      tok = new Token(type, l, c, offset);
+      tok = new Token(type, l, c, o-1);
     } else {
-      tok = new Token(TokenType.IDENT, l, c, offset);
+      tok = new Token(TokenType.IDENT, l, c, o-1);
       tok.setText(s);
       tok.setCasedText(sb.toString());
     }

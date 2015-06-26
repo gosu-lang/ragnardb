@@ -27,7 +27,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
     for(ColumnDefinition column : columns) {
       SQLColumnPropertyInfo prop = new SQLColumnPropertyInfo(column.getColumnName(),
           makePropertyName(column.getColumnName()),
-          getGosuType(column.getSQLType()), this);
+          getGosuType(column.getSQLType()), this, column.getOffset(), column.getLength());
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add(prop);
     }
@@ -88,5 +88,15 @@ public class SQLTypeInfo extends BaseTypeInfo {
   @Override
   public IPropertyInfo getProperty(CharSequence propName) {
     return _propertiesMap.get(propName.toString());
+  }
+
+  @Override
+  public int getOffset() {
+    return ((ISqlTableType)getOwnersType()).getTable().getOffset();
+  }
+
+  @Override
+  public int getTextLength() {
+    return ((ISqlTableType)getOwnersType()).getTable().getName().length();
   }
 }

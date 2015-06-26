@@ -4,14 +4,12 @@ import gw.config.CommonServices;
 import gw.fs.FileFactory;
 import gw.fs.IDirectory;
 import gw.fs.IFile;
-import gw.lang.reflect.IType;
-import gw.lang.reflect.RefreshKind;
-import gw.lang.reflect.TypeLoaderBase;
-import gw.lang.reflect.TypeSystem;
+import gw.lang.reflect.*;
 import gw.lang.reflect.module.IModule;
 import gw.util.GosuStringUtil;
 import gw.util.Pair;
 import gw.util.concurrent.LockingLazyVar;
+import ragnardb.parser.ast.CreateTable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -39,7 +37,7 @@ public class SQLPlugin extends TypeLoaderBase {
         String fileName = ddlFilePair.getFirst();
         String packageName = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
         ISQLSource ddlFile = ddlFilePair.getSecond();
-        Set<String> typeNames = ddlFile.getTypeNames();
+        List<String> typeNames = ddlFile.getTables().stream().map(CreateTable::getName).collect(Collectors.toList());
 
         boolean allTypeNamesAreValid = true;
         for(String typeName : typeNames) {
@@ -55,6 +53,7 @@ public class SQLPlugin extends TypeLoaderBase {
       return result;
     }
   };
+  private Map<IFile, String> _fileToDdlTypeNames;
 
   public SQLPlugin(IModule module) {
     super(module);
@@ -79,17 +78,22 @@ public class SQLPlugin extends TypeLoaderBase {
    * Populates _sqlSources from the provided IModule
    */
   private void initSources() {
+    _fileToDdlTypeNames = new HashMap<>();
     //leverage Streams API to basically cast Pair<String, IFile> to Pair<String, ISQLSource> in place
     _sqlSources = findAllFilesByExtension(FILE_EXTENSION)
         .stream()
         .map(pair -> new Pair<String, ISQLSource>(pair.getFirst(), new SQLSource(pair.getSecond().getPath())))
         .collect(Collectors.toList());
+    _sqlSourcesByPackage.clear();
   }
 
   @Override
   public IType getType(final String fullyQualifiedName) {
     if(_sqlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //hence, a ddltype
-      return TypeSystem.getOrCreateTypeReference(new SqlDdlType(this, _sqlSourcesByPackage.get().get(fullyQualifiedName)));
+      ISQLSource sqlSource = _sqlSourcesByPackage.get().get(fullyQualifiedName);
+      ITypeRef ddlType = TypeSystem.getOrCreateTypeReference(new SqlDdlType(this, sqlSource));
+      _fileToDdlTypeNames.put(sqlSource.getFile(), ddlType.getName());
+      return ddlType;
     }
 
     String[] packagesAndType = fullyQualifiedName.split("\\.");
@@ -143,8 +147,8 @@ public class SQLPlugin extends TypeLoaderBase {
   public Set<String> computeTypeNames() {
     Set<String> result = new HashSet<>();
     for(String pkg : _sqlSourcesByPackage.get().keySet()) {
-      for(String typeName : _sqlSourcesByPackage.get().get(pkg).getTypeNames()) {
-        result.add(pkg + '.' + typeName);
+      for(CreateTable table : _sqlSourcesByPackage.get().get(pkg).getTables()) {
+        result.add(pkg + '.' + table.getName());
       }
     }
     return result;
@@ -204,4 +208,33 @@ public class SQLPlugin extends TypeLoaderBase {
     return path;
   }
 
+  @Override
+  public String[] getTypesForFile(IFile file) {
+    String ddlTypeName = _fileToDdlTypeNames.get(file);
+    if( ddlTypeName != null ) {
+      return new String[] {ddlTypeName};
+    }
+    return NO_TYPES;
+  }
+
+  @Override
+  public boolean handlesFile(IFile file) {
+    return FILE_EXTENSION.substring( 1 ).equals(file.getExtension());
+  }
+
+  @Override
+  protected void refreshedImpl() {
+    initSources();
+  }
+
+  @Override
+  public RefreshKind refreshedFile(IFile file, String[] types, RefreshKind kind) {
+    initSources();
+    return kind;
+  }
+
+  @Override
+  protected void refreshedTypesImpl(RefreshRequest request) {
+    initSources();
+  }
 }

@@ -193,7 +193,7 @@ public class SQLParser {
     }
 
     CreateTable table = new CreateTable(currentToken.getText());
-    table.setLoc( line, col, offset );
+    table.setLoc( line, col, offset, currentToken.getCasedText().length() );
     match(TokenType.IDENT);
 
     if (currentToken.getType() == TokenType.DOT) {
@@ -530,7 +530,7 @@ public class SQLParser {
     int line = currentToken.getLine();
     match(TokenType.IDENT);
     ColumnDefinition column = parseTypeName(typeName);
-    column.setLoc(line,col, offset);
+    column.setLoc(line,col, offset, typeName.length());
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.INTERNALDOUBLE) || tokEquals(TokenType.IDENT)

@@ -17,7 +17,7 @@ public class ColumnDefinition {
   private boolean unique;
   private int line;
   private int col;
-
+  private int _offset;
 
   static public HashMap<String,Integer> lookUp = new HashMap<String,Integer>();
 
@@ -77,6 +77,8 @@ public class ColumnDefinition {
     lookUp.put("nclob", Types.CLOB);
 
   }
+
+  private int _length;
 
   public ColumnDefinition(String columnName, int sqlType) {
     _columnName = columnName;
@@ -155,9 +157,11 @@ public class ColumnDefinition {
     return unique;
   }
 
-  public void setLoc(int _line, int _col, int offset){
+  public void setLoc(int _line, int _col, int offset, int length) {
     line = _line;
     col = _col;
+    _offset = offset;
+    _length = length;
   }
 
   public int getLine(){
@@ -166,6 +170,14 @@ public class ColumnDefinition {
 
   public int getCol(){
     return col;
+  }
+
+  public int getOffset() {
+      return _offset;
+  }
+
+  public int getLength() {
+    return _length;
   }
 
 }

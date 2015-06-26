@@ -11,17 +11,19 @@ import java.util.List;
 public class CreateTable {
   private List<ColumnDefinition> columns;
   private List<Constraint> constraints;
-  private String name;
+  private String _name;
   private int _line;
   private int _col;
   private int _offset;
+  private int _length;
   //private List<Constraint> Constraints;
 
-  public CreateTable(String _name){
-    columns = new ArrayList<ColumnDefinition>();
+  public CreateTable(String name){
+    columns = new ArrayList<>();
     constraints = new ArrayList<>();
-    name = _name;
+    _name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
   }
+
   public void append(ColumnDefinition c){
     columns.add(c);
   }
@@ -38,7 +40,7 @@ public class CreateTable {
   }
 
   public String getName(){
-    return name;
+    return _name;
   }
 
   public ColumnDefinition getColumnDefinitionByName(String name){
@@ -50,10 +52,11 @@ public class CreateTable {
     return null;
   }
 
-  public void setLoc(int line, int col, int offset){
+  public void setLoc(int line, int col, int offset, int length) {
     _line = line;
     _col = col;
     _offset = offset;
+    _length = length;
   }
 
   public int getLine(){

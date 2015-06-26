@@ -3,6 +3,7 @@ package ragnardb.plugin;
 import gw.fs.IFile;
 import gw.lang.reflect.*;
 import gw.util.concurrent.LockingLazyVar;
+import ragnardb.parser.ast.CreateTable;
 import ragnardb.parser.ast.DDL;
 
 import java.util.ArrayList;
@@ -20,9 +21,9 @@ public class SqlDdlType extends TypeBase implements ISqlDdlType {
         @Override
         protected List<ISqlTableType> init() {
             List<ISqlTableType> innerClasses = new ArrayList<>();
-            for( String tableName: _sqlSource.getTypeNames() ) {
-                String fqn = getName() + '.' + tableName;
-                innerClasses.add((ISqlTableType) TypeSystem.getOrCreateTypeReference(new SqlTableType(getTypeRef(), fqn)));
+            for( CreateTable table : _sqlSource.getTables() ) {
+                String fqn = getName() + '.' + table.getName();
+                innerClasses.add((ISqlTableType) TypeSystem.getOrCreateTypeReference(new SqlTableType(getTypeRef(), table, fqn)));
             }
             return innerClasses;
         }
