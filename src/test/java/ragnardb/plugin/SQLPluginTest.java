@@ -1,13 +1,9 @@
 package ragnardb.plugin;
 
 import gw.lang.Gosu;
-import gw.lang.reflect.IPropertyInfo;
-import gw.lang.reflect.IType;
-import gw.lang.reflect.ITypeLoader;
-import gw.lang.reflect.TypeSystem;
+import gw.lang.reflect.*;
 import gw.lang.reflect.java.IJavaType;
 import gw.lang.reflect.java.JavaTypes;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -27,6 +23,13 @@ public class SQLPluginTest {
     Gosu.init();
     ITypeLoader sqlPlugin = new SQLPlugin(TypeSystem.getGlobalModule()); // global vs. current?
     TypeSystem.pushTypeLoader(TypeSystem.getGlobalModule(), sqlPlugin);
+  }
+
+  @Test
+  public void getDdlType() {
+    IType result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
+    assertNotNull(result);
+    assertEquals("ragnardb.foo.Users", result.getName());
   }
 
   @Test
@@ -55,13 +58,13 @@ public class SQLPluginTest {
 
   @Test
   public void getColumnDefs() {
-    ISQLType result = (ISQLType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
+    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
     assertNotNull(result);
 
     List<ColumnDefinition> colDefs = result.getColumnDefinitions();
     assertNotNull(colDefs);
 
-    Set<String> expectedColumnNames = Stream.of("userid", "lastname", "firstname", "age").collect(Collectors.toSet());
+    Set<String> expectedColumnNames = Stream.of("UserId", "LastName", "FirstName", "Age").collect(Collectors.toSet());
     Set<String> actualColumnNames = colDefs.stream().map(ColumnDefinition::getColumnName).collect(Collectors.toSet());
 
     assertEquals(expectedColumnNames, actualColumnNames);
@@ -69,7 +72,7 @@ public class SQLPluginTest {
 
   @Test
   public void getTypeInfo() {
-    ISQLType result = (ISQLType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
+    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users.Contacts", result.getName());
     assertEquals("ragnardb.foo.Users", result.getNamespace());
@@ -79,13 +82,13 @@ public class SQLPluginTest {
     assertEquals("Contacts", ti.getName());
 
     //make a set of expected Name/IJavaType pairs
-    Set<String> expectedPropertyNames = Stream.of("userid", "lastname", "firstname", "age").collect(Collectors.toSet());
+    Set<String> expectedPropertyNames = Stream.of("UserId", "LastName", "FirstName", "Age").collect(Collectors.toSet());
     Map<String, IJavaType> expectedPropertyNameAndType = new HashMap<>(expectedPropertyNames.size());
 
-    expectedPropertyNameAndType.put("userid", JavaTypes.pINT());
-    expectedPropertyNameAndType.put("lastname", JavaTypes.STRING());
-    expectedPropertyNameAndType.put("firstname", JavaTypes.STRING());
-    expectedPropertyNameAndType.put("age", JavaTypes.pINT());
+    expectedPropertyNameAndType.put("UserId", JavaTypes.pINT());
+    expectedPropertyNameAndType.put("LastName", JavaTypes.STRING());
+    expectedPropertyNameAndType.put("FirstName", JavaTypes.STRING());
+    expectedPropertyNameAndType.put("Age", JavaTypes.pINT());
 
     //number of properties is what we expect
     assertEquals(expectedPropertyNameAndType.size(), ti.getProperties().size());

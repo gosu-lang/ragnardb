@@ -6,6 +6,8 @@ import ragnardb.utils.NounHandler;
 
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SQLParser {
 
@@ -479,7 +481,16 @@ public class SQLParser {
       tokEquals(TokenType.LTE) ||
       tokEquals(TokenType.OVL);
   }
-
+  private String toCamelCase(String str){
+    Pattern p = Pattern.compile("_(.)");
+    Matcher m = p.matcher(str);
+    StringBuffer sb = new StringBuffer();
+    while (m.find()) {
+      m.appendReplacement(sb, m.group(1).toUpperCase());
+    }
+    m.appendTail(sb);
+    return sb.toString();
+  }
   private ColumnDefinition parseColumnDef() {
     String typeName = currentToken.getCasedText();
     typeName = NounHandler.getCamelCased(typeName);

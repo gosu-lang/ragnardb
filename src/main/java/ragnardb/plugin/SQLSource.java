@@ -1,34 +1,27 @@
 package ragnardb.plugin;
 
+import gw.config.CommonServices;
 import gw.fs.FileFactory;
+import gw.fs.IDirectory;
+import gw.fs.IFile;
 import gw.fs.ResourcePath;
 import gw.fs.physical.IPhysicalFileSystem;
+import gw.fs.physical.PhysicalFileImpl;
 import gw.fs.physical.PhysicalResourceImpl;
+import gw.lang.reflect.module.IModule;
 import ragnardb.parser.SQLParser;
 import ragnardb.parser.SQLTokenizer;
 import ragnardb.parser.ast.CreateTable;
 import ragnardb.parser.ast.DDL;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 
 public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
 
   private DDL parseTree;
-
-  private void setParseTree(){
-    SQLParser p = null;
-    try {
-     p = new SQLParser(new SQLTokenizer(getReader()));
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    }
-    parseTree = p.parse();
-  }
+  private IFile _file;
 
   public SQLSource(ResourcePath path, IPhysicalFileSystem backingFileSystem) {
     super(path, backingFileSystem);
@@ -39,8 +32,23 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
     return parseTree;
   }
 
+  @Override
+  public IFile getFile() {
+    return _file == null ? _file = CommonServices.getFileSystem().getIFile( new File( _path.getFileSystemPathString() ) ) : _file;
+  }
+
   public SQLSource(ResourcePath path) {
     this(path, FileFactory.instance().getDefaultPhysicalFileSystem());
+  }
+
+  private void setParseTree(){
+    SQLParser p = null;
+    try {
+      p = new SQLParser(new SQLTokenizer(getReader()));
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    parseTree = p.parse();
   }
 
   @Override
@@ -52,6 +60,20 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
           returnSet.add(Character.toUpperCase(name.charAt(0)) + name.substring(1));
     }
     return returnSet;
+  }
+
+  @Override
+  public String getTypeName( IModule module ) {
+    ResourcePath path = getPath();
+    for( IDirectory dir: module.getSourcePath() ) {
+      if( dir.getPath().isDescendant( path ) ) {
+        String rawName = dir.getPath().relativePath(path);
+        rawName = rawName.substring(0, rawName.lastIndexOf('.'));
+        rawName = rawName.replace(File.separator, ".");
+        return rawName;
+      }
+    }
+    throw new IllegalStateException( "Expected to have name" );
   }
 
   @Override
