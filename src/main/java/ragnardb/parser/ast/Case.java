@@ -12,7 +12,7 @@ public class Case {
   private ArrayList<WhenThen> _whenThens;
   private Expression _else;
   /*This is to keep track of which tokens we have to swallow/pass through*/
-  private ArrayList<Token> swallowedTokens;
+  private ArrayList<Token> swallowedTokens = new ArrayList<>();
 
   public Case() {
     _initial = null;

@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class Factor {
   private ArrayList<Term> _terms;
   /*This is to keep track of which tokens we have to swallow/pass through*/
-  private ArrayList<Token> swallowedTokens;
+  private ArrayList<Token> swallowedTokens = new ArrayList<>();
 
   /*Contains data about operators in this factor: 0-TIMES; 1-DIVIDE; 2-MOD*/
   private ArrayList<Integer> _operators;

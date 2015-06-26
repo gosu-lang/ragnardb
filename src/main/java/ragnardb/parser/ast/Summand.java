@@ -12,7 +12,7 @@ public class Summand {
   /*Contains data about the operators: FALSE - -; TRUE - +*/
   private ArrayList<Boolean> _operators;
   /*This is to keep track of which tokens we have to swallow/pass through*/
-  private ArrayList<Token> swallowedTokens;
+  private ArrayList<Token> swallowedTokens = new ArrayList<>();
 
   public Summand() {
     _factors = new ArrayList<Factor>();

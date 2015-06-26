@@ -11,7 +11,12 @@ public class ResultColumn {
   private String result;
   private ArrayList<Expression> resultExpressions;
   /*This is to keep track of which tokens we have to swallow/pass through*/
-  private ArrayList<Token> swallowedTokens;
+  private ArrayList<Token> swallowedTokens = new ArrayList<>();
+
+  public ResultColumn(){
+    resultExpressions = new ArrayList<>();
+    result = "";
+  }
 
   public ResultColumn(String s){
     result = s;

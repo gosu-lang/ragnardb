@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class AndCondition {
   private ArrayList<Condition> _conditions;
   /*This is to keep track of which tokens we have to swallow/pass through*/
-  private ArrayList<Token> swallowedTokens;
+  private ArrayList<Token> swallowedTokens = new ArrayList<>();
 
   public AndCondition() {
     _conditions = new ArrayList<Condition>();

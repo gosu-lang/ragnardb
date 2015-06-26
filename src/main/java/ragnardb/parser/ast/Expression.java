@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class Expression {
   private ArrayList<AndCondition> _conditions;
   /*This is to keep track of which tokens we have to swallow/pass through*/
-  private ArrayList<Token> swallowedTokens;
+  private ArrayList<Token> swallowedTokens = new ArrayList<>();
 
   public Expression() {
     _conditions = new ArrayList<AndCondition>();
@@ -28,6 +28,10 @@ public class Expression {
   public ArrayList<AndCondition> getConditions() {
     return _conditions;
   }
+
+  public void addToken(Token t){swallowedTokens.add(t);}
+
+  public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
   @Override
   public String toString() {

@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class Operand {
   private ArrayList<Summand> _summands;
   /*This is to keep track of which tokens we have to swallow/pass through*/
-  private ArrayList<Token> swallowedTokens;
+  private ArrayList<Token> swallowedTokens = new ArrayList<>();
 
   public Operand() {
     _summands = new ArrayList<Summand>();

@@ -11,7 +11,7 @@ public class Condition {
   /*We express condition as a relationship between two operands, regardless of what the relationship is*/
   private Operand first, second;
   /*This is to keep track of which tokens we have to swallow/pass through*/
-  private ArrayList<Token> swallowedTokens;
+  private ArrayList<Token> swallowedTokens = new ArrayList<>();
 
 
   public Condition() {

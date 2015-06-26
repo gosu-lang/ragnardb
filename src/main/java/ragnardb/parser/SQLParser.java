@@ -120,14 +120,16 @@ public class SQLParser {
   }
 
   private SelectStatement parseSelect() {
-    SelectStatement _ss = null;
+    SelectStatement _ss = new SelectStatement();
     if (tokEquals(TokenType.WITH)) {
+      _ss.addToken(currentToken);
       next();
       if (tokEquals(TokenType.RECURSIVE)) {
+        _ss.addToken(currentToken);
         next();
       }
       CommonTableExpression cte = parseCommonTableExpression();
-      _ss = new SelectStatement(cte);
+      _ss.addCommonTableExpression(cte);
       while (tokEquals(TokenType.COMMA)) {
         next();
         cte = parseCommonTableExpression();
@@ -140,25 +142,31 @@ public class SQLParser {
     parseSelectSub(_ss);
     while (matchIn(TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT)) {
       if (tokEquals(TokenType.UNION)) {
+        _ss.addToken(currentToken);
         next();
         if (tokEquals(TokenType.ALL)) {
+          _ss.addToken(currentToken);
           next();
         }
       } else {
+        _ss.addToken(currentToken);
         next();
       }
       parseSelectSub(_ss);
     }
     if (tokEquals(TokenType.ORDER)) {
+      _ss.addToken(currentToken);
       next();
+      _ss.addToken(currentToken);
       match(TokenType.BY);
-      parseOrderingTerm();
+      parseOrderingTerm(_ss);
       while (tokEquals(TokenType.COMMA)) {
         next();
-        parseOrderingTerm();
+        parseOrderingTerm(_ss);
       }
     }
     if (tokEquals(TokenType.LIMIT)) {
+      _ss.addToken(currentToken);
       next();
       match(TokenType.LONG);
       if(tokEquals(TokenType.OFFSET) || tokEquals(TokenType.COMMA)){
@@ -251,9 +259,11 @@ public class SQLParser {
 
   private void parseSelectSub(SelectStatement current) {
     if(tokEquals(TokenType.SELECT)) {
+      current.addToken(currentToken);
       next();
       current.setValues(false);
       if (tokEquals(TokenType.DISTINCT) || tokEquals(TokenType.ALL)) {
+        current.addToken(currentToken);
         next();
       }
       ResultColumn rc = parseResultColumn(current);
@@ -265,6 +275,7 @@ public class SQLParser {
       }
       parseSelectSub2(current);
     } else if(tokEquals(TokenType.VALUES)){
+      current.addToken(currentToken);
       next();
       current.setValues(true);
       match(TokenType.LPAREN);
@@ -295,16 +306,20 @@ public class SQLParser {
 
   private void parseSelectSub2(SelectStatement current){
     if (tokEquals(TokenType.FROM)) {
+      current.addToken(currentToken);
       next();
       parseJoinClause();
     }
     if (tokEquals(TokenType.WHERE)) {
+      current.addToken(currentToken);
       next();
       Expression e = parseExpr();
       current.addExpression(e,"WHERE");
     }
     if (tokEquals(TokenType.GROUP)) {
+      current.addToken(currentToken);
       next();
+      current.addToken(currentToken);
       match(TokenType.BY);
       Expression e = parseExpr();
       current.addExpression(e, "GROUP BY");
@@ -314,6 +329,7 @@ public class SQLParser {
         current.addExpression(e, "GROUP BY");
       }
       if (tokEquals(TokenType.HAVING)) {
+        current.addToken(currentToken);
         next();
         e = parseExpr();
         current.addExpression(e, "HAVING");
@@ -326,28 +342,35 @@ public class SQLParser {
     String s = match(TokenType.IDENT);
     _cte = new CommonTableExpression(s);
     if(tokEquals(TokenType.LPAREN)){
+      _cte.addToken(currentToken);
       next();
       ArrayList<String> sx = list(TokenType.IDENT);
       for(String ss: sx){
         _cte.addColumn(ss);
       }
+      _cte.addToken(currentToken);
       match(TokenType.RPAREN);
     }
     match(TokenType.AS);
     match(TokenType.LPAREN);
+    _cte.addToken(currentToken);
     SelectStatement _select = parseSelect();
     _cte.setSelect(_select);
+    _cte.addToken(currentToken);
     match(TokenType.RPAREN);
     return _cte;
   }
 
-  private void parseOrderingTerm() {
-    parseExpr();
+  private void parseOrderingTerm(SelectStatement current) {
+    Expression er = parseExpr();
+    current.addExpression(er, "ORDER BY");
     if(tokEquals(TokenType.COLLATE)){
+      current.addToken(currentToken);
       next();
       match(TokenType.IDENT);
     }
     if(matchIn(TokenType.ASC, TokenType.DESC)){
+      current.addToken(currentToken);
       next();
     }
   }
@@ -356,7 +379,6 @@ public class SQLParser {
     ResultColumn _rc = null;
     if(tokEquals(TokenType.TIMES)){
       next();
-      _rc = new ResultColumn("*");
     } else if(tokEquals(TokenType.IDENT)){
       String tempname = match(TokenType.IDENT);
       if(tokEquals(TokenType.DOT)){
@@ -377,14 +399,17 @@ public class SQLParser {
         error(currentToken, "Expecting tablename.* or column but found '" + currentToken.getType() + "'.");
       }
     } else if(tokEquals(TokenType.LPAREN)){
+      _rc = new ResultColumn();
+      _rc.addToken(currentToken);
       next();
       Expression e = parseExpr();
-      _rc = new ResultColumn(e);
+      _rc.addExpression(e);
       while(tokEquals(TokenType.COMMA)){
         next();
         e = parseExpr();
         _rc.addExpression(e);
       }
+      _rc.addToken(currentToken);
       match(TokenType.RPAREN);
     } else {
       Expression e = parseExpr();
@@ -481,6 +506,7 @@ public class SQLParser {
       tokEquals(TokenType.LTE) ||
       tokEquals(TokenType.OVL);
   }
+
   private String toCamelCase(String str){
     Pattern p = Pattern.compile("_(.)");
     Matcher m = p.matcher(str);
@@ -491,6 +517,7 @@ public class SQLParser {
     m.appendTail(sb);
     return sb.toString();
   }
+
   private ColumnDefinition parseColumnDef() {
     String typeName = currentToken.getCasedText();
     typeName = toCamelCase(typeName);
@@ -676,6 +703,7 @@ public class SQLParser {
     AndCondition condition = parseAndCondition();
     expression = new Expression(condition);
     while (tokEquals(TokenType.OR)) {
+      expression.addToken(currentToken);
       next();
       condition = parseAndCondition();
       expression.addCondition(condition);
@@ -688,6 +716,7 @@ public class SQLParser {
     Condition c = parseCondition();
     andCondition = new AndCondition(c);
     while (tokEquals(TokenType.AND)) {
+      andCondition.addToken(currentToken);
       next();
       c = parseCondition();
       andCondition.addCondition(c);
@@ -702,16 +731,21 @@ public class SQLParser {
       return parseCondition();
     }
     if(tokEquals(TokenType.EXISTS)){
+      condition = new Condition();
+      condition.addToken(currentToken);
       next();
+      condition.addToken(currentToken);
       match(TokenType.LPAREN);
-      parseSelect();
-      condition = null; //TODO: Deal with this BS too
+      SelectStatement ss = parseSelect();
+      condition.setFirst(new Operand(new Summand(new Factor(new GeneralTerm(ss)))));
+      condition.addToken(currentToken);
       match(TokenType.RPAREN);
     } else {
       Operand o = parseOperand();
       condition = new Condition(o);
       if (tokEquals(TokenType.IS) || tokEquals(TokenType.BETWEEN) || tokEquals(TokenType.IN) || tokEquals(TokenType.NOT)
         || tokEquals(TokenType.LIKE) || tokEquals(TokenType.REGEXP) || isComparator()) {
+        condition.addToken(currentToken);
         parseConditionRHS(condition);
       }
     }
@@ -723,10 +757,13 @@ public class SQLParser {
     if (isComparator()) {
       next();
       if (tokEquals(TokenType.ALL) || tokEquals(TokenType.ANY) || tokEquals(TokenType.SOME)) {
+        existing.addToken(currentToken);
         next();
         match(TokenType.LPAREN);
-        parseSelect();
-        //TODO: fix this
+        SelectStatement ss = parseSelect();
+        Operand o = new Operand(new Summand(new Factor(new GeneralTerm(ss))));
+        existing.setSecond(o);
+        existing.addToken(currentToken);
         match(TokenType.RPAREN);
       } else {
         Operand o = parseOperand();
@@ -735,55 +772,68 @@ public class SQLParser {
     } else {
       switch (currentToken.getType()) {
         case IS:
+          existing.addToken(currentToken);
           next();
           if (tokEquals(TokenType.NOT)) {
+            existing.addToken(currentToken);
             next();
           }
           if (tokEquals(TokenType.NULL)) {
+            existing.addToken(currentToken);
             next();
           } else {
+            existing.addToken(currentToken);
             match(TokenType.DISTINCT);
+            existing.addToken(currentToken);
             match(TokenType.FROM);
             Operand o = parseOperand();
             existing.setSecond(o);
           }
           break;
         case BETWEEN:
+          existing.addToken(currentToken);
           next();
           Operand o = parseOperand();
           existing.setSecond(o);
           match(TokenType.AND);
           break;
         case IN:
+          existing.addToken(currentToken);
           next();
+          existing.addToken(currentToken);
           match(TokenType.LPAREN);
           if (tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT)
             || tokEquals(TokenType.VALUES)) {
-            parseSelect();
-            //TODO: FIX
+            SelectStatement ss = parseSelect();
+            existing.setSecond(new Operand(new Summand(new Factor(new GeneralTerm(ss)))));
           } else {
-            parseExpr();
-            //TODO: FIX
+            Expression e = parseExpr();
+            existing.setSecond(new Operand(new Summand(new Factor(new GeneralTerm(e)))));
             while (tokEquals(TokenType.COMMA)) {
               next();
               parseExpr();
               //TODO: FIX
             }
           }
+          existing.addToken(currentToken);
           match(TokenType.RPAREN);
           break;
         case NOT:
+          existing.addToken(currentToken);
           next();
         case LIKE:
+          existing.addToken(currentToken);
           next();
           o = parseOperand();
           existing.setSecond(o);
           if (tokEquals(TokenType.ESCAPE)) {
+            existing.addToken(currentToken);
             next();
             match(TokenType.IDENT);
           }
           break;
         case REGEXP:
+          existing.addToken(currentToken);
           next();
           o = parseOperand();
           existing.setSecond(o);
@@ -800,6 +850,7 @@ public class SQLParser {
     Summand s = parseSummand();
     operand = new Operand(s);
     while (tokEquals(TokenType.BAR)) {
+      operand.addToken(currentToken);
       next();
       s = parseSummand();
       operand.addSummand(s);
