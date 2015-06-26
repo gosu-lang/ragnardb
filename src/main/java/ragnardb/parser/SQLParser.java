@@ -527,7 +527,7 @@ public class SQLParser {
   }
 
   private Constraint parseConstraint() {
-    Constraint _constraint = null;
+    Constraint _constraint = new Constraint();
     String s = "";
     if (tokEquals(TokenType.CONSTRAINT)) {
       next();
@@ -536,52 +536,64 @@ public class SQLParser {
         match(TokenType.NOT);
         match(TokenType.EXISTS);
       }
-      s= match(TokenType.IDENT);
+      _constraint.setName(match(TokenType.IDENT));
     }
     if (tokEquals(TokenType.CHECK)) {
       next();
-      _constraint = new CheckConstraint(s);
+      _constraint.setType(Constraint.constraintType.CHECK);
       Expression e = parseExpr();
-      _constraint.setExpression(e);
+      //_constraint.setExpression(e);
     } else if (tokEquals(TokenType.UNIQUE)) {
       String t;
       next();
       match(TokenType.LPAREN);
       t = match(TokenType.IDENT);
-      _constraint = new ColumnConstraint(s, t, false);
+      _constraint.appendColumn(t);
+      _constraint.setType(Constraint.constraintType.UNIQUE);
       while (tokEquals(TokenType.COMMA)) {
         next();
         t = match(TokenType.IDENT);
-        _constraint.addColumnName(t);
+        _constraint.appendColumn(t);
       }
       match(TokenType.RPAREN);
     } else if (tokEquals(TokenType.PRIMARY)) {
       next();
       match(TokenType.KEY);
-      pass(TokenType.HASH);
+      if(tokEquals(TokenType.HASH)){
+        next();
+        _constraint.setType(Constraint.constraintType.PRIMARYHASH);
+      }
+      else{
+        _constraint.setType(Constraint.constraintType.PRIMARY);
+      }
       match(TokenType.LPAREN);
       String t = match(TokenType.IDENT);
-      _constraint = new ColumnConstraint(s, t, true);
+      _constraint.appendColumn(t);
+
       while (tokEquals(TokenType.COMMA)) {
         next();
         t = match(TokenType.IDENT);
-        _constraint.addColumnName(t);
+        _constraint.appendColumn(t);
       }
       match(TokenType.RPAREN);
     } else if (tokEquals(TokenType.FOREIGN)) {
+      _constraint.setType(Constraint.constraintType.FOREIGN);
       next();
       match(TokenType.KEY);
       match(TokenType.LPAREN);
       ArrayList<String> fKs = list(TokenType.IDENT);
-      _constraint = new ReferentialConstraint(s, fKs);
+      _constraint.setColumnNames(fKs);
       match(TokenType.RPAREN);
       match(TokenType.REFERENCES);
-      pass(TokenType.IDENT);
+      if(tokEquals(TokenType.IDENT)){
+        _constraint.setReferentialName(currentToken.getText());
+        next();
+      }
       if (tokEquals(TokenType.LPAREN)) {
         next();
         ArrayList<String> refs = list(TokenType.IDENT);
         for(String r: refs){
-          _constraint.addColumnName(r+"~");
+          _constraint.appendReferentialColumn(r);
         }
         match(TokenType.RPAREN);
       }
