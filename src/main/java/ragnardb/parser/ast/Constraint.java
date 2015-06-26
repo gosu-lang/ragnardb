@@ -8,6 +8,7 @@ import java.util.List;
  */
 public class Constraint {
   public enum constraintType{CHECK,UNIQUE,FOREIGN,PRIMARY,PRIMARYHASH};
+  //private Expression
   private List<String> columnNames;
   private List<String> referentialColumnNames;
   private constraintType type;

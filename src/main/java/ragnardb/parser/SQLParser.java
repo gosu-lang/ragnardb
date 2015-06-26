@@ -169,6 +169,8 @@ public class SQLParser {
     return _ss;
   }
   private CreateTable parseCreateTable() {
+    int line = currentToken.getLine();
+    int col = currentToken.getCol();
     match(TokenType.CREATE);
     if (currentToken.getType() == TokenType.TEMP ||
       currentToken.getType() == TokenType.TEMPORARY) {
@@ -182,6 +184,7 @@ public class SQLParser {
     }
 
     CreateTable table = new CreateTable(currentToken.getText());
+    table.setLoc(line,col);
     match(TokenType.IDENT);
 
     if (currentToken.getType() == TokenType.DOT) {
@@ -301,7 +304,7 @@ public class SQLParser {
     if (tokEquals(TokenType.WHERE)) {
       next();
       Expression e = parseExpr();
-      current.addExpression(e,"WHERE");
+      current.addExpression(e, "WHERE");
     }
     if (tokEquals(TokenType.GROUP)) {
       next();
@@ -494,8 +497,11 @@ public class SQLParser {
   private ColumnDefinition parseColumnDef() {
     String typeName = currentToken.getCasedText();
     typeName = toCamelCase(typeName);
+    int col = currentToken.getCol();
+    int line = currentToken.getLine();
     match(TokenType.IDENT);
     ColumnDefinition column = parseTypeName(typeName);
+    column.setLoc(line,col);
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.INTERNALDOUBLE) || tokEquals(TokenType.IDENT)
