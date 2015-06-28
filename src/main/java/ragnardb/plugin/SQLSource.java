@@ -1,12 +1,9 @@
 package ragnardb.plugin;
 
-import gw.config.CommonServices;
 import gw.fs.FileFactory;
 import gw.fs.IDirectory;
 import gw.fs.IFile;
 import gw.fs.ResourcePath;
-import gw.fs.physical.IPhysicalFileSystem;
-import gw.fs.physical.PhysicalFileImpl;
 import gw.fs.physical.PhysicalResourceImpl;
 import gw.lang.reflect.module.IModule;
 import ragnardb.parser.SQLParser;
@@ -23,8 +20,9 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
   private DDL parseTree;
   private IFile _file;
 
-  public SQLSource(ResourcePath path, IPhysicalFileSystem backingFileSystem) {
-    super(path, backingFileSystem);
+  public SQLSource(IFile file) {
+    super( file.getPath(), FileFactory.instance().getDefaultPhysicalFileSystem() );
+    _file = file;
     setParseTree();
   }
 
@@ -34,19 +32,15 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
 
   @Override
   public IFile getFile() {
-    return _file == null ? _file = CommonServices.getFileSystem().getIFile(new File(_path.getFileSystemPathString())) : _file;
-  }
-
-  public SQLSource(ResourcePath path) {
-    this(path, FileFactory.instance().getDefaultPhysicalFileSystem());
+    return _file;
   }
 
   private void setParseTree(){
     SQLParser p = null;
     try {
       p = new SQLParser(new SQLTokenizer(getReader()));
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
+    } catch (Exception e) {
+      throw new RuntimeException( e );
     }
     parseTree = p.parse();
   }
@@ -77,8 +71,8 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
   }
 
   @Override
-  public Reader getReader() throws FileNotFoundException {
-    return new FileReader(this._path.getFileSystemPathString());
+  public Reader getReader() throws IOException {
+    return new InputStreamReader( _file.openInputStream() );
   }
 
 }

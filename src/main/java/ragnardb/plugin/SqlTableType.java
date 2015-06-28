@@ -23,7 +23,7 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
     @Override
     protected ITypeInfo init()
     {
-      return new SQLTypeInfo( SqlTableType.this );
+      return new SQLTypeInfo( (ISqlTableType)getTheRef() );
     }
   };
 

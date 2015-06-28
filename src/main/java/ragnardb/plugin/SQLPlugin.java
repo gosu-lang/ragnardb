@@ -54,6 +54,7 @@ public class SQLPlugin extends TypeLoaderBase {
     }
   };
   private Map<IFile, String> _fileToDdlTypeNames;
+  private Set<String> _namespaces;
 
   public SQLPlugin(IModule module) {
     super(module);
@@ -71,7 +72,7 @@ public class SQLPlugin extends TypeLoaderBase {
     sourcePaths.add(sourceRootDir);
     sourcePaths.add(testRootDir);
 
-    _module.setSourcePath(sourcePaths);
+    _module.setSourcePath( sourcePaths );
   }
 
   /**
@@ -82,7 +83,7 @@ public class SQLPlugin extends TypeLoaderBase {
     //leverage Streams API to basically cast Pair<String, IFile> to Pair<String, ISQLSource> in place
     _sqlSources = findAllFilesByExtension(FILE_EXTENSION)
         .stream()
-        .map(pair -> new Pair<String, ISQLSource>(pair.getFirst(), new SQLSource(pair.getSecond().getPath())))
+        .map(pair -> new Pair<String, ISQLSource>(pair.getFirst(), new SQLSource(pair.getSecond())))
         .collect(Collectors.toList());
     _sqlSourcesByPackage.clear();
   }
@@ -109,17 +110,34 @@ public class SQLPlugin extends TypeLoaderBase {
   }
 
   @Override
-  public Set<? extends CharSequence> getAllNamespaces() {
-//    if (_namespaces == null) {
-//      try {
-//        _namespaces = TypeSystem.getNamespacesFromTypeNames(getAllTypeNames(), new HashSet<>());
-//      } catch (NullPointerException e) {
-//        //!! hack to get past dependency issue with tests
-//        return Collections.emptySet();
-//      }
-//    }
-//    return _namespaces;
-    return Collections.emptySet();
+  public Set<String> getAllNamespaces() {
+    if( _namespaces == null ) {
+      try {
+        _namespaces = TypeSystem.getNamespacesFromTypeNames( getAllTypeNames(), new HashSet<String>() );
+      }
+      catch( NullPointerException e ) {
+        //!! hack to get past dependency issue with tests
+        return Collections.emptySet();
+      }
+    }
+    return _namespaces;
+  }
+
+  @Override
+  public void refreshedNamespace( String namespace, IDirectory dir, RefreshKind kind ) {
+    if( _namespaces != null ) {
+      if( kind == RefreshKind.CREATION )  {
+        _namespaces.add( namespace );
+      }
+      else if( kind == RefreshKind.DELETION ) {
+        _namespaces.remove( namespace );
+      }
+    }
+  }
+
+  @Override
+  public boolean hasNamespace( String namespace ) {
+    return getAllNamespaces().contains( namespace );
   }
 
   @Override
@@ -130,17 +148,6 @@ public class SQLPlugin extends TypeLoaderBase {
   @Override
   public boolean handlesNonPrefixLoads() {
     return true;
-  }
-
-  @Override
-  public void refreshedNamespace(String s, IDirectory iDirectory, RefreshKind refreshKind) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public boolean hasNamespace(String s) {
-//    return _sqlSourcesByPackage.get().keySet().contains(s);
-    return false;
   }
 
   @Override
