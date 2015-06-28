@@ -82,11 +82,8 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
 
     List<ColumnDefinition> defs = new ArrayList<>();
 
-    DDL ddlFile = getEnclosingType().getSqlSource();
-    for (CreateTable table: ddlFile.getList()){
-      for(ColumnDefinition def : table.getColumnDefinitions()){
-       defs.add(def);
-      }
+    for(ColumnDefinition def : _table.getColumnDefinitions()){
+     defs.add(def);
     }
 
     return defs;
