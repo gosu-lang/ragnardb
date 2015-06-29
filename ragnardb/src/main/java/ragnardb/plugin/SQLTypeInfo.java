@@ -1,8 +1,6 @@
 package ragnardb.plugin;
 
-import gw.lang.reflect.BaseTypeInfo;
-import gw.lang.reflect.IPropertyInfo;
-import gw.lang.reflect.IType;
+import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
 
 import java.sql.Types;
@@ -14,6 +12,7 @@ import java.util.Map;
 public class SQLTypeInfo extends BaseTypeInfo {
   private List<IPropertyInfo> _propertiesList;
   private Map<String, IPropertyInfo> _propertiesMap;
+  private MethodList _methodList;
 
   public SQLTypeInfo(ISqlTableType type) {
     super(type);
@@ -31,6 +30,10 @@ public class SQLTypeInfo extends BaseTypeInfo {
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add(prop);
     }
+
+    //create a "findBy***" method for each property/column
+    _methodList = new MethodList(); //MethodList#add(IMethodInfo)
+
   }
 
   /**
@@ -98,5 +101,20 @@ public class SQLTypeInfo extends BaseTypeInfo {
   @Override
   public int getTextLength() {
     return ((ISqlTableType)getOwnersType()).getTable().getName().length();
+  }
+
+  @Override
+  public MethodList getMethods() {
+    return super.getMethods();
+  }
+
+  @Override
+  public IMethodInfo getMethod(CharSequence methodName, IType... params) {
+    return super.getMethod(methodName, params);
+  }
+
+  @Override
+  public IMethodInfo getCallableMethod(CharSequence method, IType... params) {
+    return super.getCallableMethod(method, params);
   }
 }
