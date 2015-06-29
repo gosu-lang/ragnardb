@@ -15,7 +15,7 @@ RagnarDB is an experimental O/R framework for the Gosu programming language.
 
 Within this (ragnardb) project, take the following steps:
 
-1. Settings -> Plugins -> Install Plugin from disk..., then look for and install "Intellij plugin development with Maven". Restart IJ if necessary.
+1. Settings -> Plugins -> Browse Repositories..., then look for and install "Intellij plugin development with Maven". Restart IJ if necessary.
 2. Maven Projects -> Profiles -> enable "ij"
   * The project module "gosu-custom-types-plugin" icon should now look like a... plug
 3. Create a plugin SDK, if not existing already.
