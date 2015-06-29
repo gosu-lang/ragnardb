@@ -8,8 +8,8 @@ RagnarDB is an experimental O/R framework for the Gosu programming language.
 
 * IJ 14 CE
 * JDK 8
-* git clone git@github.com:gosu-lang/ragnardb.git
-* git clone git@github.com:gosu-lang/ragnardb-test.git
+* `git clone git@github.com:gosu-lang/ragnardb.git`
+* `git clone git@github.com:gosu-lang/ragnardb-test.git`
 
 ### IJ setup
 
