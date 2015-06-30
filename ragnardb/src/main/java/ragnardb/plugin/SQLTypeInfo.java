@@ -133,7 +133,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
               .withName(propertyName)
               .withType(prop.getFeatureType())
               .withDescription("Performs strict matching on this argument"))
-          .withReturnType(prop.getFeatureType())
+          .withReturnType(this.getOwnersType().getArrayType())
           .withStatic(true)
           .withCallHandler((ctx, args) -> null) // as opposed to { return null; }
       .build(this);

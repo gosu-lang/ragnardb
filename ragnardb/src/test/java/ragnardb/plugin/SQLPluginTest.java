@@ -117,7 +117,7 @@ public class SQLPluginTest {
 
     IMethodInfo getByAge = ti.getMethod("getByAge", JavaTypes.pINT());
     assertNotNull(getByAge);
-    assertEquals("ragnardb.foo.Users.Contacts", getByAge.getReturnType().getName());
+    assertEquals("ragnardb.foo.Users.Contacts[]", getByAge.getReturnType().getName()); //returns array of Contacts
 
     IMethodInfo getByAgeWithWrongSignature = ti.getMethod("getByAge", JavaTypes.STRING());
     assertNull(getByAgeWithWrongSignature);
