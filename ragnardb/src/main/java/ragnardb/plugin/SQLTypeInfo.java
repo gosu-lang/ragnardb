@@ -125,37 +125,34 @@ public class SQLTypeInfo extends BaseTypeInfo {
     for(String propertyName : _propertiesMap.keySet()) {
       SQLColumnPropertyInfo prop = (SQLColumnPropertyInfo) _propertiesMap.get(propertyName);
 
-      IMethodInfo method = new MethodInfoBuilder()
+      IMethodInfo findByMethod = new MethodInfoBuilder()
           .withName("findBy" + propertyName)
-          .withDescription("Get the value of the " + propertyName + " column.")
+          .withDescription("Find single match based on the value of the " + propertyName + " column.")
           .withParameters(new ParameterInfoBuilder()
               .withName(propertyName)
               .withType(prop.getFeatureType())
               .withDescription("Performs strict matching on this argument"))
-          .withReturnType(this.getOwnersType().getArrayType())
+          .withReturnType(this.getOwnersType())
           .withStatic(true)
           .withCallHandler((ctx, args) -> null) // as opposed to { return null; }
-      .build(this);
+          .build(this);
 
-      result.add(method);
+      result.add(findByMethod);
 
       //Now we add the findAllBy
-      method = new MethodInfoBuilder()
-              .withName("findAllBy" + propertyName)
-              .withDescription("Get the value of the all " + propertyName + " columns.")
-              .withParameters(new ParameterInfoBuilder()
-                      .withName(propertyName)
-                      .withType(prop.getFeatureType())
-                      .withDescription("Performs strict matching on this argument"))
-              .withReturnType(this.getOwnersType())  //TODO: Change to Iterable Itype when implemented
-              .withStatic(true)
-              .withCallHandler((ctx, args) -> null) // as opposed to { return null; }
-              .build(this);
+      IMethodInfo findAllByMethod = new MethodInfoBuilder()
+          .withName("findAllBy" + propertyName)
+          .withDescription("Find all matches based on the value of the " + propertyName + " column.")
+          .withParameters(new ParameterInfoBuilder()
+              .withName(propertyName)
+              .withType(prop.getFeatureType())
+              .withDescription("Performs strict matching on this argument"))
+          .withReturnType(this.getOwnersType())  //TODO: Change to Iterable<typeof this>
+          .withStatic(true)
+          .withCallHandler((ctx, args) -> null)
+          .build(this);
 
-      result.add(method);
-
-
-
+      result.add(findAllByMethod);
     }
 
     return result;

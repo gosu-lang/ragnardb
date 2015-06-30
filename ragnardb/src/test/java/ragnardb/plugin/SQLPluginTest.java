@@ -117,12 +117,16 @@ public class SQLPluginTest {
 
     IMethodInfo findByAge = ti.getMethod("findByAge", JavaTypes.pINT());
     assertNotNull(findByAge);
-    assertEquals("ragnardb.foo.Users.Contacts[]", findByAge.getReturnType().getName()); //returns array of Contacts
+    assertEquals("ragnardb.foo.Users.Contacts", findByAge.getReturnType().getName()); //returns single Contact
+
+    IMethodInfo findAllByAge = ti.getMethod("findAllByAge", JavaTypes.pINT());
+    assertNotNull(findAllByAge);
+    assertEquals("java.lang.Iterable<ragnardb.foo.Users.Contacts>", findAllByAge.getReturnType().getName()); //returns Iterable of Contacts //TODO KB
 
     IMethodInfo findByAgeWithWrongSignature = ti.getMethod("findByAge", JavaTypes.STRING());
     assertNull(findByAgeWithWrongSignature);
 
-    IMethodInfo unknownMethodWithNoArgs = ti.getMethod("doesNotExist");
+    IMethodInfo unknownMethodWithNoArgs = ti.getMethod("findSomethingWhichDoesNotExist");
     assertNull(unknownMethodWithNoArgs);
   }
 
