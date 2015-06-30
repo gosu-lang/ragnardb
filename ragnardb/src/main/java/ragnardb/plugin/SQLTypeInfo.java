@@ -127,7 +127,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
       SQLColumnPropertyInfo prop = (SQLColumnPropertyInfo) _propertiesMap.get(propertyName);
 
       IMethodInfo method = new MethodInfoBuilder()
-          .withName("getBy" + propertyName)
+          .withName("findBy" + propertyName)
           .withDescription("Get the value of the " + propertyName + " column.")
           .withParameters(new ParameterInfoBuilder()
               .withName(propertyName)
@@ -139,6 +139,24 @@ public class SQLTypeInfo extends BaseTypeInfo {
       .build(this);
 
       result.add(method);
+
+      //Now we add the findAllBy
+      method = new MethodInfoBuilder()
+              .withName("findAllBy" + propertyName)
+              .withDescription("Get the value of the all " + propertyName + " columns.")
+              .withParameters(new ParameterInfoBuilder()
+                      .withName(propertyName)
+                      .withType(prop.getFeatureType())
+                      .withDescription("Performs strict matching on this argument"))
+              .withReturnType(this.getOwnersType())  //TODO: Change to Iterable Itype when implemented
+              .withStatic(true)
+              .withCallHandler((ctx, args) -> null) // as opposed to { return null; }
+              .build(this);
+
+      result.add(method);
+
+
+
     }
 
     return result;
