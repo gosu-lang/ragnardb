@@ -147,7 +147,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
               .withName(propertyName)
               .withType(prop.getFeatureType())
               .withDescription("Performs strict matching on this argument"))
-          .withReturnType(JavaTypes.ITERABLE().getParameterizedType(this.getOwnersType()))  //TODO: Change to Iterable<typeof this>
+          .withReturnType(JavaTypes.ITERABLE().getParameterizedType(this.getOwnersType()))
           .withStatic(true)
           .withCallHandler((ctx, args) -> null)
           .build(this);
