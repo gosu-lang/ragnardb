@@ -115,12 +115,12 @@ public class SQLPluginTest {
     SQLTypeInfo ti = (SQLTypeInfo) result.getTypeInfo();
     assertEquals("Contacts", ti.getName());
 
-    IMethodInfo getByAge = ti.getMethod("findByAge", JavaTypes.pINT());
-    assertNotNull(getByAge);
-    assertEquals("ragnardb.foo.Users.Contacts[]", getByAge.getReturnType().getName()); //returns array of Contacts
+    IMethodInfo findByAge = ti.getMethod("findByAge", JavaTypes.pINT());
+    assertNotNull(findByAge);
+    assertEquals("ragnardb.foo.Users.Contacts[]", findByAge.getReturnType().getName()); //returns array of Contacts
 
-    IMethodInfo getByAgeWithWrongSignature = ti.getMethod("findByAge", JavaTypes.STRING());
-    assertNull(getByAgeWithWrongSignature);
+    IMethodInfo findByAgeWithWrongSignature = ti.getMethod("findByAge", JavaTypes.STRING());
+    assertNull(findByAgeWithWrongSignature);
 
     IMethodInfo unknownMethodWithNoArgs = ti.getMethod("doesNotExist");
     assertNull(unknownMethodWithNoArgs);
