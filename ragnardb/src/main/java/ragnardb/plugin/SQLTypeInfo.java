@@ -1,6 +1,5 @@
 package ragnardb.plugin;
 
-import com.sun.tools.doclets.internal.toolkit.builders.MethodBuilder;
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
 
@@ -133,7 +132,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
               .withName(propertyName)
               .withType(prop.getFeatureType())
               .withDescription("Performs strict matching on this argument"))
-          .withReturnType(this.getOwnersType())
+          .withReturnType(this.getOwnersType().getArrayType())
           .withStatic(true)
           .withCallHandler((ctx, args) -> null) // as opposed to { return null; }
       .build(this);
