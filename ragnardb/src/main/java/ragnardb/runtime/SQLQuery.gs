@@ -9,28 +9,34 @@ uses java.util.Iterator
 
 class SQLQuery<T> implements Iterable<T>{
 
-  var _table: IType as Table
+  var _rootType : IType as readonly RootType
   var _joinExpr: JoinExpression as JoinExpr
-  var _whereExprs: WhereExpression as WhereExpr
-  var _pickBlock: IPropertyInfo as Pick
+  var _whereExpr: WhereExpression as WhereExpr
+  var _pickBlock: IPropertyInfo as Pluck
   var _parent: SQLQuery as Parent
+  var _metadata: ITypeToSQLMetadata as Metadata
+
+  construct(me : ITypeToSQLMetadata) {
+    _metadata = me
+    _rootType = T
+  }
 
   function pluck<U>( pi: IPropertyReference<T, U> ): SQLQuery<U>{
-    return new SQLQuery<U>(){
+    return new SQLQuery<U>(Metadata){
         :Parent = this,
-        :Pick = pi.PropertyInfo
+        :Pluck = pi.PropertyInfo
         }
   }
 
-  function where( pi: IPropertyReference, c: SQLConstraint ): SQLQuery<T>{
-    return new SQLQuery<T>(){
+  function where(c: SQLConstraint ): SQLQuery<T>{
+    return new SQLQuery<T>(Metadata){
         :Parent = this,
-        :WhereExpr = new WhereExpression( pi.PropertyInfo, c )
+        :WhereExpr = new WhereExpression( c )
         }
   }
 
   function join( left: IPropertyReference, right: IPropertyReference ): SQLQuery<T>{
-    return new SQLQuery<T>(){
+    return new SQLQuery<T>(Metadata){
         :Parent = this,
         :JoinExpr = new JoinExpression( left.PropertyInfo, right.PropertyInfo )
         }
@@ -40,7 +46,26 @@ class SQLQuery<T> implements Iterable<T>{
     return execQuery().iterator()
   }
 
+  private property get Root() : SQLQuery {
+    if(_parent != null) {
+      return _parent.Root
+    } else {
+      return this
+    }
+  }
+
+  private function genSQL() : String {
+    var select =  "SELECT *";
+    var from = "FROM ${_metadata.getTableForType( Root.RootType )}"
+    var where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata )
+    return "${select} ${from} ${where}"
+  }
+
+  private function getArgs() : List {
+    return _whereExpr.getArgs();
+  }
+
   private function execQuery(): Iterable<T>{
-    return {}
+    return SQLRecord.select( genSQL(), getArgs(), T )
   }
 }

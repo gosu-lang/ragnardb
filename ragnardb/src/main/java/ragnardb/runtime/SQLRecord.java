@@ -1,5 +1,6 @@
 package ragnardb.runtime;
 
+import gw.lang.reflect.IType;
 import ragnardb.RagnarDB;
 import ragnardb.api.ISQLResult;
 
@@ -13,6 +14,7 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -165,7 +167,6 @@ public class SQLRecord implements ISQLResult
             record.setRawValue( columnName, resultSet.getObject( i ) );
             break;
         }
-
         i++;
       }
       return record;
@@ -174,6 +175,44 @@ public class SQLRecord implements ISQLResult
     {
       return null;
     }
+  }
+
+  static <T> Iterable<T> select(String sql, List vals, IType impl) throws SQLException
+  {
+    PreparedStatement preparedStatement = RagnarDB.getConnection().prepareStatement( sql );
+    for( int i = 0; i < vals.size(); i++ )
+    {
+      preparedStatement.setObject( i + 1, vals.get( i ) );
+    }
+    ResultSet resultSet = preparedStatement.executeQuery();
+    List<T> results = new LinkedList<>();
+    while( resultSet.next() )
+    {
+      SQLRecord record = (SQLRecord)impl.getTypeInfo().getCallableConstructor().getConstructor().newInstance();
+      ResultSetMetaData metaData = resultSet.getMetaData();
+      int columnCount = metaData.getColumnCount();
+      int i = 1;
+      while( i <= columnCount )
+      {
+        int columnType = metaData.getColumnType( i );
+        String columnName = metaData.getColumnName( i );
+        switch( columnType )
+        {
+          case Types.INTEGER:
+            record.setRawValue( columnName, resultSet.getInt( i ) );
+            break;
+          case Types.BIGINT:
+            record.setRawValue( columnName, resultSet.getLong( i ) );
+            break;
+          default:
+            record.setRawValue( columnName, resultSet.getObject( i ) );
+            break;
+        }
+        i++;
+      }
+      results.add( (T) record );
+    }
+    return results;
   }
 
   public boolean delete()
