@@ -6,7 +6,7 @@ import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.ITypeInfo;
 import gw.lang.reflect.PropertyInfoBase;
-import ragnardb.runtime.SQLResult;
+import ragnardb.runtime.SQLRecord;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,13 +31,13 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
       @Override
       public Object getValue( Object obj )
       {
-        return ((SQLResult)obj).getRawValue( _propName );
+        return ((SQLRecord)obj).getRawValue( _propName );
       }
 
       @Override
       public void setValue( Object obj, Object val )
       {
-        ((SQLResult)obj).setRawValue( _propName, val );
+        ((SQLRecord)obj).setRawValue( _propName, val );
       }
     };
     _offset = offset;

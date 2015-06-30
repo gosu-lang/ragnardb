@@ -1,4 +1,4 @@
-package ragnardb.demo
+package ragnardb.runtime
 
 interface IQueryStuff {
 
