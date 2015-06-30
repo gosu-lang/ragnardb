@@ -10,6 +10,10 @@ RagnarDB is an experimental O/R framework for the Gosu programming language.
 * JDK 8
 * `git clone git@github.com:gosu-lang/ragnardb.git`
 * `git clone git@github.com:gosu-lang/ragnardb-test.git`
+* The following environment variables defined:
+  * JAVA_HOME
+  * IDEA_HOME
+  * IDEA_JDK
 
 ### IJ setup
 
@@ -24,7 +28,7 @@ Within this (ragnardb) project, take the following steps:
   3. Add a new SDK pointing to the root of your IJ installation.  The SDK would likely be named "IDEA IC-141.1532.4"
     * It is probably also a good idea to make a matching IDEA_HOME environment variable
   4. Go to Project Settings -> Modules, select "gosu-custom-types-plugin".  Set its SDK to that of the previous step.
-4. Add a run configuration of type plugin.  The name is irrelevant but make sure its classpath is "gosu-custom-types-plugin".
+4. Add a run configuration of type plugin.  Call it "Gosu Sandbox" although the name is irrelevant. Make sure its classpath is "gosu-custom-types-plugin".
 5. Run the plugin configuration, which will launch another "sandbox" IJ instance.
 
 ### Gosu sandbox setup
@@ -34,3 +38,6 @@ Within this (ragnardb) project, take the following steps:
 3. Shutdown the sandboxed IJ and restart from the run configuration again.
 4. Open the root pom of the ragnardb-test project
 5. Ctrl-N to find HelloWorldTest - you should see pretty Gosu syntax highlighting.  Right-click and run the test class.
+6. Upon startup of the sandbox, you may see a " Gosu plugin could not start: Project SDK not defined." error.
+  * To resolve this, go to File -> Project Structure, Platform Settings -> SDKs and add a 1.8 SDK if it does not exist already.
+  * Go to Project Settings -> Project and set the JDK to 1.8, also make sure the language level is set to 8 or the sdk default.
