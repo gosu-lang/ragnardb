@@ -1,5 +1,6 @@
 package ragnardb.plugin;
 
+import com.sun.tools.doclets.internal.toolkit.builders.MethodBuilder;
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
 
@@ -22,6 +23,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
   private void resolveProperties(ISqlTableType type) {
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
+
     List<ColumnDefinition> columns = type.getColumnDefinitions();
     for(ColumnDefinition column : columns) {
       SQLColumnPropertyInfo prop = new SQLColumnPropertyInfo(column.getColumnName(),
@@ -29,11 +31,8 @@ public class SQLTypeInfo extends BaseTypeInfo {
           getGosuType(column.getSQLType()), this, column.getOffset(), column.getLength());
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add(prop);
+      _methodList = createMethodInfos();
     }
-
-    //create a "findBy***" method for each property/column
-    _methodList = new MethodList(); //MethodList#add(IMethodInfo)
-
   }
 
   /**
@@ -100,21 +99,49 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
   @Override
   public int getTextLength() {
-    return ((ISqlTableType)getOwnersType()).getTable().getName().length();
+    return ((ISqlTableType) getOwnersType()).getTable().getName().length();
   }
 
   @Override
   public MethodList getMethods() {
-    return super.getMethods();
+    return _methodList;
+  }
+
+  @Override
+  public IMethodInfo getCallableMethod(CharSequence strMethod, IType... params) {
+    return FIND.callableMethod(getMethods(), strMethod, params);
   }
 
   @Override
   public IMethodInfo getMethod(CharSequence methodName, IType... params) {
-    return super.getMethod(methodName, params);
+    return FIND.method(getMethods(), methodName, params);
   }
 
-  @Override
-  public IMethodInfo getCallableMethod(CharSequence method, IType... params) {
-    return super.getCallableMethod(method, params);
+  /**
+   * create a "findBy***" method for each property/column
+   * @return
+   */
+  private MethodList createMethodInfos() {  //MethodList#add(IMethodInfo)
+    MethodList result = new MethodList();
+    for(String propertyName : _propertiesMap.keySet()) {
+      SQLColumnPropertyInfo prop = (SQLColumnPropertyInfo) _propertiesMap.get(propertyName);
+
+      IMethodInfo method = new MethodInfoBuilder()
+          .withName("getBy" + propertyName)
+          .withDescription("Get the value of the " + propertyName + " column.")
+          .withParameters(new ParameterInfoBuilder()
+              .withName(propertyName)
+              .withType(prop.getFeatureType())
+              .withDescription("Performs strict matching on this argument"))
+          .withReturnType(prop.getFeatureType())
+          .withStatic(true)
+          .withCallHandler((ctx, args) -> null) // as opposed to { return null; }
+      .build(this);
+
+      result.add(method);
+    }
+
+    return result;
   }
+
 }

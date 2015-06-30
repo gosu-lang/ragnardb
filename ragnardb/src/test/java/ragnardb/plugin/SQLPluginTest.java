@@ -7,6 +7,7 @@ import gw.lang.reflect.java.JavaTypes;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +102,28 @@ public class SQLPluginTest {
       assertNotNull("expectedType was null, meaning the actualProp's name was not found in the map", expectedType);
       assertSame(expectedType, actualProp.getFeatureType());
     }
+  }
+
+  @Test
+  public void getMethodInfo() {
+    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
+    assertNotNull(result);
+    assertEquals("ragnardb.foo.Users.Contacts", result.getName());
+    assertEquals("ragnardb.foo.Users", result.getNamespace());
+    assertEquals("Contacts", result.getRelativeName());
+
+    SQLTypeInfo ti = (SQLTypeInfo) result.getTypeInfo();
+    assertEquals("Contacts", ti.getName());
+
+    IMethodInfo getByAge = ti.getMethod("getByAge", JavaTypes.pINT());
+    assertNotNull(getByAge);
+    assertEquals("ragnardb.foo.Users.Contacts", getByAge.getReturnType().getName());
+
+    IMethodInfo getByAgeWithWrongSignature = ti.getMethod("getByAge", JavaTypes.STRING());
+    assertNull(getByAgeWithWrongSignature);
+
+    IMethodInfo unknownMethodWithNoArgs = ti.getMethod("doesNotExist");
+    assertNull(unknownMethodWithNoArgs);
   }
 
 }
