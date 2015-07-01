@@ -7,6 +7,7 @@ import gw.lang.reflect.java.JavaTypes;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
@@ -128,6 +129,32 @@ public class SQLPluginTest {
 
     IMethodInfo unknownMethodWithNoArgs = ti.getMethod("findSomethingWhichDoesNotExist");
     assertNull(unknownMethodWithNoArgs);
+  }
+
+  @Test
+  public void getRawSQL() {
+    ISqlDdlType result = (ISqlDdlType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
+    assertNotNull(result);
+    assertEquals("ragnardb.foo.Users", result.getName());
+
+    String expectedSource = "CREATE TABLE CONTACTS (\n" +
+        "    UserId int,\n" +
+        "    FirstName nchar(50),\n" +
+        "    LastName nchar(50),\n" +
+        "    Age int\n" +
+        "    -- TODO add Gender\n" +
+        ");";
+    String actualSource = null;
+
+    try {
+      actualSource = result.getSqlSource();
+      System.out.println(actualSource.toString());
+    } catch(IOException e) {
+      e.printStackTrace();
+      fail();
+    }
+
+    assertEquals(expectedSource, actualSource);
   }
 
 }

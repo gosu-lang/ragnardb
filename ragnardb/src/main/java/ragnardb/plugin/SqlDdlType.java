@@ -2,16 +2,15 @@ package ragnardb.plugin;
 
 import gw.fs.IFile;
 import gw.lang.reflect.*;
+import gw.util.StreamUtil;
 import gw.util.concurrent.LockingLazyVar;
 import ragnardb.parser.ast.CreateTable;
-import ragnardb.parser.ast.DDL;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by kmoore on 6/25/15.
- */
 public class SqlDdlType extends TypeBase implements ISqlDdlType {
 
     private final ISQLSource _sqlSource;
@@ -94,8 +93,9 @@ public class SqlDdlType extends TypeBase implements ISqlDdlType {
     }
 
     @Override
-    public DDL getSqlSource() {
-        return _sqlSource.getParseTree();
+    public String getSqlSource() throws IOException {
+        Reader reader = StreamUtil.getInputStreamReader(getSourceFiles()[0].openInputStream());
+        return StreamUtil.getContent(reader);
     }
 
     @Override
