@@ -2,9 +2,7 @@ package ragnardb.plugin;
 
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
-import ragnardb.runtime.SQLConstraint;
-import ragnardb.runtime.SQLQuery;
-import ragnardb.runtime.SQLRecord;
+import ragnardb.runtime.*;
 
 import java.sql.Types;
 import java.util.ArrayList;
@@ -130,24 +128,26 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
       IMethodInfo findByMethod = new MethodInfoBuilder()
           .withName("findBy" + propertyName)
-          .withDescription( "Find single match based on the value of the " + propertyName + " column." )
-          .withParameters( new ParameterInfoBuilder()
-                             .withName( propertyName )
-                             .withType( prop.getFeatureType() )
-                             .withDescription( "Performs strict matching on this argument" ) )
-          .withReturnType( this.getOwnersType() )
-          .withStatic( true )
-          .withCallHandler( ( ctx, args ) -> {
-            return new IMethodCallHandler()
-            {
+          .withDescription("Find single match based on the value of the " + propertyName + " column.")
+          .withParameters(new ParameterInfoBuilder()
+            .withName(propertyName)
+            .withType(prop.getFeatureType())
+            .withDescription("Performs strict matching on this argument"))
+          .withReturnType(this.getOwnersType())
+          .withStatic(true)
+          .withCallHandler((ctx, args) -> {
+            return new IMethodCallHandler() {
               @Override
-              public Object handleCall( Object ctx, Object... args )
-              {
-                return null; //TODO interns - fill in here w/ SQLQuery
+              public Object handleCall(Object ctx, Object... args) {
+               SQLMetadata md = new SQLMetadata();
+                SQLQuery query = new SQLQuery(md, getOwnersType());
+                SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
+                query = query.where(constraint);
+                return query.iterator().next();
               }
             };
-          } ) // as opposed to { return null; }
-          .build( this );
+          }) // as opposed to { return null; }
+          .build(this);
 
       result.add(findByMethod);
 
