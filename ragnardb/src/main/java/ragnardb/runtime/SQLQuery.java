@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Created by carson on 7/1/15.
  */
-class SQLQuery<T> implements Iterable<T>{
+public class SQLQuery<T> implements Iterable<T>{
 
   private IType _rootType;
   private SQLConstraint _whereExpr;
