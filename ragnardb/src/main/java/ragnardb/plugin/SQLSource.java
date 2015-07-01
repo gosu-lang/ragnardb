@@ -11,13 +11,16 @@ import ragnardb.parser.SQLTokenizer;
 import ragnardb.parser.ast.CreateTable;
 import ragnardb.parser.ast.DDL;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
 
-  private DDL parseTree;
+  private DDL _parseTree;
   private IFile _file;
 
   public SQLSource(IFile file) {
@@ -27,7 +30,7 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
   }
 
   public DDL getParseTree(){
-    return parseTree;
+    return _parseTree;
   }
 
   @Override
@@ -42,15 +45,15 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
     } catch (Exception e) {
       throw new RuntimeException( e );
     }
-    parseTree = p.parse();
+    _parseTree = p.parse();
   }
 
   @Override
   public List<CreateTable> getTables() {
-    return parseTree.getList().stream().collect(Collectors.toList());
+    return _parseTree.getList().stream().collect(Collectors.toList());
 //    List<CreateTable> returnSet = new ArrayList<>();
 //
-//    for (CreateTable table : parseTree.getList()){
+//    for (CreateTable table : _parseTree.getList()){
 //          returnSet.add(table);
 //    }
 //    return returnSet;
