@@ -125,6 +125,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
     MethodList result = new MethodList();
     for(String propertyName : _propertiesMap.keySet()) {
       SQLColumnPropertyInfo prop = (SQLColumnPropertyInfo) _propertiesMap.get(propertyName);
+      SQLMetadata md = new SQLMetadata();
 
       IMethodInfo findByMethod = new MethodInfoBuilder()
           .withName("findBy" + propertyName)
@@ -139,11 +140,10 @@ public class SQLTypeInfo extends BaseTypeInfo {
             return new IMethodCallHandler() {
               @Override
               public Object handleCall(Object ctx, Object... args) {
-               SQLMetadata md = new SQLMetadata();
                 SQLQuery query = new SQLQuery(md, getOwnersType());
                 SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
                 query = query.where(constraint);
-                return query.iterator().next();
+                return query.iterator().hasNext() ? query.iterator().next() : null;
               }
             };
           }) // as opposed to { return null; }
@@ -156,12 +156,22 @@ public class SQLTypeInfo extends BaseTypeInfo {
           .withName("findAllBy" + propertyName)
           .withDescription("Find all matches based on the value of the " + propertyName + " column.")
           .withParameters(new ParameterInfoBuilder()
-              .withName(propertyName)
-              .withType(prop.getFeatureType())
-              .withDescription("Performs strict matching on this argument"))
+            .withName(propertyName)
+            .withType(prop.getFeatureType())
+            .withDescription("Performs strict matching on this argument"))
           .withReturnType(JavaTypes.ITERABLE().getParameterizedType(this.getOwnersType()))
           .withStatic(true)
-          .withCallHandler((ctx, args) -> null)
+          .withCallHandler((ctx, args) -> {
+            return new IMethodCallHandler() {
+              @Override
+              public Object handleCall(Object ctx, Object... args) {
+                SQLQuery query = new SQLQuery(md, getOwnersType());
+                SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
+                query = query.where(constraint);
+                return query.iterator();
+              }
+            };
+          })
           .build(this);
 
       result.add(findAllByMethod);
