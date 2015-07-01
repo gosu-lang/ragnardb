@@ -18,7 +18,7 @@ public class SQLQuery<T> implements Iterable<T>{
   private SQLQuery _parent;
   private ITypeToSQLMetadata _metadata;
 
-  SQLQuery( ITypeToSQLMetadata md, IType rootType )
+  public SQLQuery( ITypeToSQLMetadata md, IType rootType )
   {
     _metadata = md;
     _rootType = rootType;

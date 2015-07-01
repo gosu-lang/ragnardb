@@ -1,6 +1,6 @@
 package ragnardb.runtime;
 
-import gw.lang.reflect.features.IPropertyReference;
+import gw.lang.reflect.IPropertyInfo;
 
 import java.util.Arrays;
 import java.util.List;
@@ -8,24 +8,17 @@ import java.util.List;
 public abstract class SQLConstraint
 {
 
-  IPropertyReference _propertyReference;
-
-  SQLConstraint( IPropertyReference pr )
-  {
-    _propertyReference = pr;
-  }
-
-  static SQLConstraint isEqualTo( IPropertyReference pr, Object o )
+  public static SQLConstraint isEqualTo( IPropertyInfo pr, Object o )
   {
     return new IsEqualToConstraint( pr, o );
   }
 
-  static SQLConstraint isIn( IPropertyReference pr, List<Object> l )
+  public static SQLConstraint isIn( IPropertyInfo pr, List<Object> l )
   {
     return new IsInConstraint( pr, l );
   }
 
-  static SQLConstraint isLike( IPropertyReference pr, String s )
+  public static SQLConstraint isLike( IPropertyInfo pr, String s )
   {
     return new IsLikeConstraint( pr, s );
   }
@@ -36,17 +29,18 @@ public abstract class SQLConstraint
 
   private static class IsEqualToConstraint extends SQLConstraint
   {
+    IPropertyInfo _propertyInfo;
     Object _obj;
 
-    IsEqualToConstraint( IPropertyReference pr, Object o )
+    IsEqualToConstraint( IPropertyInfo pi, Object o )
     {
-      super( pr );
+      _propertyInfo = pi;
       _obj = o;
     }
 
     public String getSQL( ITypeToSQLMetadata metadata )
     {
-      return metadata.getColumnForProperty( _propertyReference.getPropertyInfo() ) + "=?";
+      return metadata.getColumnForProperty( _propertyInfo ) + "=?";
     }
 
     List<Object> getArgs()
@@ -57,11 +51,12 @@ public abstract class SQLConstraint
 
   private static class IsInConstraint extends SQLConstraint
   {
+    IPropertyInfo _propertyInfo;
     List _list;
 
-    IsInConstraint( IPropertyReference pr, List list )
+    IsInConstraint( IPropertyInfo pi, List list )
     {
-      super( pr );
+      _propertyInfo = pi;
       _list = list;
     }
 
@@ -78,11 +73,12 @@ public abstract class SQLConstraint
 
   private static class IsLikeConstraint extends SQLConstraint
   {
+    IPropertyInfo _propertyInfo;
     String _str;
 
-    IsLikeConstraint( IPropertyReference pr, String str )
+    IsLikeConstraint( IPropertyInfo pi, String str )
     {
-      super( pr );
+      _propertyInfo = pi;
       _str = str;
     }
 

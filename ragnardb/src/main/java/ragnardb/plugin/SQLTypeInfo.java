@@ -2,6 +2,9 @@ package ragnardb.plugin;
 
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
+import ragnardb.runtime.SQLConstraint;
+import ragnardb.runtime.SQLQuery;
+import ragnardb.runtime.SQLRecord;
 
 import java.sql.Types;
 import java.util.ArrayList;
