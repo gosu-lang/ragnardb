@@ -85,7 +85,7 @@ class QueryBootstrapTest {
     }
 
     static function where( c: SQLConstraint) : SQLQuery<Contact> {
-      return new SQLQuery<Contact>(new ContactMetadata()).where(c)
+      return new SQLQuery<Contact>(new ContactMetadata(), Contact).where(c)
     }
   }
 
