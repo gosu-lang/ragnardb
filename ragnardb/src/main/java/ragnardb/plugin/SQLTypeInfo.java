@@ -238,7 +238,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
             SQLQuery query = new SQLQuery(md, getOwnersType());
             SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
             query = query.where(constraint);
-            return query.iterator();
+            return query;
           })
           .build(this);
 
