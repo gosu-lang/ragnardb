@@ -513,26 +513,14 @@ public class SQLParser {
       tokEquals(TokenType.OVL);
   }
 
-  private String toCamelCase(String str){
-    Pattern p = Pattern.compile("_(.)");
-    Matcher m = p.matcher(str);
-    StringBuffer sb = new StringBuffer();
-    while (m.find()) {
-      m.appendReplacement(sb, m.group(1).toUpperCase());
-    }
-    m.appendTail(sb);
-    return sb.toString();
-  }
-
   private ColumnDefinition parseColumnDef() {
-    String typeName = currentToken.getCasedText();
-    typeName = toCamelCase(typeName);
+    String columnName = currentToken.getCasedText();
     int col = currentToken.getCol();
     int offset = currentToken.getOffset();
     int line = currentToken.getLine();
     match(TokenType.IDENT);
-    ColumnDefinition column = parseTypeName(typeName);
-    column.setLoc(line,col, offset, typeName.length());
+    ColumnDefinition column = parseTypeName(columnName);
+    column.setLoc( line, col, offset, columnName.length() );
     if (tokEquals(TokenType.DEFAULT)) {
       next();
       if(tokEquals(TokenType.LONG) || tokEquals(TokenType.INTERNALDOUBLE) || tokEquals(TokenType.IDENT)

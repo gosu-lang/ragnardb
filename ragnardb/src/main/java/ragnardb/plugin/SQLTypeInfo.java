@@ -26,8 +26,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
     List<ColumnDefinition> columns = type.getColumnDefinitions();
     for(ColumnDefinition column : columns) {
-      SQLColumnPropertyInfo prop = new SQLColumnPropertyInfo(column.getColumnName(),
-          makePropertyName(column.getColumnName()),
+      SQLColumnPropertyInfo prop = new SQLColumnPropertyInfo(column.getColumnName(), column.getPropertyName(),
           getGosuType(column.getSQLType()), this, column.getOffset(), column.getLength());
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add( prop );
@@ -78,10 +77,6 @@ public class SQLTypeInfo extends BaseTypeInfo {
     }
   }
 
-  private String makePropertyName(String columnName) {
-    return columnName;
-  }
-
   @Override
   public List<? extends IPropertyInfo> getProperties() {
     return _propertiesList;
@@ -127,8 +122,9 @@ public class SQLTypeInfo extends BaseTypeInfo {
       SQLColumnPropertyInfo prop = (SQLColumnPropertyInfo) _propertiesMap.get(propertyName);
       SQLMetadata md = new SQLMetadata();
 
+      String name = "findBy" + prop.getName();
       IMethodInfo findByMethod = new MethodInfoBuilder()
-          .withName("findBy" + propertyName.substring(0,1).toUpperCase()+propertyName.substring(1))
+          .withName( name )
           .withDescription("Find single match based on the value of the " + propertyName + " column.")
           .withParameters(new ParameterInfoBuilder()
             .withName(propertyName)

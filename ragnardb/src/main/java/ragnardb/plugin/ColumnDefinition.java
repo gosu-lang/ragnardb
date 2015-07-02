@@ -2,9 +2,12 @@ package ragnardb.plugin;
 
 import java.sql.Types;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ColumnDefinition {
   private String _columnName;
+  private String _propertyName;
   private int _sqlType; // see java.sql.Types: http://docs.oracle.com/javase/8/docs/api/index.html?java/sql/Types.html
   private boolean notNull;
   private boolean _null;
@@ -82,6 +85,7 @@ public class ColumnDefinition {
 
   public ColumnDefinition(String columnName, int sqlType) {
     _columnName = columnName;
+    _propertyName = toCapitalizedCamelCase( _columnName );
     _sqlType = sqlType;
   }
 
@@ -89,8 +93,8 @@ public class ColumnDefinition {
     return _columnName;
   }
 
-  public void setColumnName(String columnName) {
-    _columnName = columnName;
+  public String getPropertyName() {
+    return _propertyName;
   }
 
   public int getSQLType() {
@@ -180,4 +184,15 @@ public class ColumnDefinition {
     return _length;
   }
 
+  private String toCapitalizedCamelCase( String str ){
+    Pattern p = Pattern.compile("_(.)");
+    Matcher m = p.matcher(str);
+    StringBuffer sb = new StringBuffer();
+    while (m.find()) {
+      m.appendReplacement(sb, m.group(1).toUpperCase());
+    }
+    m.appendTail(sb);
+    String returnStr = sb.toString();
+    return returnStr.substring(0, 1).toUpperCase() + returnStr.substring(1);
+  }
 }
