@@ -1,7 +1,9 @@
 package ragnardb.runtime;
 
+import com.sun.tools.javac.util.StringUtils;
 import gw.lang.reflect.IPropertyInfo;
 
+import java.awt.font.NumericShaper;
 import java.util.Arrays;
 import java.util.List;
 
@@ -62,7 +64,17 @@ public abstract class SQLConstraint
 
     public String getSQL( ITypeToSQLMetadata metadata )
     {
-      throw new UnsupportedOperationException( "Need to implement" );
+      String ans = "";
+      ans += metadata.getColumnForProperty(_propertyInfo);
+      ans += " IN (";
+      if(_list.size() != 0) {
+        for (int x = 0; x < _list.size() - 1; x++){
+          ans += " ? ,";
+        }
+        ans += " ? ";
+      }
+      ans += " ) ";
+      return ans;
     }
 
     List<Object> getArgs()
