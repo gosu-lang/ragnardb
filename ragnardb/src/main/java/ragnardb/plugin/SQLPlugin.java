@@ -37,7 +37,7 @@ public class SQLPlugin extends TypeLoaderBase {
         String fileName = ddlFilePair.getFirst();
         String packageName = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
         ISQLSource ddlFile = ddlFilePair.getSecond();
-        List<String> typeNames = ddlFile.getTables().stream().map(CreateTable::getName).collect(Collectors.toList());
+        List<String> typeNames = ddlFile.getTables().stream().map(CreateTable::getTypeName).collect(Collectors.toList());
 
         boolean allTypeNamesAreValid = true;
         for(String typeName : typeNames) {
@@ -155,7 +155,7 @@ public class SQLPlugin extends TypeLoaderBase {
     Set<String> result = new HashSet<>();
     for(String pkg : _sqlSourcesByPackage.get().keySet()) {
       for(CreateTable table : _sqlSourcesByPackage.get().get(pkg).getTables()) {
-        result.add(pkg + '.' + table.getName());
+        result.add(pkg + '.' + table.getTypeName());
       }
     }
     return result;

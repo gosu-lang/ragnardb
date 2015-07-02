@@ -99,7 +99,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
   @Override
   public int getTextLength() {
-    return ((ISqlTableType) getOwnersType()).getTable().getName().length();
+    return ((ISqlTableType) getOwnersType()).getTable().getTypeName().length();
   }
 
   @Override
