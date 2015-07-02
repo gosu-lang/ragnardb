@@ -37,4 +37,18 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/gosu</directory>
+      </resource>
+      <resource>
+        <directory>src/test/gosu</directory>
+      </resource>
+    </resources>
+  </build>
+
+
+
 </project>
