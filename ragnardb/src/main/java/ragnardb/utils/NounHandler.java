@@ -262,7 +262,7 @@ public class NounHandler {
       return finalout;
     }
     String output = "";
-    output += Character.toLowerCase(strings[0].charAt(0)) + (strings[0].length() > 1 ? strings[0].substring(1) : "");
+    output += Character.toUpperCase(strings[0].charAt(0)) + (strings[0].length() > 1 ? strings[0].substring(1) : "");
     for (int i = 1; i < strings.length - 1; i++) {
       if(!strings[i].equals("")) {
         String nextpart = Character.toUpperCase(strings[i].charAt(0)) + (strings[i].length() > 1 ? strings[i].substring(1) : "");
