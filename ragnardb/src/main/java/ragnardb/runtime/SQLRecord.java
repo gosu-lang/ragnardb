@@ -11,6 +11,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -81,12 +83,7 @@ public class SQLRecord implements ISQLResult
 
     try
     {
-      Connection connection = RagnarDB.getConnection();
-      PreparedStatement preparedStatement = connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
-      for( int i = 0; i < vals.size(); i++ )
-      {
-        preparedStatement.setObject( i + 1, vals.get( i ) );
-      }
+      PreparedStatement preparedStatement = RagnarDB.prepareStatement( sql, vals, Statement.RETURN_GENERATED_KEYS );
       preparedStatement.executeUpdate();
       ResultSet tableKeys = preparedStatement.getGeneratedKeys();
       tableKeys.next();
@@ -124,12 +121,7 @@ public class SQLRecord implements ISQLResult
 
     try
     {
-      Connection connection = RagnarDB.getConnection();
-      PreparedStatement preparedStatement = connection.prepareStatement( sql );
-      for( int i = 0; i < vals.size(); i++ )
-      {
-        preparedStatement.setObject( i + 1, vals.get( i ) );
-      }
+      PreparedStatement preparedStatement = RagnarDB.prepareStatement( sql, vals );
       preparedStatement.executeUpdate();
     }
     catch( SQLException e )
@@ -142,8 +134,7 @@ public class SQLRecord implements ISQLResult
 
   public static SQLRecord read( String tableName, String idColumn, Object idValue ) throws SQLException
   {
-    PreparedStatement preparedStatement = RagnarDB.getConnection().prepareStatement( "SELECT * FROM " + tableName + " WHERE " + idColumn + "=?" );
-    preparedStatement.setObject( 1, idValue );
+    PreparedStatement preparedStatement = RagnarDB.prepareStatement( "SELECT * FROM " + tableName + " WHERE " + idColumn + "=?", Collections.singletonList( idValue ) );
     ResultSet resultSet = preparedStatement.executeQuery();
     if( resultSet.next() )
     {
@@ -179,11 +170,7 @@ public class SQLRecord implements ISQLResult
 
   static <T> Iterable<T> select(String sql, List vals, IType impl) throws SQLException
   {
-    PreparedStatement preparedStatement = RagnarDB.getConnection().prepareStatement( sql );
-    for( int i = 0; i < vals.size(); i++ )
-    {
-      preparedStatement.setObject( i + 1, vals.get( i ) );
-    }
+    PreparedStatement preparedStatement = RagnarDB.prepareStatement( sql, vals );
     ResultSet resultSet = preparedStatement.executeQuery();
     List<T> results = new LinkedList<>();
     while( resultSet.next() )
@@ -222,12 +209,7 @@ public class SQLRecord implements ISQLResult
     vals.add( getRawValue( _idColumn ) );
     try
     {
-      Connection connection = RagnarDB.getConnection();
-      PreparedStatement preparedStatement = connection.prepareStatement( sql );
-      for( int i = 0; i < vals.size(); i++ )
-      {
-        preparedStatement.setObject( i + 1, vals.get( i ) );
-      }
+      PreparedStatement preparedStatement = RagnarDB.prepareStatement( sql, vals );
       preparedStatement.executeUpdate();
     }
     catch( SQLException e )
