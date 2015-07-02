@@ -16,7 +16,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
   public SQLTypeInfo(ISqlTableType type) {
     super(type);
-    decorateDdlType(type);
+    resolveProperties(type);
   }
 
   public SQLTypeInfo(ISqlDdlType type) {
@@ -24,7 +24,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
     decorateDdlType(type);
   }
 
-  private void decorateDdlType( ISqlTableType type ) {
+  private void resolveProperties( ISqlTableType type ) {
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
 
