@@ -192,16 +192,19 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
       constructors = ti.getConstructors();
     }
     int i = 0;
-    for( IConstructorInfo ci : constructors )
+    if( constructors != null )
     {
-      sb.append( "  @ConstructorInfoId(" ).append( i++ ).append( ", \"" ).append( ci.getName() ).append( "\", " ).append( ci.getOffset() ).append( ", " ).append( ci.getTextLength() ).append( ")\n" )
-      .append( "  " );
-      generateModifiers( sb, ci );
-      sb.append( " " );
-      sb.append( type.getRelativeName() );
-      sb.append( "(" );
-      generateParameters( sb, ci );
-      sb.append( ") {}\n" );
+      for( IConstructorInfo ci : constructors )
+      {
+        sb.append( "  @ConstructorInfoId(" ).append( i++ ).append( ", \"" ).append( ci.getName() ).append( "\", " ).append( ci.getOffset() ).append( ", " ).append( ci.getTextLength() ).append( ")\n" )
+          .append( "  " );
+        generateModifiers( sb, ci );
+        sb.append( " " );
+        sb.append( type.getRelativeName() );
+        sb.append( "(" );
+        generateParameters( sb, ci );
+        sb.append( ") {}\n" );
+      }
     }
   }
 
@@ -218,23 +221,26 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
       methods = ti.getMethods();
     }
     int i = 0;
-    for( IMethodInfo mi : methods )
+    if( methods != null )
     {
-      if( mi.getDisplayName().charAt( 0 ) == '@' )
+      for( IMethodInfo mi : methods )
       {
-        i++;
-        continue;
+        if( mi.getDisplayName().charAt( 0 ) == '@' )
+        {
+          i++;
+          continue;
+        }
+        sb.append( "  @MethodInfoId(" ).append( i++ ).append( ", \"" ).append( mi.getName() ).append( "\", " ).append( mi.getOffset() ).append( ", " ).append( mi.getTextLength() ).append( ")\n" )
+          .append( "  " );
+        generateModifiers( sb, mi );
+        generateReturnType( sb, mi );
+        sb.append( " " );
+        sb.append( mi.getDisplayName() );
+        sb.append( "(" );
+        generateParameters( sb, mi );
+        sb.append( ")" );
+        generateMethodImplStub( sb, mi );
       }
-      sb.append( "  @MethodInfoId(" ).append( i++ ).append( ", \"" ).append( mi.getName() ).append( "\", " ).append( mi.getOffset() ).append( ", " ).append( mi.getTextLength() ).append( ")\n" )
-      .append( "  " );
-      generateModifiers( sb, mi );
-      generateReturnType( sb, mi );
-      sb.append( " " );
-      sb.append( mi.getDisplayName() );
-      sb.append( "(" );
-      generateParameters( sb, mi );
-      sb.append( ")" );
-      generateMethodImplStub( sb, mi );
     }
   }
 
@@ -251,17 +257,20 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
       properties = ti.getProperties();
     }
     int i = 0;
-    for( IPropertyInfo pi : properties )
+    if( properties != null )
     {
-      if( pi.isStatic() )
+      for( IPropertyInfo pi : properties )
       {
-        generatePropertyAsField( sb, i, pi );
+        if( pi.isStatic() )
+        {
+          generatePropertyAsField( sb, i, pi );
+        }
+        else
+        {
+          generateInstanceProperty( sb, i, pi );
+        }
+        i++;
       }
-      else
-      {
-        generateInstanceProperty( sb, i, pi );
-      }
-      i++;
     }
   }
 

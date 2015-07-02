@@ -4,6 +4,7 @@ import gw.fs.IFile;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.ITypeInfo;
 import gw.lang.reflect.ITypeLoader;
+import gw.lang.reflect.Modifier;
 import gw.lang.reflect.TypeBase;
 import gw.util.GosuClassUtil;
 import gw.util.concurrent.LockingLazyVar;
@@ -66,6 +67,12 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
   @Override
   public ISqlDdlType getEnclosingType() {
     return _enclosingType;
+  }
+
+  @Override
+  public int getModifiers()
+  {
+    return super.getModifiers() & Modifier.STATIC;
   }
 
   @Override

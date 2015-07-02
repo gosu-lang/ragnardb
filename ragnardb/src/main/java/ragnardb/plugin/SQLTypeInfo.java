@@ -37,24 +37,21 @@ public class SQLTypeInfo extends BaseTypeInfo {
           getGosuType(column.getSQLType()), this, column.getOffset(), column.getLength());
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add( prop );
-      _methodList = createMethodInfos();
-      _constructorList = createConstructorInfos();
     }
+    _methodList = createMethodInfos();
+    _constructorList = createConstructorInfos();
   }
 
   private List<IConstructorInfo> createConstructorInfos() {
-    List<IConstructorInfo> L = new ArrayList<>();
+    List<IConstructorInfo> list = new ArrayList<>();
 
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
             .withDescription( "Creates a new Table object" )
             .withParameters()
             .withConstructorHandler( ( args ) -> new SQLRecord( ((ISqlTableType)getOwnersType()).getTable().getTableName(),
                                                                 "id" ) ).build( this );
-
-    L.add( constructorMethod );
-
-    return L;
-
+    list.add( constructorMethod );
+    return list;
   }
 
   /**
@@ -69,21 +66,27 @@ public class SQLTypeInfo extends BaseTypeInfo {
         .withName("SqlSource")
         .withDescription("Returns the source of this ISqlDdlType")
         .withStatic()
-        .withWritable(false)
-        .withType(JavaTypes.STRING())
-        .withAccessor(new IPropertyAccessor() {
-          @Override
-          public Object getValue( Object ctx ) {
-            try {
-              return ((ISqlDdlType) getOwnersType()).getSqlSource();
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+      .withWritable( false )
+      .withType( JavaTypes.STRING() )
+      .withAccessor( new IPropertyAccessor()
+      {
+        @Override
+        public Object getValue( Object ctx )
+        {
+          try
+          {
+            return ((ISqlDdlType)getOwnersType()).getSqlSource();
           }
+          catch( IOException e )
+          {
+            throw new RuntimeException( e );
+          }
+        }
 
-          @Override
-          public void setValue( Object ctx, Object value ) {
-            throw new IllegalStateException("Calling setter on readonly property");
+        @Override
+        public void setValue( Object ctx, Object value )
+        {
+          throw new IllegalStateException("Calling setter on readonly property");
           }
         })
         .build(this);
@@ -266,6 +269,16 @@ public class SQLTypeInfo extends BaseTypeInfo {
       .withCallHandler((ctx, args) -> new SQLRecord(((ISqlTableType) getOwnersType()).getTable().getTableName(), "id"))
         .build(this);
     result.add(initMethod);
+
+    IMethodInfo whereMethod = new MethodInfoBuilder()
+      .withName( "where" )
+      .withDescription( "Creates a new table query" )
+      .withParameters( new ParameterInfoBuilder().withName( "condition" ).withType( TypeSystem.get( SQLConstraint.class ) ) )
+      .withReturnType( JavaTypes.ITERABLE().getParameterizedType( this.getOwnersType() ) )
+      .withStatic( true )
+      .withCallHandler( ( ctx, args ) -> new SQLQuery<SQLRecord>( md, this.getOwnersType() ).where( (SQLConstraint)args[0] ) )
+      .build( this );
+    result.add(whereMethod);
 
     return result;
   }
