@@ -5,20 +5,19 @@ import gw.lang.reflect.java.JavaTypes;
 import ragnardb.runtime.*;
 
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SQLTypeInfo extends BaseTypeInfo {
   private List<IPropertyInfo> _propertiesList;
   private Map<String, IPropertyInfo> _propertiesMap;
   private MethodList _methodList;
+  private List<IConstructorInfo> _constructorList;
 
   public SQLTypeInfo(ISqlTableType type) {
     super(type);
     resolveProperties(type);
   }
+
 
   private void resolveProperties(ISqlTableType type) {
     _propertiesList = new ArrayList<>();
@@ -31,7 +30,23 @@ public class SQLTypeInfo extends BaseTypeInfo {
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add( prop );
       _methodList = createMethodInfos();
+      _constructorList = createConstructorInfos();
     }
+  }
+
+  private List<IConstructorInfo> createConstructorInfos() {
+    List<IConstructorInfo> L = new ArrayList<>();
+
+    IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
+            .withDescription("Creates a new Table object")
+            .withParameters(new ParameterInfoBuilder())
+            .withConstructorHandler( (args ) -> null)
+            .build(this);
+
+    L.add(constructorMethod);
+
+    return L;
+
   }
 
   /**
@@ -78,6 +93,21 @@ public class SQLTypeInfo extends BaseTypeInfo {
   }
 
   @Override
+  public List<? extends IConstructorInfo> getConstructors() {
+    return _constructorList;
+  }
+
+  @Override
+  public IConstructorInfo getConstructor(IType... vars) {
+    if(vars == null) {
+      return _constructorList.get(0); //NOTE: Will have to worry about ordering, nastiness later
+    }
+    else{
+      return null;
+    }
+  }
+
+  @Override
   public List<? extends IPropertyInfo> getProperties() {
     return _propertiesList;
   }
@@ -118,9 +148,13 @@ public class SQLTypeInfo extends BaseTypeInfo {
    */
   private MethodList createMethodInfos() {  //MethodList#add(IMethodInfo)
     MethodList result = new MethodList();
+    SQLMetadata md = new SQLMetadata();
+
+
+
     for(String propertyName : _propertiesMap.keySet()) {
       SQLColumnPropertyInfo prop = (SQLColumnPropertyInfo) _propertiesMap.get(propertyName);
-      SQLMetadata md = new SQLMetadata();
+
 
       String name = "findBy" + prop.getName();
       IMethodInfo findByMethod = new MethodInfoBuilder()
