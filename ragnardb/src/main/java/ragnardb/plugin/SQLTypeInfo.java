@@ -38,12 +38,12 @@ public class SQLTypeInfo extends BaseTypeInfo {
     List<IConstructorInfo> L = new ArrayList<>();
 
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
-            .withDescription("Creates a new Table object")
+            .withDescription( "Creates a new Table object" )
             .withParameters()
-            .withConstructorHandler( (args ) -> null)
-            .build(this);
+            .withConstructorHandler( ( args ) -> new SQLRecord( ((ISqlTableType)getOwnersType()).getTable().getTableName(),
+                                                                "id" ) ).build( this );
 
-    L.add(constructorMethod);
+    L.add( constructorMethod );
 
     return L;
 
@@ -99,12 +99,13 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
   @Override
   public IConstructorInfo getConstructor(IType... vars) {
-    if(vars == null) {
-      return _constructorList.get(0); //NOTE: Will have to worry about ordering, nastiness later
-    }
-    else{
-      return null;
-    }
+    return FIND.constructor( getConstructors(), vars );
+  }
+
+  @Override
+  public IConstructorInfo getCallableConstructor( IType... params )
+  {
+    return FIND.callableConstructor( getConstructors(), params );
   }
 
   @Override
