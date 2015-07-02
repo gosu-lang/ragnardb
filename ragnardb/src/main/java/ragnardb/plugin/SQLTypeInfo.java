@@ -167,16 +167,11 @@ public class SQLTypeInfo extends BaseTypeInfo {
           .withReturnType(this.getOwnersType())
           .withStatic(true)
           .withCallHandler((ctx, args) -> {
-            return new IMethodCallHandler() {
-              @Override
-              public Object handleCall(Object ctx, Object... args) {
-                SQLQuery query = new SQLQuery(md, getOwnersType());
-                SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
-                query = query.where(constraint);
-                return query.iterator().hasNext() ? query.iterator().next() : null;
-              }
-            };
-          }) // as opposed to { return null; }
+            SQLQuery query = new SQLQuery(md, getOwnersType());
+            SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
+            query = query.where(constraint);
+            return query.iterator().hasNext() ? query.iterator().next() : null;
+           }) // as opposed to { return null; }
           .build(this);
 
       result.add(findByMethod);
@@ -192,20 +187,35 @@ public class SQLTypeInfo extends BaseTypeInfo {
           .withReturnType(JavaTypes.ITERABLE().getParameterizedType(this.getOwnersType()))
           .withStatic(true)
           .withCallHandler((ctx, args) -> {
-            return new IMethodCallHandler() {
-              @Override
-              public Object handleCall(Object ctx, Object... args) {
-                SQLQuery query = new SQLQuery(md, getOwnersType());
-                SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
-                query = query.where(constraint);
-                return query.iterator();
-              }
-            };
+            SQLQuery query = new SQLQuery(md, getOwnersType());
+            SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
+            query = query.where(constraint);
+            return query.iterator();
           })
           .build(this);
 
       result.add(findAllByMethod);
     }
+
+    //Now we add a create method to allow insertions
+    IMethodInfo createMethod = new MethodInfoBuilder()
+      .withName("create")
+      .withDescription("Creates a new table entry")
+      .withParameters()
+      .withReturnType(this.getOwnersType())
+      .withCallHandler((ctx, args) -> ((SQLRecord) ctx).create())
+      .build(this);
+    result.add(createMethod);
+
+    IMethodInfo initMethod = new MethodInfoBuilder()
+      .withName("init")
+      .withDescription("Creates a new table entry")
+      .withParameters()
+      .withReturnType(this.getOwnersType())
+      .withStatic(true)
+      .withCallHandler((ctx, args) -> new SQLRecord(((ISqlTableType) getOwnersType()).getTable().getTableName(), "id"))
+        .build(this);
+    result.add(initMethod);
 
     return result;
   }

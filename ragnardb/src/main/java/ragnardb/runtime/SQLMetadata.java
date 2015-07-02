@@ -2,8 +2,11 @@ package ragnardb.runtime;
 
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
+import ragnardb.plugin.ISqlTableType;
 import ragnardb.plugin.SQLColumnPropertyInfo;
+import ragnardb.plugin.SqlTableType;
 
+import java.sql.SQLType;
 import java.util.ArrayList;
 
 /**
@@ -15,7 +18,7 @@ public class SQLMetadata  implements ITypeToSQLMetadata{
   }
 
   public String getTableForType(IType type){
-    return type.getRelativeName();
+    return ((ISqlTableType) type).getTable().getTableName();
   }
 
   public String getColumnForProperty(IPropertyInfo pi){
