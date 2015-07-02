@@ -31,13 +31,13 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
       @Override
       public Object getValue( Object obj )
       {
-        return ((SQLRecord)obj).getRawValue( _propName );
+        return ((SQLRecord)obj).getRawValue( _columnName );
       }
 
       @Override
       public void setValue( Object obj, Object val )
       {
-        ((SQLRecord)obj).setRawValue( _propName, val );
+        ((SQLRecord)obj).setRawValue( _columnName, val );
       }
     };
     _offset = offset;

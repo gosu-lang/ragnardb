@@ -23,8 +23,8 @@ public class CreateTable {
   public CreateTable(String name){
     columns = new ArrayList<>();
     constraints = new ArrayList<>();
-    _typeName = Character.toUpperCase(name.charAt(0)) + name.substring(1);
     _tableName = name;
+    _typeName = new NounHandler(Character.toUpperCase(name.charAt(0)) + name.substring(1)).getSingular();
   }
 
   public void append(ColumnDefinition c){
@@ -44,6 +44,10 @@ public class CreateTable {
 
   public String getTypeName(){
     return _typeName;
+  }
+
+  public String getTableName(){
+    return _tableName;
   }
 
   public ColumnDefinition getColumnDefinitionByName(String name){

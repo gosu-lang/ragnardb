@@ -52,7 +52,7 @@ public class SQLRecord implements ISQLResult
     if(_persisted) {
       return update();
     } else {
-      return save();
+      return create();
     }
   }
 

@@ -15,6 +15,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
   private List<IPropertyInfo> _propertiesList;
   private Map<String, IPropertyInfo> _propertiesMap;
   private MethodList _methodList;
+  private List<IConstructorInfo> _constructorList;
 
   public SQLTypeInfo(ISqlTableType type) {
     super(type);
@@ -37,7 +38,23 @@ public class SQLTypeInfo extends BaseTypeInfo {
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add( prop );
       _methodList = createMethodInfos();
+      _constructorList = createConstructorInfos();
     }
+  }
+
+  private List<IConstructorInfo> createConstructorInfos() {
+    List<IConstructorInfo> L = new ArrayList<>();
+
+    IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
+            .withDescription( "Creates a new Table object" )
+            .withParameters()
+            .withConstructorHandler( ( args ) -> new SQLRecord( ((ISqlTableType)getOwnersType()).getTable().getTableName(),
+                                                                "id" ) ).build( this );
+
+    L.add( constructorMethod );
+
+    return L;
+
   }
 
   /**
@@ -119,6 +136,22 @@ public class SQLTypeInfo extends BaseTypeInfo {
   }
 
   @Override
+  public List<? extends IConstructorInfo> getConstructors() {
+    return _constructorList;
+  }
+
+  @Override
+  public IConstructorInfo getConstructor(IType... vars) {
+    return FIND.constructor( getConstructors(), vars );
+  }
+
+  @Override
+  public IConstructorInfo getCallableConstructor( IType... params )
+  {
+    return FIND.callableConstructor( getConstructors(), params );
+  }
+
+  @Override
   public List<? extends IPropertyInfo> getProperties() {
     return _propertiesList;
   }
@@ -151,12 +184,12 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
   @Override
   public IMethodInfo getCallableMethod(CharSequence strMethod, IType... params) {
-    return FIND.callableMethod(getMethods(), strMethod, params);
+    return FIND.callableMethod( getMethods(), strMethod, params );
   }
 
   @Override
   public IMethodInfo getMethod(CharSequence methodName, IType... params) {
-    return FIND.method(getMethods(), methodName, params);
+    return FIND.method( getMethods(), methodName, params );
   }
 
   /**
@@ -165,9 +198,13 @@ public class SQLTypeInfo extends BaseTypeInfo {
    */
   private MethodList createMethodInfos() {  //MethodList#add(IMethodInfo)
     MethodList result = new MethodList();
+    SQLMetadata md = new SQLMetadata();
+
+
+
     for(String propertyName : _propertiesMap.keySet()) {
       SQLColumnPropertyInfo prop = (SQLColumnPropertyInfo) _propertiesMap.get(propertyName);
-      SQLMetadata md = new SQLMetadata();
+
 
       String name = "findBy" + prop.getName();
       IMethodInfo findByMethod = new MethodInfoBuilder()
@@ -180,16 +217,11 @@ public class SQLTypeInfo extends BaseTypeInfo {
           .withReturnType(this.getOwnersType())
           .withStatic(true)
           .withCallHandler((ctx, args) -> {
-            return new IMethodCallHandler() {
-              @Override
-              public Object handleCall(Object ctx, Object... args) {
-                SQLQuery query = new SQLQuery(md, getOwnersType());
-                SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
-                query = query.where(constraint);
-                return query.iterator().hasNext() ? query.iterator().next() : null;
-              }
-            };
-          }) // as opposed to { return null; }
+            SQLQuery query = new SQLQuery(md, getOwnersType());
+            SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
+            query = query.where(constraint);
+            return query.iterator().hasNext() ? query.iterator().next() : null;
+           }) // as opposed to { return null; }
           .build(this);
 
       result.add(findByMethod);
@@ -205,20 +237,35 @@ public class SQLTypeInfo extends BaseTypeInfo {
           .withReturnType(JavaTypes.ITERABLE().getParameterizedType(this.getOwnersType()))
           .withStatic(true)
           .withCallHandler((ctx, args) -> {
-            return new IMethodCallHandler() {
-              @Override
-              public Object handleCall(Object ctx, Object... args) {
-                SQLQuery query = new SQLQuery(md, getOwnersType());
-                SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
-                query = query.where(constraint);
-                return query.iterator();
-              }
-            };
+            SQLQuery query = new SQLQuery(md, getOwnersType());
+            SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
+            query = query.where(constraint);
+            return query.iterator();
           })
           .build(this);
 
       result.add(findAllByMethod);
     }
+
+    //Now we add a create method to allow insertions
+    IMethodInfo createMethod = new MethodInfoBuilder()
+      .withName("create")
+      .withDescription("Creates a new table entry")
+      .withParameters()
+      .withReturnType(this.getOwnersType())
+      .withCallHandler((ctx, args) -> ((SQLRecord) ctx).create())
+      .build(this);
+    result.add(createMethod);
+
+    IMethodInfo initMethod = new MethodInfoBuilder()
+      .withName("init")
+      .withDescription("Creates a new table entry")
+      .withParameters()
+      .withReturnType(this.getOwnersType())
+      .withStatic(true)
+      .withCallHandler((ctx, args) -> new SQLRecord(((ISqlTableType) getOwnersType()).getTable().getTableName(), "id"))
+        .build(this);
+    result.add(initMethod);
 
     return result;
   }
