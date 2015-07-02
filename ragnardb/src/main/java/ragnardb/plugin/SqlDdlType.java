@@ -21,7 +21,7 @@ public class SqlDdlType extends TypeBase implements ISqlDdlType {
         protected List<ISqlTableType> init() {
             List<ISqlTableType> innerClasses = new ArrayList<>();
             for( CreateTable table : _sqlSource.getTables() ) {
-                String fqn = getName() + '.' + table.getName();
+                String fqn = getName() + '.' + table.getTypeName();
                 innerClasses.add((ISqlTableType) TypeSystem.getOrCreateTypeReference(new SqlTableType(getTypeRef(), table, fqn)));
             }
             return innerClasses;

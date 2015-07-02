@@ -88,20 +88,7 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
 
     return defs;
 
-    /*
-    //TODO mock implementation; remove these once we hook up with the parser
-    ColumnDefinition userId = new ColumnDefinition("UserId", Types.INTEGER);
-    ColumnDefinition lastName = new ColumnDefinition("LastName", Types.NVARCHAR);
-    ColumnDefinition firstName = new ColumnDefinition("FirstName", Types.NVARCHAR);
-    ColumnDefinition age = new ColumnDefinition("Age", Types.INTEGER);
-    final List<ColumnDefinition> contactCols = Arrays.asList(userId, lastName, firstName, age);
 
-    switch(getName()) {
-      case "ragnardb.foo.Users.Contacts": return contactCols;
-      case "": return Collections.emptyList();
-      default: throw new Error("Unknown sqlType: " + getName());
-    }
-    */
   }
 
   @Override

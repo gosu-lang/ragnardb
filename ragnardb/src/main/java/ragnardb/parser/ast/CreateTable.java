@@ -1,6 +1,7 @@
 package ragnardb.parser.ast;
 
 import ragnardb.plugin.ColumnDefinition;
+import ragnardb.utils.NounHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +12,8 @@ import java.util.List;
 public class CreateTable {
   private List<ColumnDefinition> columns;
   private List<Constraint> constraints;
-  private String _name;
+  private String _typeName;
+  private String _tableName;
   private int _line;
   private int _col;
   private int _offset;
@@ -21,7 +23,8 @@ public class CreateTable {
   public CreateTable(String name){
     columns = new ArrayList<>();
     constraints = new ArrayList<>();
-    _name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    _typeName = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    _tableName = name;
   }
 
   public void append(ColumnDefinition c){
@@ -39,8 +42,8 @@ public class CreateTable {
     return constraints;
   }
 
-  public String getName(){
-    return _name;
+  public String getTypeName(){
+    return _typeName;
   }
 
   public ColumnDefinition getColumnDefinitionByName(String name){
