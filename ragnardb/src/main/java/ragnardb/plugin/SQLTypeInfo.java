@@ -128,7 +128,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
       SQLMetadata md = new SQLMetadata();
 
       IMethodInfo findByMethod = new MethodInfoBuilder()
-          .withName("findBy" + propertyName)
+          .withName("findBy" + propertyName.substring(0,1).toUpperCase()+propertyName.substring(1))
           .withDescription("Find single match based on the value of the " + propertyName + " column.")
           .withParameters(new ParameterInfoBuilder()
             .withName(propertyName)
@@ -153,7 +153,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
       //Now we add the findAllBy
       IMethodInfo findAllByMethod = new MethodInfoBuilder()
-          .withName("findAllBy" + propertyName)
+          .withName("findAllBy" + propertyName.substring(0,1).toUpperCase()+propertyName.substring(1))
           .withDescription("Find all matches based on the value of the " + propertyName + " column.")
           .withParameters(new ParameterInfoBuilder()
             .withName(propertyName)

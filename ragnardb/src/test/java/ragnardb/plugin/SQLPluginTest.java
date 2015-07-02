@@ -36,9 +36,9 @@ public class SQLPluginTest {
 
   @Test
   public void getTypeExplicitly() {
-    IType result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
+    IType result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
     assertNotNull(result);
-    assertEquals("ragnardb.foo.Users.Contacts", result.getName());
+    assertEquals("ragnardb.foo.Users.Contact", result.getName());
   }
 
   @Test
@@ -49,18 +49,18 @@ public class SQLPluginTest {
 
   @Test
   public void oneSourceWithMultipleTypes() {
-    IType result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Vehicles.Cars");
+    IType result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Vehicles.Car");
     assertNotNull(result);
-    assertEquals("ragnardb.foo.Vehicles.Cars", result.getName());
+    assertEquals("ragnardb.foo.Vehicles.Car", result.getName());
 
-    result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Vehicles.Motorcycles");
+    result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Vehicles.Motorcycle");
     assertNotNull(result);
-    assertEquals("ragnardb.foo.Vehicles.Motorcycles", result.getName());
+    assertEquals("ragnardb.foo.Vehicles.Motorcycle", result.getName());
   }
 
   @Test
   public void getColumnDefs() {
-    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
+    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
     assertNotNull(result);
 
     List<ColumnDefinition> colDefs = result.getColumnDefinitions();
@@ -76,14 +76,14 @@ public class SQLPluginTest {
 
   @Test
   public void getTypeInfo() {
-    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
+    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
     assertNotNull(result);
-    assertEquals("ragnardb.foo.Users.Contacts", result.getName());
+    assertEquals("ragnardb.foo.Users.Contact", result.getName());
     assertEquals("ragnardb.foo.Users", result.getNamespace());
-    assertEquals("Contacts", result.getRelativeName());
+    assertEquals("Contact", result.getRelativeName());
 
     SQLTypeInfo ti = (SQLTypeInfo) result.getTypeInfo();
-    assertEquals("Contacts", ti.getName());
+    assertEquals("Contact", ti.getName());
 
     //make a set of expected Name/IJavaType pairs
     Set<String> expectedPropertyNames = Stream.of("UserId", "LastName", "FirstName", "Age").collect(Collectors.toSet());
@@ -107,22 +107,22 @@ public class SQLPluginTest {
 
   @Test
   public void getMethodInfo() {
-    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contacts");
+    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
     assertNotNull(result);
-    assertEquals("ragnardb.foo.Users.Contacts", result.getName());
+    assertEquals("ragnardb.foo.Users.Contact", result.getName());
     assertEquals("ragnardb.foo.Users", result.getNamespace());
-    assertEquals("Contacts", result.getRelativeName());
+    assertEquals("Contact", result.getRelativeName());
 
     SQLTypeInfo ti = (SQLTypeInfo) result.getTypeInfo();
-    assertEquals("Contacts", ti.getName());
+    assertEquals("Contact", ti.getName());
 
     IMethodInfo findByAge = ti.getMethod("findByAge", JavaTypes.pINT());
     assertNotNull(findByAge);
-    assertEquals("ragnardb.foo.Users.Contacts", findByAge.getReturnType().getName()); //returns single Contact
+    assertEquals("ragnardb.foo.Users.Contact", findByAge.getReturnType().getName()); //returns single Contact
 
     IMethodInfo findAllByAge = ti.getMethod("findAllByAge", JavaTypes.pINT());
     assertNotNull(findAllByAge);
-    assertEquals("java.lang.Iterable<ragnardb.foo.Users.Contacts>", findAllByAge.getReturnType().getName()); //returns Iterable of Contacts //TODO KB
+    assertEquals("java.lang.Iterable<ragnardb.foo.Users.Contact>", findAllByAge.getReturnType().getName()); //returns Iterable of Contacts //TODO KB
 
     IMethodInfo findByAgeWithWrongSignature = ti.getMethod("findByAge", JavaTypes.STRING());
     assertNull(findByAgeWithWrongSignature);
@@ -137,12 +137,12 @@ public class SQLPluginTest {
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users", result.getName());
 
-    String expectedSource = "CREATE TABLE CONTACTS (\n" +
-        "    UserId int,\n" +
-        "    FirstName nchar(50),\n" +
-        "    LastName nchar(50),\n" +
-        "    Age int\n" +
-        "    -- TODO add Gender\n" +
+    String expectedSource = "CREATE TABLE CONTACTS (\r\n" +
+        "    UserId int,\r\n" +
+        "    FirstName nchar(50),\r\n" +
+        "    LastName nchar(50),\r\n" +
+        "    Age int\r\n" +
+        "    -- TODO add Gender\r\n" +
         ");";
     String actualSource = null;
 

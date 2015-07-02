@@ -13,6 +13,7 @@ public class SQLParser {
 
   private SQLTokenizer _tokenizer;
   private Token currentToken;
+  private NounHandler _singularizer;
 
   public SQLParser(SQLTokenizer tokenizer) {
     _tokenizer = tokenizer;
@@ -98,6 +99,7 @@ public class SQLParser {
   }
 
   public DDL parse() {
+    _singularizer = new NounHandler("");
     if(tokEquals(TokenType.CREATE) || tokEquals(TokenType.EOF)) {
       DDL statements = new DDL();
       while (true) {
@@ -191,8 +193,8 @@ public class SQLParser {
       match(TokenType.NOT);
       match(TokenType.EXISTS);
     }
-
-    CreateTable table = new CreateTable(currentToken.getText());
+    _singularizer.changeWord(currentToken.getText());
+    CreateTable table = new CreateTable(_singularizer.getSingular());
     table.setLoc( line, col, offset, currentToken.getCasedText().length() );
     match(TokenType.IDENT);
 
