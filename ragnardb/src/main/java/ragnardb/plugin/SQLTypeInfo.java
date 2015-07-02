@@ -6,10 +6,7 @@ import ragnardb.runtime.*;
 
 import java.io.IOException;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SQLTypeInfo extends BaseTypeInfo {
   private List<IPropertyInfo> _propertiesList;
@@ -19,15 +16,15 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
   public SQLTypeInfo(ISqlTableType type) {
     super(type);
-    resolveProperties(type);
+    decorateDdlType(type);
   }
 
   public SQLTypeInfo(ISqlDdlType type) {
     super(type);
-    resolveProperties(type);
+    decorateDdlType(type);
   }
 
-  private void resolveProperties(ISqlTableType type) {
+  private void decorateDdlType( ISqlTableType type ) {
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
 
@@ -48,8 +45,8 @@ public class SQLTypeInfo extends BaseTypeInfo {
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
             .withDescription( "Creates a new Table object" )
             .withParameters()
-            .withConstructorHandler( ( args ) -> new SQLRecord( ((ISqlTableType)getOwnersType()).getTable().getTableName(),
-                                                                "id" ) ).build( this );
+            .withConstructorHandler(( args ) -> new SQLRecord(((ISqlTableType) getOwnersType()).getTable().getTableName(),
+                "id")).build(this);
 
     L.add( constructorMethod );
 
@@ -61,7 +58,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
    * ISqlDdlType will have a single getter, SqlSource : String
    * @param type ISqlDdlType
    */
-  private void resolveProperties(ISqlDdlType type) {
+  private void decorateDdlType( ISqlDdlType type ) {
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
 
@@ -89,7 +86,9 @@ public class SQLTypeInfo extends BaseTypeInfo {
         .build(this);
 
     _propertiesMap.put(prop.getName(), prop);
-    _propertiesList.add( prop );
+    _propertiesList.add(prop);
+    _methodList = new MethodList();
+    _constructorList = Collections.emptyList();
   }
 
   /**
