@@ -39,7 +39,7 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
             .withDescription("Creates a new Table object")
-            .withParameters(new ParameterInfoBuilder())
+            .withParameters()
             .withConstructorHandler( (args ) -> null)
             .build(this);
 
