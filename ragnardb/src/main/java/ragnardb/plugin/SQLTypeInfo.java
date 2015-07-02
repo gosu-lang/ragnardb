@@ -4,6 +4,7 @@ import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
 import ragnardb.runtime.*;
 
+import java.io.IOException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +21,11 @@ public class SQLTypeInfo extends BaseTypeInfo {
     resolveProperties(type);
   }
 
+  public SQLTypeInfo(ISqlDdlType type) {
+    super(type);
+    resolveProperties(type);
+  }
+
   private void resolveProperties(ISqlTableType type) {
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
@@ -32,6 +38,41 @@ public class SQLTypeInfo extends BaseTypeInfo {
       _propertiesList.add( prop );
       _methodList = createMethodInfos();
     }
+  }
+
+  /**
+   * ISqlDdlType will have a single getter, SqlSource : String
+   * @param type ISqlDdlType
+   */
+  private void resolveProperties(ISqlDdlType type) {
+    _propertiesList = new ArrayList<>();
+    _propertiesMap = new HashMap<>();
+
+    IPropertyInfo prop = new PropertyInfoBuilder()
+        .withName("SqlSource")
+        .withDescription("Returns the source of this ISqlDdlType")
+        .withStatic()
+        .withWritable(false)
+        .withType(JavaTypes.STRING())
+        .withAccessor(new IPropertyAccessor() {
+          @Override
+          public Object getValue( Object ctx ) {
+            try {
+              return ((ISqlDdlType) getOwnersType()).getSqlSource();
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+
+          @Override
+          public void setValue( Object ctx, Object value ) {
+            throw new IllegalStateException("Calling setter on readonly property");
+          }
+        })
+        .build(this);
+
+    _propertiesMap.put(prop.getName(), prop);
+    _propertiesList.add( prop );
   }
 
   /**
@@ -89,12 +130,18 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
   @Override
   public int getOffset() {
-    return ((ISqlTableType)getOwnersType()).getTable().getOffset();
+    if(getOwnersType() instanceof ISqlTableType) {
+      return ((ISqlTableType) getOwnersType()).getTable().getOffset();
+    }
+    return super.getOffset();
   }
 
   @Override
   public int getTextLength() {
-    return ((ISqlTableType) getOwnersType()).getTable().getTypeName().length();
+    if(getOwnersType() instanceof ISqlTableType) {
+      return ((ISqlTableType) getOwnersType()).getTable().getTypeName().length();
+    }
+    return super.getTextLength();
   }
 
   @Override
@@ -104,12 +151,12 @@ public class SQLTypeInfo extends BaseTypeInfo {
 
   @Override
   public IMethodInfo getCallableMethod(CharSequence strMethod, IType... params) {
-    return FIND.callableMethod( getMethods(), strMethod, params );
+    return FIND.callableMethod(getMethods(), strMethod, params);
   }
 
   @Override
   public IMethodInfo getMethod(CharSequence methodName, IType... params) {
-    return FIND.method( getMethods(), methodName, params );
+    return FIND.method(getMethods(), methodName, params);
   }
 
   /**

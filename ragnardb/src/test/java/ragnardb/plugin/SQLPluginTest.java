@@ -8,7 +8,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -137,12 +136,12 @@ public class SQLPluginTest {
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users", result.getName());
 
-    String expectedSource = "CREATE TABLE CONTACTS (\r\n" +
-        "    UserId int,\r\n" +
-        "    FirstName nchar(50),\r\n" +
-        "    LastName nchar(50),\r\n" +
-        "    Age int\r\n" +
-        "    -- TODO add Gender\r\n" +
+    String expectedSource = "CREATE TABLE CONTACTS (\n" +
+        "    UserId int,\n" +
+        "    FirstName nchar(50),\n" +
+        "    LastName nchar(50),\n" +
+        "    Age int\n" +
+        "    -- TODO add Gender\n" +
         ");";
     String actualSource = null;
 
@@ -155,6 +154,15 @@ public class SQLPluginTest {
     }
 
     assertEquals(expectedSource, actualSource);
+
+    SQLTypeInfo ti = (SQLTypeInfo) result.getTypeInfo();
+    assertEquals("Users", ti.getName());
+
+    IPropertyInfo readOnlySqlSourceProperty = ti.getProperty("SqlSource");
+    assertNotNull(readOnlySqlSourceProperty);
+    assertTrue(readOnlySqlSourceProperty.isReadable());
+    assertFalse(readOnlySqlSourceProperty.isWritable());
+    assertEquals(expectedSource, readOnlySqlSourceProperty.getAccessor().getValue(null));
   }
 
 }

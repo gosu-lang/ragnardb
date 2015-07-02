@@ -87,9 +87,10 @@ public class SqlDdlType extends TypeBase implements ISqlDdlType {
     private ISqlDdlType getTypeRef() {
         return (ISqlDdlType) (_typeRef == null ? _typeRef = TypeSystem.getOrCreateTypeReference( this ) : _typeRef);
     }
+
     @Override
     public ITypeInfo getTypeInfo() {
-        return new BaseTypeInfo( getTypeRef() );
+        return new SQLTypeInfo( getTypeRef() );
     }
 
     @Override
