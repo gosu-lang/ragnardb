@@ -6,13 +6,16 @@ import gw.lang.reflect.ITypeInfo;
 import gw.lang.reflect.ITypeLoader;
 import gw.lang.reflect.Modifier;
 import gw.lang.reflect.TypeBase;
+import gw.lang.reflect.TypeSystem;
 import gw.util.GosuClassUtil;
 import gw.util.concurrent.LockingLazyVar;
 import ragnardb.parser.ast.CreateTable;
 import ragnardb.parser.ast.DDL;
+import ragnardb.runtime.SQLRecord;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class SqlTableType extends TypeBase implements ISqlTableType {
 
@@ -61,7 +64,7 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
 
   @Override
   public IType getSupertype() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return TypeSystem.get( SQLRecord.class );
   }
 
   @Override
@@ -72,7 +75,7 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
   @Override
   public int getModifiers()
   {
-    return super.getModifiers() & Modifier.STATIC;
+    return super.getModifiers() | Modifier.STATIC;
   }
 
   @Override
