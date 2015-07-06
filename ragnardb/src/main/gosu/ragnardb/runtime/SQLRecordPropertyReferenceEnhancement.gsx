@@ -15,4 +15,10 @@ enhancement SQLRecordPropertyReferenceEnhancement : IPropertyReference<SQLRecord
   function isLike( s : String ) : SQLConstraint {
     return SQLConstraint.isLike(this.PropertyInfo, s)
   }
+
+
+
+
+
+
 }

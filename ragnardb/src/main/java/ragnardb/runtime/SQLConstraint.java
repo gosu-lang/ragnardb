@@ -2,13 +2,18 @@ package ragnardb.runtime;
 
 import com.sun.tools.javac.util.StringUtils;
 import gw.lang.reflect.IPropertyInfo;
+import ragnardb.parser.ast.SQL;
 
 import java.awt.font.NumericShaper;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public abstract class SQLConstraint
 {
+
+  IPropertyInfo _propertyInfo;
 
   public static SQLConstraint isEqualTo( IPropertyInfo pr, Object o )
   {
@@ -29,9 +34,73 @@ public abstract class SQLConstraint
 
   abstract List<Object> getArgs();
 
+
+  public SQLConstraint andAlso(SQLConstraint sql){
+    return new AndConstraint(_propertyInfo, this, sql);
+  }
+
+  public SQLConstraint orElse(SQLConstraint sql){
+    return new OrConstraint(_propertyInfo, this, sql);
+  }
+
+  private static class AndConstraint extends SQLConstraint
+  {
+
+    SQLConstraint constraint1;
+    SQLConstraint constraint2;
+    String result;
+
+    AndConstraint( IPropertyInfo pi, SQLConstraint _constraint1, SQLConstraint _constraint2 )
+    {
+      _propertyInfo = pi;
+      constraint1 = _constraint1;
+      constraint2 = _constraint2;
+    }
+
+    public String getSQL( ITypeToSQLMetadata metadata ){
+      result = " ( " +   constraint1.getSQL(metadata)  + " AND " +  constraint2.getSQL(metadata) + " ) ";
+      return result;
+    }
+
+    List<Object> getArgs()
+    {
+      List answer = new ArrayList();
+      answer.addAll(constraint1.getArgs());
+      answer.addAll(constraint2.getArgs());
+      return answer;
+    }
+  }
+
+  private static class OrConstraint extends SQLConstraint
+  {
+
+    SQLConstraint constraint1;
+    SQLConstraint constraint2;
+    String result;
+
+    OrConstraint( IPropertyInfo pi, SQLConstraint _constraint1, SQLConstraint _constraint2 )
+    {
+      _propertyInfo = pi;
+      constraint1 = _constraint1;
+      constraint2 = _constraint2;
+    }
+
+    public String getSQL( ITypeToSQLMetadata metadata ){
+      result = " ( " +   constraint1.getSQL(metadata)  + " OR " +  constraint2.getSQL(metadata) + " ) ";
+      return result;
+    }
+
+    List<Object> getArgs()
+    {
+      List answer = new ArrayList();
+      answer.addAll(constraint1.getArgs());
+      answer.addAll(constraint2.getArgs());
+      return answer;
+    }
+  }
+
   private static class IsEqualToConstraint extends SQLConstraint
   {
-    IPropertyInfo _propertyInfo;
     Object _obj;
 
     IsEqualToConstraint( IPropertyInfo pi, Object o )
@@ -53,7 +122,6 @@ public abstract class SQLConstraint
 
   private static class IsInConstraint extends SQLConstraint
   {
-    IPropertyInfo _propertyInfo;
     List _list;
 
     IsInConstraint( IPropertyInfo pi, List list )
@@ -85,7 +153,6 @@ public abstract class SQLConstraint
 
   private static class IsLikeConstraint extends SQLConstraint
   {
-    IPropertyInfo _propertyInfo;
     String _str;
 
     IsLikeConstraint( IPropertyInfo pi, String str )
@@ -96,7 +163,7 @@ public abstract class SQLConstraint
 
     public String getSQL( ITypeToSQLMetadata metadata )
     {
-      throw new UnsupportedOperationException( "Need to implement" );
+      return (metadata.getColumnForProperty(_propertyInfo) + " LIKE ?");
     }
 
     List<Object> getArgs()
