@@ -39,6 +39,10 @@ public abstract class SQLConstraint
     return new AndConstraint(_propertyInfo, this, sql);
   }
 
+  public SQLConstraint orElse(SQLConstraint sql){
+    return new OrConstraint(_propertyInfo, this, sql);
+  }
+
   private static class AndConstraint extends SQLConstraint
   {
 
@@ -55,6 +59,34 @@ public abstract class SQLConstraint
 
     public String getSQL( ITypeToSQLMetadata metadata ){
       result = " ( " +   constraint1.getSQL(metadata)  + " AND " +  constraint2.getSQL(metadata) + " ) ";
+      return result;
+    }
+
+    List<Object> getArgs()
+    {
+      List answer = new ArrayList();
+      answer.addAll(constraint1.getArgs());
+      answer.addAll(constraint2.getArgs());
+      return answer;
+    }
+  }
+
+  private static class OrConstraint extends SQLConstraint
+  {
+
+    SQLConstraint constraint1;
+    SQLConstraint constraint2;
+    String result;
+
+    OrConstraint( IPropertyInfo pi, SQLConstraint _constraint1, SQLConstraint _constraint2 )
+    {
+      _propertyInfo = pi;
+      constraint1 = _constraint1;
+      constraint2 = _constraint2;
+    }
+
+    public String getSQL( ITypeToSQLMetadata metadata ){
+      result = " ( " +   constraint1.getSQL(metadata)  + " OR " +  constraint2.getSQL(metadata) + " ) ";
       return result;
     }
 
