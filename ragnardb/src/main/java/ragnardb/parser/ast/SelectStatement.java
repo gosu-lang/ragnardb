@@ -108,6 +108,14 @@ public class SelectStatement {
     tables.add(jc);
   }
 
+  public String getTable(){
+    return tables.get(0).getNames().get(0);
+  }
+
+  public ArrayList<String> getTables(){
+    return tables.get(0).getNames();
+  }
+
   public String toString(){
     StringBuilder sb = new StringBuilder("<Select>\n");
     if(isRecursive){

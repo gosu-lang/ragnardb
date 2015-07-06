@@ -68,6 +68,14 @@ public class JoinClause {
     constraints.add(c);
   }
 
+  public ArrayList<String> getNames(){
+    ArrayList<String> names = new ArrayList<>();
+    for(TableOrSubquery t: tables){
+      names.add(t.getName());
+    }
+    return names;
+  }
+
   @Override
   public String toString(){
     StringBuilder sb = new StringBuilder("<Join-Clause>\n");
