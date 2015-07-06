@@ -136,12 +136,12 @@ public class SQLPluginTest {
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users", result.getName());
 
-    String expectedSource = "CREATE TABLE CONTACTS (\n" +
-        "    UserId int,\n" +
-        "    FirstName nchar(50),\n" +
-        "    LastName nchar(50),\n" +
-        "    Age int\n" +
-        "    -- TODO add Gender\n" +
+    String expectedSource = "CREATE TABLE CONTACTS (\r\n" +
+        "    UserId int,\r\n" +
+        "    FirstName nchar(50),\r\n" +
+        "    LastName nchar(50),\r\n" +
+        "    Age int\r\n" +
+        "    -- TODO add Gender\r\n" +
         ");";
     String actualSource = null;
 

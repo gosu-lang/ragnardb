@@ -311,7 +311,8 @@ public class SQLParser {
     if (tokEquals(TokenType.FROM)) {
       current.addToken(currentToken);
       next();
-      parseJoinClause();
+      JoinClause jc = parseJoinClause();
+      current.addTable(jc);
     }
     if (tokEquals(TokenType.WHERE)) {
       current.addToken(currentToken);
@@ -425,33 +426,42 @@ public class SQLParser {
     return _rc;
   }
 
-  private void parseTableOrSubquery(){
+  private TableOrSubquery parseTableOrSubquery(){
+    TableOrSubquery _table = null;
     if(tokEquals(TokenType.LPAREN)){
       if(matchIn(TokenType.WITH, TokenType.RECURSIVE, TokenType.SELECT, TokenType.VALUES)){
-        parseSelect();
+        SelectStatement s = parseSelect();
+        _table = new TableOrSubquery(s);
         match(TokenType.RPAREN);
         if(tokEquals(TokenType.AS)){
           next();
-          match(TokenType.IDENT);
+          String al = match(TokenType.IDENT);
+          _table.setAlias(al);
         }
       } else {
-        parseJoinClause();
+        JoinClause j = parseJoinClause();
+        _table = new TableOrSubquery(j);
         match(TokenType.RPAREN);
       }
     } else if(tokEquals(TokenType.IDENT)){
+      String name = currentToken.getCasedText();
       next();
       if(tokEquals(TokenType.DOT)){
         next();
-        match(TokenType.IDENT);
+        name += ".";
+        name += match(TokenType.IDENT);
       }
+      _table = new TableOrSubquery(name);
       if(tokEquals(TokenType.AS)){
         next();
-        match(TokenType.IDENT);
+        String al = match(TokenType.IDENT);
+        _table.setAlias(al);
       }
       if(tokEquals(TokenType.INDEXED)){
         next();
         match(TokenType.BY);
-        match(TokenType.IDENT);
+        String in = match(TokenType.IDENT);
+        _table.setIndex(in);
       } else if(tokEquals(TokenType.NOT)){
         next();
         match(TokenType.INDEXED);
@@ -459,26 +469,38 @@ public class SQLParser {
     } else {
       error(currentToken, "Expecting Table Name or '(' but found '" + currentToken.getType() + "'.");
     }
+    return _table;
   }
 
-  private void parseJoinClause(){
-    parseTableOrSubquery();
+  private JoinClause parseJoinClause(){
+    JoinClause _results;
+    TableOrSubquery t = parseTableOrSubquery();
+    _results = new JoinClause(t);
     while(matchIn(TokenType.COMMA, TokenType.NATURAL, TokenType.LEFT, TokenType.INNER, TokenType.CROSS)) {
+      String s = "";
       if (tokEquals(TokenType.COMMA)) {
+        s = ", ";
         next();
       } else {
         if (tokEquals(TokenType.NATURAL)) {
+          s = "NATURAL";
           next();
         }
         switch (currentToken.getType()) {
           case LEFT:
             next();
+            s += " LEFT";
             if (tokEquals(TokenType.OUTER)) {
+              s += " OUTER";
               next();
             }
             break;
           case INNER:
+            s += " INNER";
+            next();
+            break;
           case CROSS:
+            s += " CROSS";
             next();
             break;
           default:
@@ -486,18 +508,24 @@ public class SQLParser {
             break;
         }
         match(TokenType.JOIN);
+        s += " JOIN";
       }
-      parseTableOrSubquery();
+      TableOrSubquery ts = parseTableOrSubquery();
       if(tokEquals(TokenType.ON)){
         next();
-        parseExpr();
+        Expression e = parseExpr();
+        _results.add(ts, s, e);
       } else if(tokEquals(TokenType.USING)){
         next();
         match(TokenType.LPAREN);
-        list(TokenType.IDENT);
+        ArrayList<String> s2 = list(TokenType.IDENT);
         match(TokenType.RPAREN);
+        _results.add(ts, s, s2);
+      } else {
+        _results.add(ts, s);
       }
     }
+    return _results;
   }
 
   private boolean isComparator() {
@@ -903,6 +931,8 @@ public class SQLParser {
         break;
       case AT:
         next();
+        int l1 = currentToken.getLine();
+        int c1 = currentToken.getCol();
         String name = match(TokenType.IDENT);
         JavaVar variable = new JavaVar(name);
         if(tokEquals(TokenType.COLON)){
@@ -916,6 +946,7 @@ public class SQLParser {
           variable.setVarType(_type);
         }
         t = new VariableTerm(variable);
+        t.setLocation(l1, c1);
         break;
       case LONG:
       case INTERNALDOUBLE:

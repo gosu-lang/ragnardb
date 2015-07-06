@@ -1,7 +1,6 @@
 package ragnardb.parser.ast;
 
 import ragnardb.parser.Token;
-
 import java.util.ArrayList;
 
 /**
@@ -11,6 +10,7 @@ public class SelectStatement {
   private boolean isRecursive, isValues;
   private ArrayList<CommonTableExpression> recursiveTables;
   private ArrayList<ResultColumn> results;
+  private ArrayList<JoinClause> tables;
 
   /*This is to keep track of which tokens we have to swallow/pass through*/
   private ArrayList<Token> swallowedTokens = new ArrayList<>();
@@ -33,6 +33,7 @@ public class SelectStatement {
     recursiveTables = new ArrayList<>();
     results = new ArrayList<>();
     expressions = new ArrayList<>();
+    tables = new ArrayList<>();
   }
 
   public SelectStatement(CommonTableExpression cte){
@@ -41,6 +42,7 @@ public class SelectStatement {
     recursiveTables.add(cte);
     results = new ArrayList<>();
     expressions = new ArrayList<>();
+    tables = new ArrayList<>();
   }
 
   public SelectStatement(ResultColumn rc){
@@ -48,6 +50,7 @@ public class SelectStatement {
     results = new ArrayList<>();
     results.add(rc);
     expressions = new ArrayList<>();
+    tables = new ArrayList<>();
   }
 
   public SelectStatement(CommonTableExpression cte, ResultColumn rc){
@@ -57,6 +60,7 @@ public class SelectStatement {
     results = new ArrayList<>();
     results.add(rc);
     expressions = new ArrayList<>();
+    tables = new ArrayList<>();
   }
 
   public SelectStatement(boolean b, Expression e, String s){
@@ -65,6 +69,7 @@ public class SelectStatement {
     results = new ArrayList<>();
     expressions = new ArrayList<>();
     expressions.add(new SelectExpression(e, s));
+    tables = new ArrayList<>();
   }
 
   public void setValues(boolean b){isValues = b;}
@@ -99,6 +104,10 @@ public class SelectStatement {
 
   public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
+  public void addTable(JoinClause jc){
+    tables.add(jc);
+  }
+
   public String toString(){
     StringBuilder sb = new StringBuilder("<Select>\n");
     if(isRecursive){
@@ -115,9 +124,13 @@ public class SelectStatement {
         sb.append(se.containedExpression.toString("\t"));
       }
     } else {
-      sb.append("\tSELECT ");
+      sb.append("\tSELECT\n");
       for(ResultColumn rc: results){
         sb.append(rc.toString("\t"));
+      }
+      sb.append("\tFROM\n");
+      for(JoinClause jc: tables){
+        sb.append(jc.toString("\t"));
       }
       for(SelectExpression se: expressions){
         sb.append("\t" + se.containedType + "\n");
@@ -143,9 +156,13 @@ public class SelectStatement {
         sb.append(se.containedExpression.toString(initial+"\t"));
       }
     } else {
-      sb.append(initial+"\tSELECT ");
+      sb.append(initial+"\tSELECT\n");
       for(ResultColumn rc: results){
         sb.append(rc.toString(initial+"\t"));
+      }
+      sb.append(initial+"\tFROM\n");
+      for(JoinClause jc: tables){
+        sb.append(jc.toString(initial+"\t"));
       }
       for(SelectExpression se: expressions){
         sb.append(initial+"\t" + se.containedType + "\n");
