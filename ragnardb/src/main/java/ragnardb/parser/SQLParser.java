@@ -6,6 +6,7 @@ import ragnardb.utils.NounHandler;
 
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,9 +14,11 @@ public class SQLParser {
 
   private SQLTokenizer _tokenizer;
   private Token currentToken;
+  private HashMap<String, String> variables;
 
   public SQLParser(SQLTokenizer tokenizer) {
     _tokenizer = tokenizer;
+    variables = new HashMap<>();
     next();
   }
 
@@ -944,6 +947,13 @@ public class SQLParser {
             _type += match(TokenType.IDENT);
           }
           variable.setVarType(_type);
+          variables.put(variable.getVarName(), variable.getVarType());
+        } else {
+          String type = variables.get(variable.getVarName());
+          if(type == null){
+            throw new SQLParseError("ERROR: Variable " + name + " has no type.");
+          }
+          variable.setVarType(type);
         }
         t = new VariableTerm(variable);
         t.setLocation(l1, c1);
