@@ -40,6 +40,14 @@ public class SQLParser {
     }
   }
 
+  private void pass(TokenType... passTypes) {
+    if(passTypes[0] == currentToken.getType()){
+      for(TokenType t: passTypes){
+        match(t);
+      }
+    }
+  }
+
   private String match(TokenType expectedType) {
     TokenType currentType = currentToken.getType();
     String s;
@@ -116,7 +124,22 @@ public class SQLParser {
           match(TokenType.SEMI);
         }
       }
-    } else { //for now we will treat everything else as a select statement
+    } else if(tokEquals(TokenType.ALTER)){
+      parseAlterTable();
+      return null;
+    } else if(tokEquals(TokenType.DROP)){
+      parseDropTable();
+      return null;
+    } else if(tokEquals(TokenType.UPDATE)){
+      parseUpdate();
+      return null;
+    } else if(tokEquals(TokenType.INSERT) || tokEquals(TokenType.REPLACE)){
+      parseInsert();
+      return null;
+    } else if(tokEquals(TokenType.DELETE)){
+      parseDelete();
+      return null;
+    } else {
       parseSelect();
       return null;
     }
@@ -195,7 +218,7 @@ public class SQLParser {
       match(TokenType.EXISTS);
     }
     CreateTable table = new CreateTable(currentToken.getText());
-    table.setLoc( line, col, offset, currentToken.getCasedText().length() );
+    table.setLoc(line, col, offset, currentToken.getCasedText().length());
     match(TokenType.IDENT);
 
     if (currentToken.getType() == TokenType.DOT) {
@@ -226,7 +249,264 @@ public class SQLParser {
       match(TokenType.ROWID);
     }
     return table;
+  }
 
+  private void parseInsert(){
+    if(tokEquals(TokenType.REPLACE)){
+      next();
+    } else if(tokEquals(TokenType.INSERT)){
+      next();
+      if(tokEquals(TokenType.OR)){
+        next();
+        matchIn(TokenType.REPLACE, TokenType.ROLLBACK, TokenType.ABORT, TokenType.FAIL, TokenType.IGNORE);
+      }
+    } else {
+      error(currentToken, "Expecting INSERT or REPLACE but found '" + currentToken.getType() + "'.");
+    }
+    match(TokenType.INTO);
+    match(TokenType.IDENT);
+    if(tokEquals(TokenType.DOT)){
+      next();
+      match(TokenType.IDENT);
+    }
+    if(tokEquals(TokenType.LPAREN)){
+      next();
+      list(TokenType.IDENT);
+      match(TokenType.RPAREN);
+    }
+    if(tokEquals(TokenType.DEFAULT)){
+      next();
+      match(TokenType.VALUES);
+    } else if(tokEquals(TokenType.VALUES)){
+      next();
+      match(TokenType.LPAREN);
+      if(tokEquals(TokenType.DEFAULT)){
+        next();
+      } else {
+        parseExpr();
+      }
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        if(tokEquals(TokenType.DEFAULT)){
+          next();
+        } else {
+          parseExpr();
+        }
+      }
+      match(TokenType.RPAREN);
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        match(TokenType.LPAREN);
+        if(tokEquals(TokenType.DEFAULT)){
+          next();
+        } else {
+          parseExpr();
+        }
+        while(tokEquals(TokenType.COMMA)){
+          next();
+          if(tokEquals(TokenType.DEFAULT)){
+            next();
+          } else {
+            parseExpr();
+          }
+        }
+        match(TokenType.RPAREN);
+      }
+    } else {
+      parseSelect();
+    }
+  }
+
+  private void parseUpdate(){
+    match(TokenType.UPDATE);
+    if(tokEquals(TokenType.OR)){
+      next();
+      matchIn(TokenType.ROLLBACK, TokenType.ABORT, TokenType.REPLACE, TokenType.FAIL, TokenType.IGNORE);
+    }
+    match(TokenType.IDENT);
+    if(tokEquals(TokenType.DOT)){
+      next();
+      match(TokenType.IDENT);
+    }
+    if(tokEquals(TokenType.AS)){
+      next();
+      match(TokenType.IDENT);
+    }
+    if(tokEquals(TokenType.INDEXED)){
+      next();
+      match(TokenType.BY);
+      match(TokenType.IDENT);
+    } else if(tokEquals(TokenType.NOT)){
+      next();
+      match(TokenType.INDEXED);
+    }
+    match(TokenType.SET);
+    match(TokenType.IDENT);
+    match(TokenType.EQ);
+    parseExpr();
+    while(tokEquals(TokenType.COMMA)){
+      next();
+      match(TokenType.IDENT);
+      match(TokenType.EQ);
+      parseExpr();
+    }
+    if(tokEquals(TokenType.WHERE)){
+      next();
+      parseExpr();
+    }
+    if(tokEquals(TokenType.LIMIT)){
+      next();
+      parseExpr();
+    }
+  }
+
+  private void parseDropTable(){
+    match(TokenType.DROP);
+    match(TokenType.TABLE);
+    pass(TokenType.IF, TokenType.EXISTS);
+    match(TokenType.IDENT);
+    if(tokEquals(TokenType.DOT)){
+      next();
+      match(TokenType.IDENT);
+    }
+    while(tokEquals(TokenType.COMMA)){
+      match(TokenType.IDENT);
+      if(tokEquals(TokenType.DOT)){
+        next();
+        match(TokenType.IDENT);
+      }
+    }
+    if(tokEquals(TokenType.RESTRICT) || tokEquals(TokenType.CASCADE)){
+      next();
+    }
+  }
+
+  private void parseDelete(){
+    match(TokenType.DELETE);
+    match(TokenType.FROM);
+    match(TokenType.IDENT);
+    if(tokEquals(TokenType.DOT)){
+      next();
+      match(TokenType.IDENT);
+    }
+    if(tokEquals(TokenType.INDEXED)){
+      next();
+      match(TokenType.BY);
+      match(TokenType.IDENT);
+    } else if(tokEquals(TokenType.NOT)) {
+      next();
+      match(TokenType.INDEXED);
+    }
+    if(tokEquals(TokenType.WHERE)){
+      next();
+      parseExpr();
+    }
+    if(tokEquals(TokenType.LIMIT)){
+      next();
+      parseTerm();
+    }
+  }
+
+  private void parseAlterTable(){
+    match(TokenType.ALTER);
+    match(TokenType.TABLE);
+    match(TokenType.IDENT);
+    if(tokEquals(TokenType.DOT)){
+      next();
+      match(TokenType.IDENT);
+    }
+    if(tokEquals(TokenType.ADD)){
+      next();
+      pass(TokenType.COLUMN);
+      if(tokEquals(TokenType.LPAREN)){
+        next();
+        parseColumnDef();
+        while(tokEquals(TokenType.COMMA)){
+          next();
+          parseColumnDef();
+        }
+        match(TokenType.RPAREN);
+      } else if(tokEquals(TokenType.IF)){
+        pass(TokenType.IF, TokenType.NOT, TokenType.EXISTS);
+        parseColumnDef();
+        if(tokEquals(TokenType.BEFORE) || tokEquals(TokenType.AFTER)){
+          next();
+          match(TokenType.IDENT);
+        }
+      } else if(tokEquals(TokenType.CHECK) || tokEquals(TokenType.UNIQUE) || tokEquals(TokenType.FOREIGN) || tokEquals(TokenType.PRIMARY)){
+        parseConstraint();
+        if(tokEquals(TokenType.CHECK) || tokEquals(TokenType.NOCHECK)){
+          next();
+        }
+      } else if(tokEquals(TokenType.IDENT)){
+        Token next = _tokenizer.peek();
+        if(next.getType().equals(TokenType.IDENT)){
+          parseColumnDef();
+          if(tokEquals(TokenType.BEFORE) || tokEquals(TokenType.AFTER)){
+            next();
+            match(TokenType.IDENT);
+          }
+        } else {
+          parseConstraint();
+          if(tokEquals(TokenType.CHECK) || tokEquals(TokenType.NOCHECK)){
+            next();
+          }
+        }
+      }
+    } else if(tokEquals(TokenType.ALTER)){
+      next();
+      match(TokenType.COLUMN);
+      String name = match(TokenType.IDENT);
+      if(tokEquals(TokenType.RENAME)){
+        next();
+        match(TokenType.TO);
+        match(TokenType.IDENT);
+      } else if(tokEquals(TokenType.RESTART)){
+        next();
+        match(TokenType.WITH);
+        match(TokenType.LONG);
+      } else if(tokEquals(TokenType.SET)){
+        next();
+        if(tokEquals(TokenType.DEFAULT)){
+          next();
+          parseExpr();
+        } else if(tokEquals(TokenType.NULL)){
+          next();
+        } else if(tokEquals(TokenType.NOT)){
+          next();
+          match(TokenType.NULL);
+        }
+      } else {
+        parseTypeName(name);
+        if(tokEquals(TokenType.DEFAULT)){
+          next();
+          parseExpr();
+        }
+        pass(TokenType.NOT);
+        pass(TokenType.NULL);
+        if(tokEquals(TokenType.AUTO_INCREMENT) || tokEquals(TokenType.IDENTITY)){
+          next();
+        }
+      }
+    } else if(tokEquals(TokenType.DROP)){
+      next();
+      if(tokEquals(TokenType.COLUMN) || tokEquals(TokenType.CONSTRAINT)){
+        next();
+        pass(TokenType.IF, TokenType.EXISTS);
+        match(TokenType.IDENT);
+      } else if(tokEquals(TokenType.PRIMARY)){
+        next();
+        match(TokenType.KEY);
+      } else {
+        error(currentToken, "Expecting COLUMN or CONSTRAINT or PRIMARY KEY but found '" + currentToken.getType() + "'.");
+      }
+    } else if(tokEquals(TokenType.RENAME)){
+      next();
+      match(TokenType.TO);
+      match(TokenType.IDENT);
+    } else {
+      error(currentToken, "Unexpected token failure in parsing 'alter table' command. Failed on '" + currentToken.getType() + "'.");
+    }
   }
 
   private ColumnDefinition parseTypeName(String name) {
@@ -994,8 +1274,8 @@ public class SQLParser {
         next();
         if (tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT)
           || tokEquals(TokenType.VALUES)) {
-          parseSelect();
-          t = new GeneralTerm(new SelectStatement()); //TODO: Fix this BS
+          SelectStatement ss = parseSelect();
+          t = new GeneralTerm(ss);
         } else {
           Expression e = parseExpr();
           t = new GeneralTerm(e);
