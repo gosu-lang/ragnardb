@@ -24,24 +24,38 @@ import java.util.stream.Collectors;
 
 public class SQLPlugin extends TypeLoaderBase {
 
-  private static final String FILE_EXTENSION = ".ddl";
+  private static final String DDL_EXTENSION = ".ddl";
+  private static final String SQL_EXTENSION = ".sql";
 
-  private final LockingLazyVar<Map<String, IFile>> _sqlSourcesByPackage = new LockingLazyVar<Map<String, IFile>>() {
+  private final LockingLazyVar<Map<String, IFile>> _ddlSourcesByPackage = new LockingLazyVar<Map<String, IFile>>() {
     @Override
     protected Map<String, IFile> init() {
       Map<String, IFile> result = new HashMap<>();
-      for(Pair<String, IFile> p : findAllFilesByExtension(FILE_EXTENSION)) {
+      for(Pair<String, IFile> p : findAllFilesByExtension(DDL_EXTENSION)) {
         IFile file = p.getSecond();
         String fileName = p.getFirst();
-        String fqn = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
-        _fileToDdlTypeName.put(file, fqn);
+        String fqn = fileName.substring(0, fileName.length() - DDL_EXTENSION.length()).replace('/', '.');
         result.put(fqn, file);
       }
       return result;
     }
   };
-  private Map<IFile, String> _fileToDdlTypeName = new HashMap<>();
-  private Map<String, ISQLDdlType> _typeNameToDdlType = new HashMap<>();
+
+  private final LockingLazyVar<Map<IFile, String>> _fileToDdlTypeName = new LockingLazyVar<Map<IFile, String>>() {
+    @Override
+    protected Map<IFile, String> init() {
+      Map<IFile, String> result = new HashMap<>();
+      for(Pair<String, IFile> p : findAllFilesByExtension(DDL_EXTENSION)) {
+        IFile file = p.getSecond();
+        String fileName = p.getFirst();
+        String fqn = fileName.substring(0, fileName.length() - DDL_EXTENSION.length()).replace('/', '.');
+        result.put(file, fqn);
+      }
+      return result;
+    }
+  };
+
+  private Map<String, ISQLDdlType> _fqnToDdlType = new HashMap<>();
   private Set<String> _namespaces;
 
   public SQLPlugin(IModule module) {
@@ -64,7 +78,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public IType getType(final String fullyQualifiedName) {
-    if(_sqlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //hence, a ddltype
+    if(_ddlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //hence, a ddltype
       return ((SqlDdlType) getOrCreateDdlType(fullyQualifiedName)).getTypeRef();
     }
 
@@ -73,7 +87,7 @@ public class SQLPlugin extends TypeLoaderBase {
     String typeName = packagesAndType[packagesAndType.length - 1];
     String packageName = String.join(".", packages);
 
-    IFile iFile = _sqlSourcesByPackage.get().get(packageName);
+    IFile iFile = _ddlSourcesByPackage.get().get(packageName);
     if(iFile != null) {
       ISQLDdlType ddlType = getOrCreateDdlType(packageName);
       List<String> typeNames = ddlType.getTables().stream().map(CreateTable::getTypeName).collect(Collectors.toList());
@@ -85,13 +99,13 @@ public class SQLPlugin extends TypeLoaderBase {
   }
 
   private ISQLDdlType getOrCreateDdlType(String fullyQualifiedName) {
-    ISQLDdlType ddlType = _typeNameToDdlType.get(fullyQualifiedName);
+    ISQLDdlType ddlType = _fqnToDdlType.get(fullyQualifiedName);
     if(ddlType != null) {
       return ddlType;
     }
-    IFile sqlFile = _sqlSourcesByPackage.get().get(fullyQualifiedName);
+    IFile sqlFile = _ddlSourcesByPackage.get().get(fullyQualifiedName);
     ddlType = new SqlDdlType(sqlFile, this);
-    _typeNameToDdlType.put(fullyQualifiedName, ddlType);
+    _fqnToDdlType.put(fullyQualifiedName, ddlType);
     return ddlType;
   }
 
@@ -139,7 +153,7 @@ public class SQLPlugin extends TypeLoaderBase {
   @Override
   public Set<String> computeTypeNames() {
     Set<String> result = new HashSet<>();
-    for(String pkg : _sqlSourcesByPackage.get().keySet()) {
+    for(String pkg : _ddlSourcesByPackage.get().keySet()) {
       for(CreateTable table : getOrCreateDdlType(pkg).getTables()) {
         result.add(pkg + '.' + table.getTypeName());
       }
@@ -203,7 +217,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public String[] getTypesForFile(IFile file) {
-    String ddlTypeName = _fileToDdlTypeName.get(file);
+    String ddlTypeName = _fileToDdlTypeName.get().get(file);
     if( ddlTypeName != null ) {
       return new String[] {ddlTypeName};
     }
@@ -212,7 +226,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public boolean handlesFile(IFile file) {
-    return FILE_EXTENSION.substring( 1 ).equals(file.getExtension());
+    return DDL_EXTENSION.substring( 1 ).equals(file.getExtension());
   }
 
   @Override
@@ -232,8 +246,8 @@ public class SQLPlugin extends TypeLoaderBase {
 
   private void clear() {
     _fileToDdlTypeName.clear();
-    _sqlSourcesByPackage.clear();
-    _typeNameToDdlType.clear();
+    _ddlSourcesByPackage.clear();
+    _fqnToDdlType.clear();
     //_namespaces.clear();
   }
 }
