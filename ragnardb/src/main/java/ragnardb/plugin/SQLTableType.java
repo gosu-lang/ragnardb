@@ -14,6 +14,7 @@ import ragnardb.runtime.SQLRecord;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SQLTableType extends TypeBase implements ISQLTableType {
 
@@ -87,13 +88,7 @@ public class SQLTableType extends TypeBase implements ISQLTableType {
   }
 
   public List<ColumnDefinition> getColumnDefinitions() {
-
-    List<ColumnDefinition> defs = new ArrayList<>();
-
-    for(ColumnDefinition def : _table.getColumnDefinitions()){
-     defs.add(def);
-    }
-    return defs;
+    return getTable().getColumnDefinitions();
   }
 
   @Override
