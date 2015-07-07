@@ -6,7 +6,7 @@ import ragnardb.parser.ast.CreateTable;
 
 import java.util.List;
 
-public interface ISqlTableType extends IType, IFileBasedType {
+public interface ISQLTableType extends IType, IFileBasedType {
   CreateTable getTable();
 
   List<ColumnDefinition> getColumnDefinitions();

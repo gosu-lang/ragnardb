@@ -3,6 +3,6 @@ package ragnardb.parser.ast;
 /**
  * Created by klu on 6/25/2015.
  */
-public class SQL {
+public abstract class SQL {
 
 }

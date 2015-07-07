@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Created by pjennings on 6/23/2015.
  */
-public class DDL {
+public class DDL extends SQL {
   private List<CreateTable> statements;
   public DDL(){
     statements = new ArrayList<CreateTable>();

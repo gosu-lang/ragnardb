@@ -6,7 +6,7 @@ import java.util.ArrayList;
 /**
  * Created by klu on 6/22/2015.
  */
-public class SelectStatement {
+public class SelectStatement extends SQL {
   private boolean isRecursive, isValues;
   private ArrayList<CommonTableExpression> recursiveTables;
   private ArrayList<ResultColumn> results;

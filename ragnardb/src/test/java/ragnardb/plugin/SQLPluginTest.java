@@ -59,7 +59,7 @@ public class SQLPluginTest {
 
   @Test
   public void getColumnDefs() {
-    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
+    ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
     assertNotNull(result);
 
     List<ColumnDefinition> colDefs = result.getColumnDefinitions();
@@ -75,13 +75,13 @@ public class SQLPluginTest {
 
   @Test
   public void getTypeInfo() {
-    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
+    ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users.Contact", result.getName());
     assertEquals("ragnardb.foo.Users", result.getNamespace());
     assertEquals("Contact", result.getRelativeName());
 
-    SQLTypeInfo ti = (SQLTypeInfo) result.getTypeInfo();
+    SQLBaseTypeInfo ti = (SQLBaseTypeInfo) result.getTypeInfo();
     assertEquals("Contact", ti.getName());
 
     //make a set of expected Name/IJavaType pairs
@@ -106,13 +106,13 @@ public class SQLPluginTest {
 
   @Test
   public void getMethodInfo() {
-    ISqlTableType result = (ISqlTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
+    ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users.Contact", result.getName());
     assertEquals("ragnardb.foo.Users", result.getNamespace());
     assertEquals("Contact", result.getRelativeName());
 
-    SQLTypeInfo ti = (SQLTypeInfo) result.getTypeInfo();
+    SQLBaseTypeInfo ti = (SQLBaseTypeInfo) result.getTypeInfo();
     assertEquals("Contact", ti.getName());
 
     IMethodInfo findByAge = ti.getMethod("findByAge", JavaTypes.pINT());
@@ -132,7 +132,7 @@ public class SQLPluginTest {
 
   @Test
   public void getRawSQL() {
-    ISqlDdlType result = (ISqlDdlType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
+    ISQLDdlType result = (ISQLDdlType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users", result.getName());
 
@@ -147,7 +147,7 @@ public class SQLPluginTest {
 
     try {
       actualSource = result.getSqlSource();
-      System.out.println(actualSource.toString());
+      System.out.println(actualSource);
     } catch(IOException e) {
       e.printStackTrace();
       fail();
@@ -155,7 +155,7 @@ public class SQLPluginTest {
 
     assertEquals(expectedSource, actualSource);
 
-    SQLTypeInfo ti = (SQLTypeInfo) result.getTypeInfo();
+    SQLBaseTypeInfo ti = (SQLBaseTypeInfo) result.getTypeInfo();
     assertEquals("Users", ti.getName());
 
     IPropertyInfo readOnlySqlSourceProperty = ti.getProperty("SqlSource");

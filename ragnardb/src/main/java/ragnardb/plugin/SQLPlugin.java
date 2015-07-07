@@ -41,7 +41,7 @@ public class SQLPlugin extends TypeLoaderBase {
     }
   };
   private Map<IFile, String> _fileToDdlTypeName = new HashMap<>();
-  private Map<String, ISqlDdlType> _typeNameToDdlType = new HashMap<>();
+  private Map<String, ISQLDdlType> _typeNameToDdlType = new HashMap<>();
   private Set<String> _namespaces;
 
   public SQLPlugin(IModule module) {
@@ -65,8 +65,7 @@ public class SQLPlugin extends TypeLoaderBase {
   @Override
   public IType getType(final String fullyQualifiedName) {
     if(_sqlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //hence, a ddltype
-      ITypeRef typeRef = ((SqlDdlType) getDdlType(fullyQualifiedName)).getTypeRef();
-      return typeRef;
+      return ((SqlDdlType) getOrCreateDdlType(fullyQualifiedName)).getTypeRef();
     }
 
     String[] packagesAndType = fullyQualifiedName.split("\\.");
@@ -76,10 +75,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
     IFile iFile = _sqlSourcesByPackage.get().get(packageName);
     if(iFile != null) {
-      ISqlDdlType ddlType = _typeNameToDdlType.get(packageName);
-      if(ddlType == null) {
-        ddlType = getDdlType(packageName);
-      }
+      ISQLDdlType ddlType = getOrCreateDdlType(packageName);
       List<String> typeNames = ddlType.getTables().stream().map(CreateTable::getTypeName).collect(Collectors.toList());
       if(typeNames.contains(typeName) && isValidTypeName(fullyQualifiedName)) {
         return ddlType.getInnerClass(typeName);
@@ -88,9 +84,13 @@ public class SQLPlugin extends TypeLoaderBase {
     return null;
   }
 
-  private ISqlDdlType getDdlType(String fullyQualifiedName) {
+  private ISQLDdlType getOrCreateDdlType(String fullyQualifiedName) {
+    ISQLDdlType ddlType = _typeNameToDdlType.get(fullyQualifiedName);
+    if(ddlType != null) {
+      return ddlType;
+    }
     IFile sqlFile = _sqlSourcesByPackage.get().get(fullyQualifiedName);
-    SqlDdlType ddlType = new SqlDdlType(this, new SQLSource(sqlFile));
+    ddlType = new SqlDdlType(sqlFile, this);
     _typeNameToDdlType.put(fullyQualifiedName, ddlType);
     return ddlType;
   }
@@ -140,7 +140,7 @@ public class SQLPlugin extends TypeLoaderBase {
   public Set<String> computeTypeNames() {
     Set<String> result = new HashSet<>();
     for(String pkg : _sqlSourcesByPackage.get().keySet()) {
-      for(CreateTable table : _typeNameToDdlType.get(pkg).getTables()) {
+      for(CreateTable table : getOrCreateDdlType(pkg).getTables()) {
         result.add(pkg + '.' + table.getTypeName());
       }
     }

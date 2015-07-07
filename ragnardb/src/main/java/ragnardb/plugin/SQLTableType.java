@@ -10,28 +10,26 @@ import gw.lang.reflect.TypeSystem;
 import gw.util.GosuClassUtil;
 import gw.util.concurrent.LockingLazyVar;
 import ragnardb.parser.ast.CreateTable;
-import ragnardb.parser.ast.DDL;
 import ragnardb.runtime.SQLRecord;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-public class SqlTableType extends TypeBase implements ISqlTableType {
+public class SQLTableType extends TypeBase implements ISQLTableType {
 
   private final String _name;
-  private final ISqlDdlType _enclosingType;
+  private final ISQLDdlType _enclosingType;
   private final CreateTable _table;
   private LockingLazyVar<ITypeInfo> _typeInfo = new LockingLazyVar<ITypeInfo>()
   {
     @Override
     protected ITypeInfo init()
     {
-      return new SQLTypeInfo( (ISqlTableType)getTheRef() );
+      return new SQLTableTypeInfo( (ISQLTableType)getTheRef() );
     }
   };
 
-  public SqlTableType(ISqlDdlType parent, CreateTable table, String name){
+  public SQLTableType(ISQLDdlType parent, CreateTable table, String name){
     _name = name;
     _table = table;
     _enclosingType = parent;
@@ -68,7 +66,7 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
   }
 
   @Override
-  public ISqlDdlType getEnclosingType() {
+  public ISQLDdlType getEnclosingType() {
     return _enclosingType;
   }
 
@@ -95,10 +93,7 @@ public class SqlTableType extends TypeBase implements ISqlTableType {
     for(ColumnDefinition def : _table.getColumnDefinitions()){
      defs.add(def);
     }
-
     return defs;
-
-
   }
 
   @Override
