@@ -27,6 +27,7 @@ public class SQLQuery<T> implements Iterable<T>{
   public SQLQuery<T> where(SQLConstraint constraint) {
     SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
     newQuery._whereExpr = constraint;
+    newQuery._joinExpr = this._joinExpr; //Carrying data over
     return newQuery;
   }
 
@@ -50,10 +51,11 @@ public class SQLQuery<T> implements Iterable<T>{
   }
 
   public String  getSQLString() {
-    String select =  "SELECT *";
+    String select =  "SELECT " +  _metadata.getTableForType( getRoot()._rootType ) + ".* ";
     String from = "FROM " + _metadata.getTableForType( getRoot()._rootType );
+    String join = _joinExpr == null ? "" : _joinExpr.getSQL( _metadata);
     String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
-    return select + " " + from + " " + where;
+    return select + " " +  from + " " + join + " " + where;
   }
 
   public List<Object> getArgs()

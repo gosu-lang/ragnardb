@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.sql.Types;
 import java.util.*;
 
+import static gw.lang.reflect.java.JavaTypes.getGosuType;
+import static gw.lang.reflect.java.JavaTypes.getJreType;
+
 public class SQLTypeInfo extends BaseTypeInfo {
   private List<IPropertyInfo> _propertiesList;
   private Map<String, IPropertyInfo> _propertiesMap;
@@ -265,15 +268,27 @@ public class SQLTypeInfo extends BaseTypeInfo {
         .build(this);
     result.add(initMethod);
 
+    IMethodInfo selectMethod = new MethodInfoBuilder()
+            .withName("select")
+            .withDescription("Creates a new table query")
+            .withParameters()
+            .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
+            .withStatic(true)
+            .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(md, this.getOwnersType()))
+            .build(this);
+    result.add(selectMethod);
+
     IMethodInfo whereMethod = new MethodInfoBuilder()
-      .withName( "where" )
-      .withDescription( "Creates a new table query" )
-      .withParameters( new ParameterInfoBuilder().withName( "condition" ).withType( TypeSystem.get( SQLConstraint.class ) ) )
-      .withReturnType( JavaTypes.ITERABLE().getParameterizedType(this.getOwnersType() ) )
-      .withStatic( true )
-      .withCallHandler( ( ctx, args ) -> new SQLQuery<SQLRecord>( md, this.getOwnersType() ).where( (SQLConstraint)args[0] ) )
-        .build( this );
+      .withName("where")
+      .withDescription("Creates a new table query")
+      .withParameters(new ParameterInfoBuilder().withName("condition").withType(TypeSystem.get(SQLConstraint.class)))
+      .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
+              .withStatic(true)
+              .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(md, this.getOwnersType()).where((SQLConstraint) args[0]))
+              .build(this);
     result.add(whereMethod);
+
+
 
     return result;
   }
