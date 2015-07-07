@@ -26,40 +26,27 @@ public class SQLPlugin extends TypeLoaderBase {
 
   private static final String FILE_EXTENSION = ".ddl";
 
-  private List<Pair<String, ISQLSource>> _sqlSources;
-
-  private final LockingLazyVar<Map<String, ISQLSource>> _sqlSourcesByPackage = new LockingLazyVar<Map<String, ISQLSource>>() {
+  private final LockingLazyVar<Map<String, IFile>> _sqlSourcesByPackage = new LockingLazyVar<Map<String, IFile>>() {
     @Override
-    protected Map<String, ISQLSource> init() {
-      Map<String, ISQLSource> result = new HashMap<>(_sqlSources.size());
-
-      for(Pair<String, ISQLSource> ddlFilePair : _sqlSources) {
-        String fileName = ddlFilePair.getFirst();
-        String packageName = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
-        ISQLSource ddlFile = ddlFilePair.getSecond();
-        List<String> typeNames = ddlFile.getTables().stream().map(CreateTable::getTypeName).collect(Collectors.toList());
-
-        boolean allTypeNamesAreValid = true;
-        for(String typeName : typeNames) {
-          String fullyQualifiedName = packageName + '.' + typeName;
-          if(!isValidTypeName(fullyQualifiedName)) {
-            allTypeNamesAreValid = false;
-          }
-          if(allTypeNamesAreValid) {
-            result.put(packageName, ddlFile);
-          }
-        }
+    protected Map<String, IFile> init() {
+      Map<String, IFile> result = new HashMap<>();
+      for(Pair<String, IFile> p : findAllFilesByExtension(FILE_EXTENSION)) {
+        IFile file = p.getSecond();
+        String fileName = p.getFirst();
+        String fqn = fileName.substring(0, fileName.length() - FILE_EXTENSION.length()).replace('/', '.');
+        _fileToDdlTypeName.put(file, fqn);
+        result.put(fqn, file);
       }
       return result;
     }
   };
-  private Map<IFile, String> _fileToDdlTypeNames;
+  private Map<IFile, String> _fileToDdlTypeName = new HashMap<>();
+  private Map<String, ISqlDdlType> _typeNameToDdlType = new HashMap<>();
   private Set<String> _namespaces;
 
   public SQLPlugin(IModule module) {
     super(module);
-    appendSqlSources();
-    initSources();
+    appendSqlSources(); // Todo in maven
     init();
   }
 
@@ -72,29 +59,14 @@ public class SQLPlugin extends TypeLoaderBase {
     sourcePaths.add(sourceRootDir);
     sourcePaths.add(testRootDir);
 
-    _module.setSourcePath( sourcePaths );
-  }
-
-  /**
-   * Populates _sqlSources from the provided IModule
-   */
-  private void initSources() {
-    _fileToDdlTypeNames = new HashMap<>();
-    //leverage Streams API to basically cast Pair<String, IFile> to Pair<String, ISQLSource> in place
-    _sqlSources = findAllFilesByExtension(FILE_EXTENSION)
-        .stream()
-        .map(pair -> new Pair<String, ISQLSource>(pair.getFirst(), new SQLSource(pair.getSecond())))
-        .collect(Collectors.toList());
-    _sqlSourcesByPackage.clear();
+    _module.setSourcePath(sourcePaths);
   }
 
   @Override
   public IType getType(final String fullyQualifiedName) {
     if(_sqlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //hence, a ddltype
-      ISQLSource sqlSource = _sqlSourcesByPackage.get().get(fullyQualifiedName);
-      ITypeRef ddlType = TypeSystem.getOrCreateTypeReference(new SqlDdlType(this, sqlSource));
-      _fileToDdlTypeNames.put(sqlSource.getFile(), ddlType.getName());
-      return ddlType;
+      ITypeRef typeRef = ((SqlDdlType) getDdlType(fullyQualifiedName)).getTypeRef();
+      return typeRef;
     }
 
     String[] packagesAndType = fullyQualifiedName.split("\\.");
@@ -102,11 +74,25 @@ public class SQLPlugin extends TypeLoaderBase {
     String typeName = packagesAndType[packagesAndType.length - 1];
     String packageName = String.join(".", packages);
 
-    if(_sqlSourcesByPackage.get().keySet().contains(packageName)) {
-      ISqlDdlType sourceFile = (ISqlDdlType) TypeSystem.getByFullName(packageName);
-      return sourceFile.getInnerClass(typeName);
+    IFile iFile = _sqlSourcesByPackage.get().get(packageName);
+    if(iFile != null) {
+      ISqlDdlType ddlType = _typeNameToDdlType.get(packageName);
+      if(ddlType == null) {
+        ddlType = getDdlType(packageName);
+      }
+      List<String> typeNames = ddlType.getTables().stream().map(CreateTable::getTypeName).collect(Collectors.toList());
+      if(typeNames.contains(typeName) && isValidTypeName(fullyQualifiedName)) {
+        return ddlType.getInnerClass(typeName);
+      }
     }
     return null;
+  }
+
+  private ISqlDdlType getDdlType(String fullyQualifiedName) {
+    IFile sqlFile = _sqlSourcesByPackage.get().get(fullyQualifiedName);
+    SqlDdlType ddlType = new SqlDdlType(this, new SQLSource(sqlFile));
+    _typeNameToDdlType.put(fullyQualifiedName, ddlType);
+    return ddlType;
   }
 
   @Override
@@ -154,7 +140,7 @@ public class SQLPlugin extends TypeLoaderBase {
   public Set<String> computeTypeNames() {
     Set<String> result = new HashSet<>();
     for(String pkg : _sqlSourcesByPackage.get().keySet()) {
-      for(CreateTable table : _sqlSourcesByPackage.get().get(pkg).getTables()) {
+      for(CreateTable table : _typeNameToDdlType.get(pkg).getTables()) {
         result.add(pkg + '.' + table.getTypeName());
       }
     }
@@ -217,7 +203,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public String[] getTypesForFile(IFile file) {
-    String ddlTypeName = _fileToDdlTypeNames.get(file);
+    String ddlTypeName = _fileToDdlTypeName.get(file);
     if( ddlTypeName != null ) {
       return new String[] {ddlTypeName};
     }
@@ -231,17 +217,23 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   protected void refreshedImpl() {
-    initSources();
+    clear();
   }
 
   @Override
   public RefreshKind refreshedFile(IFile file, String[] types, RefreshKind kind) {
-    initSources();
+    clear();
     return kind;
   }
-
   @Override
   protected void refreshedTypesImpl(RefreshRequest request) {
-    initSources();
+    clear();
+  }
+
+  private void clear() {
+    _fileToDdlTypeName.clear();
+    _sqlSourcesByPackage.clear();
+    _typeNameToDdlType.clear();
+    //_namespaces.clear();
   }
 }

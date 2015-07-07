@@ -49,17 +49,6 @@ public class SQLSource extends PhysicalResourceImpl implements ISQLSource {
   }
 
   @Override
-  public List<CreateTable> getTables() {
-    return _parseTree.getList().stream().collect(Collectors.toList());
-//    List<CreateTable> returnSet = new ArrayList<>();
-//
-//    for (CreateTable table : _parseTree.getList()){
-//          returnSet.add(table);
-//    }
-//    return returnSet;
-  }
-
-  @Override
   public String getTypeName( IModule module ) {
     ResourcePath path = getPath();
     for( IDirectory dir: module.getSourcePath() ) {

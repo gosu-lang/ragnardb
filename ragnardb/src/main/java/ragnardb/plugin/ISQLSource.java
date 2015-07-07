@@ -12,12 +12,6 @@ import java.util.List;
 
 public interface ISQLSource extends IResource {
 
-  /**
-   * The names of all the SQL types available from this source
-   * @return a non null set of SQL type names
-   */
-  List<CreateTable> getTables();
-
   Reader getReader() throws IOException;
 
   String getTypeName( IModule module );
