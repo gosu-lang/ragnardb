@@ -78,7 +78,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     methodList.add(generateWhereMethod());
     methodList.add(generateSelectMethod());
     methodList.add(generateGetNameMethod());
-    methodList.add(generateSelectMethod());
 
     List<? extends IMethodInfo> domainMethods = maybeGetDomainMethods();
     List<? extends IPropertyInfo> domainProperties = maybeGetDomainProperties();
