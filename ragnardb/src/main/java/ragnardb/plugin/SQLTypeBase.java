@@ -23,7 +23,7 @@ public abstract class SQLTypeBase extends TypeBase implements ISQLTypeBase {
 
   private SQL _parseTree;
   private IFile _file;
-  private final SQLPlugin _plugin;
+  protected final SQLPlugin _plugin;
   private ITypeRef _typeRef;
   private LockingLazyVar<SQLBaseTypeInfo> _typeInfo;
 

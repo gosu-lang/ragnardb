@@ -41,6 +41,20 @@ public class SQLPlugin extends TypeLoaderBase {
     }
   };
 
+  private final LockingLazyVar<Map<String, IFile>> _sqlSourcesByPackage = new LockingLazyVar<Map<String, IFile>>() {
+    @Override
+    protected Map<String, IFile> init() {
+      Map<String, IFile> result = new HashMap<>();
+      for(Pair<String, IFile> p : findAllFilesByExtension(SQL_EXTENSION)) {
+        IFile file = p.getSecond();
+        String fileName = p.getFirst();
+        String fqn = fileName.substring(0, fileName.length() - SQL_EXTENSION.length()).replace('/', '.');
+        result.put(fqn, file);
+      }
+      return result;
+    }
+  };
+
   private final LockingLazyVar<Map<IFile, String>> _fileToDdlTypeName = new LockingLazyVar<Map<IFile, String>>() {
     @Override
     protected Map<IFile, String> init() {
@@ -55,7 +69,22 @@ public class SQLPlugin extends TypeLoaderBase {
     }
   };
 
+  private final LockingLazyVar<Map<IFile, String>> _fileToSqlTypeName = new LockingLazyVar<Map<IFile, String>>() {
+    @Override
+    protected Map<IFile, String> init() {
+      Map<IFile, String> result = new HashMap<>();
+      for(Pair<String, IFile> p : findAllFilesByExtension(SQL_EXTENSION)) {
+        IFile file = p.getSecond();
+        String fileName = p.getFirst();
+        String fqn = fileName.substring(0, fileName.length() - SQL_EXTENSION.length()).replace('/', '.');
+        result.put(file, fqn);
+      }
+      return result;
+    }
+  };
+
   private Map<String, ISQLDdlType> _fqnToDdlType = new HashMap<>();
+  private Map<String, ISQLQueryType> _fqnToSqlType = new HashMap<>();
   private Set<String> _namespaces;
 
   public SQLPlugin(IModule module) {
@@ -80,6 +109,10 @@ public class SQLPlugin extends TypeLoaderBase {
   public IType getType(final String fullyQualifiedName) {
     if(_ddlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //hence, a ddltype
       return ((SqlDdlType) getOrCreateDdlType(fullyQualifiedName)).getTypeRef();
+    }
+
+    if(_sqlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //a query type
+      return ((SQLQueryType) getOrCreateQueryType(fullyQualifiedName)).getTypeRef();
     }
 
     String[] packagesAndType = fullyQualifiedName.split("\\.");
@@ -107,6 +140,17 @@ public class SQLPlugin extends TypeLoaderBase {
     ddlType = new SqlDdlType(sqlFile, this);
     _fqnToDdlType.put(fullyQualifiedName, ddlType);
     return ddlType;
+  }
+
+  private ISQLQueryType getOrCreateQueryType(String fullyQualifiedName) {
+    ISQLQueryType queryType = _fqnToSqlType.get(fullyQualifiedName);
+    if(queryType != null) {
+      return queryType;
+    }
+    IFile sqlFile = _sqlSourcesByPackage.get().get(fullyQualifiedName);
+    queryType = new SQLQueryType(sqlFile, this);
+    _fqnToSqlType.put(fullyQualifiedName, queryType);
+    return queryType;
   }
 
   @Override
@@ -249,5 +293,37 @@ public class SQLPlugin extends TypeLoaderBase {
     _ddlSourcesByPackage.clear();
     _fqnToDdlType.clear();
     //_namespaces.clear();
+  }
+
+  protected ISQLTableType getTypeFromRelativeName(String relativeName, String namespace){
+    String currentName;
+    if(relativeName.contains("\\.")){
+       currentName = relativeName.split("\\.")[1];
+    } else {currentName = relativeName;}
+
+    Set<String> files = _fqnToDdlType.keySet();
+
+    while(!namespace.equals("")) {
+      Set<String> filesInCurrentDirectory = new HashSet<>();
+      for (String file : files) {
+        if (file.contains(namespace)) {
+          filesInCurrentDirectory.add(file);
+        }
+      }
+
+      for (String fileinCD : filesInCurrentDirectory) {
+        ISQLDdlType currentType = _fqnToDdlType.get(fileinCD);
+        List<CreateTable> tables = currentType.getTables();
+        for (CreateTable table : tables) {
+          if (currentName.equals(table.getTableName())) {
+            ISQLTableType returnType = (ISQLTableType) TypeSystem.getByFullNameIfValid(currentType.getName() + "." + table.getTypeName());
+            return returnType;
+          }
+        }
+      }
+      namespace = namespace.contains("\\.")?namespace.substring(0, namespace.lastIndexOf('.')):"";
+    }
+
+    return null;
   }
 }

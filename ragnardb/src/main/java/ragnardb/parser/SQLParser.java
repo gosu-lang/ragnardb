@@ -1,5 +1,6 @@
 package ragnardb.parser;
 
+import com.sun.org.apache.bcel.internal.generic.Select;
 import ragnardb.parser.ast.*;
 import ragnardb.plugin.ColumnDefinition;
 import ragnardb.utils.NounHandler;
@@ -15,10 +16,12 @@ public class SQLParser {
   private SQLTokenizer _tokenizer;
   private Token currentToken;
   private HashMap<String, String> variables;
+  private ArrayList<JavaVar> _vars;
 
   public SQLParser(SQLTokenizer tokenizer) {
     _tokenizer = tokenizer;
     variables = new HashMap<>();
+    _vars = new ArrayList<>();
     next();
   }
 
@@ -108,7 +111,7 @@ public class SQLParser {
     throw new SQLParseError("[" + token.getLine() + ", " + token.getCol() + "] - ERROR: " + message);
   }
 
-  public DDL parse() {
+  public SQL parse() {
     if(tokEquals(TokenType.CREATE) || tokEquals(TokenType.EOF)) {
       DDL statements = new DDL();
       while (true) {
@@ -140,8 +143,9 @@ public class SQLParser {
       parseDelete();
       return null;
     } else {
-      parseSelect();
-      return null;
+      SelectStatement _select = parseSelect();
+      _select.setVariables(_vars);
+      return _select;
     }
   }
 
@@ -666,6 +670,7 @@ public class SQLParser {
     ResultColumn _rc = null;
     if(tokEquals(TokenType.TIMES)){
       next();
+      _rc = new ResultColumn("*");
     } else if(tokEquals(TokenType.IDENT)){
       String tempname = match(TokenType.IDENT);
       if(tokEquals(TokenType.DOT)){
@@ -1224,7 +1229,8 @@ public class SQLParser {
           while(tokEquals(TokenType.DOT)){
             _type += '.';
             next();
-            _type += match(TokenType.IDENT);
+            _type += currentToken.getCasedText();
+            match(TokenType.IDENT);
           }
           variable.setVarType(_type);
           variables.put(variable.getVarName(), variable.getVarType());
@@ -1235,6 +1241,9 @@ public class SQLParser {
           }
           variable.setVarType(type);
         }
+        variable.setLine(l1);
+        variable.setCol(c1);
+        _vars.add(variable);
         t = new VariableTerm(variable);
         t.setLocation(l1, c1);
         break;

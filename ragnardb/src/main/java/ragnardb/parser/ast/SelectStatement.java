@@ -11,6 +11,7 @@ public class SelectStatement extends SQL {
   private ArrayList<CommonTableExpression> recursiveTables;
   private ArrayList<ResultColumn> results;
   private ArrayList<JoinClause> tables;
+  private ArrayList<JavaVar> variables;
 
   /*This is to keep track of which tokens we have to swallow/pass through*/
   private ArrayList<Token> swallowedTokens = new ArrayList<>();
@@ -34,6 +35,7 @@ public class SelectStatement extends SQL {
     results = new ArrayList<>();
     expressions = new ArrayList<>();
     tables = new ArrayList<>();
+    variables = new ArrayList<>();
   }
 
   public SelectStatement(CommonTableExpression cte){
@@ -43,6 +45,7 @@ public class SelectStatement extends SQL {
     results = new ArrayList<>();
     expressions = new ArrayList<>();
     tables = new ArrayList<>();
+    variables = new ArrayList<>();
   }
 
   public SelectStatement(ResultColumn rc){
@@ -51,6 +54,7 @@ public class SelectStatement extends SQL {
     results.add(rc);
     expressions = new ArrayList<>();
     tables = new ArrayList<>();
+    variables = new ArrayList<>();
   }
 
   public SelectStatement(CommonTableExpression cte, ResultColumn rc){
@@ -61,6 +65,7 @@ public class SelectStatement extends SQL {
     results.add(rc);
     expressions = new ArrayList<>();
     tables = new ArrayList<>();
+    variables = new ArrayList<>();
   }
 
   public SelectStatement(boolean b, Expression e, String s){
@@ -70,6 +75,7 @@ public class SelectStatement extends SQL {
     expressions = new ArrayList<>();
     expressions.add(new SelectExpression(e, s));
     tables = new ArrayList<>();
+    variables = new ArrayList<>();
   }
 
   public void setValues(boolean b){isValues = b;}
@@ -115,6 +121,12 @@ public class SelectStatement extends SQL {
   public ArrayList<String> getTables(){
     return tables.get(0).getNames();
   }
+
+  public void setVariables(ArrayList<JavaVar> vars){variables = vars;}
+
+  public ArrayList<JavaVar> getVariables(){return variables;}
+
+  public void addVariable(JavaVar var){variables.add(var);}
 
   public String toString(){
     StringBuilder sb = new StringBuilder("<Select>\n");
