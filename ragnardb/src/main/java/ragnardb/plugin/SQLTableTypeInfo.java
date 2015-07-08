@@ -76,6 +76,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     methodList.add(generateCreateMethod());
     methodList.add(generateInitMethod());
     methodList.add(generateWhereMethod());
+    methodList.add(generateSelectMethod());
     methodList.add(generateGetNameMethod());
 
     List<? extends IMethodInfo> domainMethods = maybeGetDomainMethods();
@@ -161,6 +162,17 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withReturnType(JavaTypes.ITERABLE().getParameterizedType(this.getOwnersType()))
         .withStatic(true)
         .withCallHandler(( ctx, args ) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()).where((SQLConstraint) args[0]))
+        .build(this);
+  }
+
+  private IMethodInfo generateSelectMethod() {
+    return new MethodInfoBuilder()
+        .withName("select")
+        .withDescription("Creates a new table query")
+        .withParameters()
+        .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
+        .withStatic(true)
+        .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
         .build(this);
   }
 
