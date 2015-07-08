@@ -1,7 +1,9 @@
 package ragnardb.runtime;
 
+import gw.lang.reflect.IFeatureInfo;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
+import gw.lang.reflect.features.PropertyReference;
 import ragnardb.plugin.ISQLTableType;
 
 import java.util.*;
@@ -153,22 +155,31 @@ public abstract class SQLConstraint
 
   private static class IsEqualToConstraint extends SQLConstraint
   {
-    Object _obj;
+    List<Object> _objs;
+    String RHS;
 
     IsEqualToConstraint( IPropertyInfo pi, Object o )
     {
       _propertyInfo = pi;
-      _obj = o;
+      if( o instanceof PropertyReference){
+        IFeatureInfo info = ((PropertyReference) o).getFeatureInfo();
+        RHS = ((ISQLTableType) info.getOwnersType()).getTable().getTableName()+"."+info.getDisplayName();
+        _objs = new ArrayList<>();
+      }
+      else {
+        _objs = Arrays.asList( o );
+        RHS = " ? ";
+      }
     }
 
     public String getSQL( ITypeToSQLMetadata metadata )
     {
-      return metadata.getColumnForProperty( _propertyInfo ) + "=?";
+      return metadata.getColumnForProperty( _propertyInfo ) + "= " + RHS;
     }
 
     List<Object> getArgs()
     {
-      return Arrays.asList( _obj );
+      return _objs;
     }
   }
 

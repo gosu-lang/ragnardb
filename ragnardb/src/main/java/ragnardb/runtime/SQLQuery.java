@@ -109,8 +109,9 @@ public class SQLQuery<T> implements Iterable<T>{
     String select =  "SELECT " +  _metadata.getTableForType( getRoot()._rootType ) + ".* ";
     String from = "FROM " + _metadata.getTableForType( getRoot()._rootType );
     String join = _joinExpr == null ? "" : _joinExpr.getSQL( _metadata);
+    String on =  _onExpr == null ? "" : _onExpr.getSQL( _metadata);
     String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
-    return select + " " +  from + " " + join + " " + where;
+    return select + " " +  from + " "  + join + on + " " + " " + where;
   }
 
   public List<Object> getArgs()
