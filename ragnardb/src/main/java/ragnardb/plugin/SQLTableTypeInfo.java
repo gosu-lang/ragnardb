@@ -6,6 +6,7 @@ import ragnardb.runtime.SQLConstraint;
 import ragnardb.runtime.SQLMetadata;
 import ragnardb.runtime.SQLQuery;
 import ragnardb.runtime.SQLRecord;
+import ragnardb.utils.NounHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -169,9 +170,13 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
    */
   private IType maybeGetDomainLogic() {
     ISQLTableType tableType = (ISQLTableType) getOwnersType();
-    final String domainLogicPackageSuffix = "Extensions."; //TODO make constant
-    final String domainLogicTableSuffix = "Ext"; //TODO make constant
-    final String domainLogicFqn = tableType.getNamespace() + domainLogicPackageSuffix + tableType.getRelativeName() + domainLogicTableSuffix;
+    ISQLDdlType ddlType = (ISQLDdlType) tableType.getEnclosingType();
+    final String singularizedDdlType = new NounHandler(ddlType.getRelativeName()).getSingular();
+    final String domainLogicPackageSuffix = "Extensions.";
+    final String domainLogicTableSuffix = "Ext";
+    final String domainLogicFqn = ddlType.getNamespace() + '.' +
+        singularizedDdlType + domainLogicPackageSuffix + tableType.getRelativeName() + domainLogicTableSuffix;
+
     return TypeSystem.getByFullNameIfValid(domainLogicFqn);
   }
 
