@@ -155,18 +155,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .build(this);
   }
 
-
-  private IMethodInfo generateSelectMethod() {
-    return new MethodInfoBuilder()
-      .withName("select")
-      .withDescription("Creates a new table query")
-      .withParameters()
-      .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
-      .withStatic(true)
-      .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
-      .build(this);
-  }
-
   private IMethodInfo generateWhereMethod() {
     return new MethodInfoBuilder()
         .withName("where")
