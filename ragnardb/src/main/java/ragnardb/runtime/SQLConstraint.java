@@ -26,10 +26,15 @@ public abstract class SQLConstraint
     return new IsLikeConstraint( pr, s );
   }
 
-  public static SQLConstraint join( IType s )
+  public static SQLConstraint join( IType s , String joinName )
   {
-    return new JoinConstraint( s );
+    return new JoinConstraint( s , joinName );
   }
+
+  public static SQLConstraint on( SQLConstraint s) {
+    return new OnConstraint(s);
+  }
+
 
   abstract String getSQL( ITypeToSQLMetadata metadata );
 
@@ -47,15 +52,18 @@ public abstract class SQLConstraint
   private static class JoinConstraint extends SQLConstraint
   {
     IType _obj;
+    String _joinType;
 
-    JoinConstraint( IType o )
+    JoinConstraint( IType o , String joinType)
     {
       _obj = o;
+      _joinType = joinType;
     }
 
-    public String getSQL( ITypeToSQLMetadata metadata )
+
+    public String getSQL( ITypeToSQLMetadata metadata  )
     {
-      return " CROSS JOIN " +
+      return " " + _joinType + " " +
         ((ISQLTableType) _obj).getTable().getTableName() + " ";
     }
 
@@ -90,6 +98,28 @@ public abstract class SQLConstraint
       answer.addAll(constraint1.getArgs());
       answer.addAll(constraint2.getArgs());
       return answer;
+    }
+  }
+
+  private static class OnConstraint extends SQLConstraint
+  {
+
+    SQLConstraint constraint1;
+
+
+    OnConstraint( SQLConstraint _constraint1 )
+    {
+      constraint1 = _constraint1;
+    }
+
+    public String getSQL( ITypeToSQLMetadata metadata ){
+
+      return " ON " + constraint1.getSQL( metadata);
+    }
+
+    List<Object> getArgs()
+    {
+      return constraint1.getArgs();
     }
   }
 

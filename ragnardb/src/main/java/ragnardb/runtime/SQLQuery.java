@@ -26,6 +26,8 @@ public class SQLQuery<T> implements Iterable<T>{
     _rootType = rootType;
   }
 
+
+
   public SQLQuery<T> where(SQLConstraint constraint) {
     SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
     newQuery._whereExpr = constraint;
@@ -34,15 +36,58 @@ public class SQLQuery<T> implements Iterable<T>{
     return newQuery;
   }
 
-  public SQLQuery<T> join( IType type) {
+  public SQLQuery<T> crossJoin( IType type) {
     SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
-    newQuery._joinExpr =  SQLConstraint.join(type);
+    newQuery._joinExpr =  SQLConstraint.join(type , "CROSS JOIN");
     return newQuery;
   }
 
+  public SQLQuery<T> join( IType type) {
+    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    newQuery._joinExpr =  SQLConstraint.join(type , "JOIN");
+    return newQuery;
+  }
+
+  public SQLQuery<T> innerJoin( IType type) {
+    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    newQuery._joinExpr =  SQLConstraint.join(type , "INNER JOIN");
+    return newQuery;
+  }
+
+  public SQLQuery<T> leftOuterJoin( IType type) {
+    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    newQuery._joinExpr =  SQLConstraint.join(type , "LEFT OUTER JOIN");
+    return newQuery;
+  }
+
+  public SQLQuery<T> rightOuterJoin( IType type) {
+    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    newQuery._joinExpr =  SQLConstraint.join(type , "RIGHT OUTER JOIN");
+    return newQuery;
+  }
+
+  public SQLQuery<T> rightJoin( IType type) {
+    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    newQuery._joinExpr =  SQLConstraint.join(type , "RIGHT JOIN");
+    return newQuery;
+  }
+
+  public SQLQuery<T> leftJoin( IType type) {
+    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    newQuery._joinExpr =  SQLConstraint.join(type , "LEFT JOIN");
+    return newQuery;
+  }
+
+  public SQLQuery<T> naturalJoin( IType type) {
+    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    newQuery._joinExpr =  SQLConstraint.join(type , "NATURAL JOIN");
+    return newQuery;
+  }
+
+
   public SQLQuery<T> on( SQLConstraint constraint) {
     SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
-    newQuery._onExpr = constraint;
+    newQuery._onExpr = SQLConstraint.on(constraint);
     newQuery._joinExpr = this._joinExpr;
     return newQuery;
   }
