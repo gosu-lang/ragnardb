@@ -42,10 +42,15 @@
       <resource>
         <directory>src/main/gosu</directory>
       </resource>
-      <resource>
-        <directory>src/test/gosu</directory>
-      </resource>
     </resources>
+    <testResources>
+      <testResource>
+        <directory>src/test/gosu</directory>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources</directory>
+      </testResource>
+    </testResources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
