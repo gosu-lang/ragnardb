@@ -35,10 +35,13 @@ public class ResultColumn {
 
   public ArrayList<Expression> getResultExpressions(){return resultExpressions;}
 
+  public String getResult(){return result;}
+
   public void addToken(Token t){swallowedTokens.add(t);}
 
   public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
 
+  @Override
   public String toString(){
     if(resultExpressions == null){
       return result+ "\n";

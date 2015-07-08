@@ -6,6 +6,7 @@ package ragnardb.parser.ast;
 public class JavaVar {
   private String _varName;
   private String _varType;
+  private int line, col;
 
   public JavaVar(){}
 
@@ -23,4 +24,18 @@ public class JavaVar {
   public void setVarName(String s){_varName = s;}
 
   public void setVarType(String s){_varType = s;}
+
+  public void setLine(int l){line = l;}
+
+  public void setCol(int c){col = c;}
+
+  public int getLine(){return line;}
+
+  public int getCol(){return col;}
+
+  @Override
+  public boolean equals(Object o){
+    JavaVar var = (JavaVar) o;
+    return ((this._varName.equals(var._varName)) && (this._varType.equals(var._varType)));
+  }
 }
