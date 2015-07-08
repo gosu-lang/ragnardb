@@ -92,7 +92,6 @@ public class SQLPluginTest {
     expectedPropertyNameAndType.put("LastName", JavaTypes.STRING());
     expectedPropertyNameAndType.put("FirstName", JavaTypes.STRING());
     expectedPropertyNameAndType.put("Age", JavaTypes.pINT());
-    expectedPropertyNameAndType.put("MeaningOfLife", JavaTypes.pINT()); // see ragnardb.foo.users.impl.Contact for domain logic
 
     //number of properties is what we expect
     assertEquals(expectedPropertyNameAndType.size(), ti.getProperties().size()); //TODO domain logic breaks this test
@@ -168,10 +167,10 @@ public class SQLPluginTest {
 
   @Test
   public void getInjectedMethod() {
-    ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bar.Baz");
+    ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
     assertNotNull(result);
-    assertEquals("ragnardb.foo.Bar.Baz", result.getName());
-    assertEquals("ragnardb.foo.Bar", result.getNamespace());
+    assertEquals("ragnardb.foo.Bars.Baz", result.getName());
+    assertEquals("ragnardb.foo.Bars", result.getNamespace());
     assertEquals("Baz", result.getRelativeName());
 
     SQLTableTypeInfo ti = (SQLTableTypeInfo) result.getTypeInfo();
@@ -184,10 +183,10 @@ public class SQLPluginTest {
 
   @Test
   public void getInjectedProperty() {
-    ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bar.Baz");
+    ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
     assertNotNull(result);
-    assertEquals("ragnardb.foo.Bar.Baz", result.getName());
-    assertEquals("ragnardb.foo.Bar", result.getNamespace());
+    assertEquals("ragnardb.foo.Bars.Baz", result.getName());
+    assertEquals("ragnardb.foo.Bars", result.getNamespace());
     assertEquals("Baz", result.getRelativeName());
 
     SQLTableTypeInfo ti = (SQLTableTypeInfo) result.getTypeInfo();
