@@ -1229,7 +1229,8 @@ public class SQLParser {
           while(tokEquals(TokenType.DOT)){
             _type += '.';
             next();
-            _type += match(TokenType.IDENT);
+            _type += currentToken.getCasedText();
+            match(TokenType.IDENT);
           }
           variable.setVarType(_type);
           variables.put(variable.getVarName(), variable.getVarType());
