@@ -18,9 +18,12 @@ import java.util.HashMap;
 import java.util.List;
 
 public class SQLTableTypeInfo extends SQLBaseTypeInfo {
+  private String _classTableName;
+
   public SQLTableTypeInfo(ISQLTableType type) {
     super(type);
     resolveProperties(type);
+    _classTableName = type.getName();
   }
 
   private void resolveProperties( ISQLTableType type ) {
@@ -156,6 +159,18 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
       .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(md, this.getOwnersType()).where((SQLConstraint) args[0]))
       .build(this);
     result.add(whereMethod);
+
+
+    IMethodInfo getName = new MethodInfoBuilder()
+      .withName("getName")
+      .withDescription("Returns Table Name")
+      .withParameters()
+      .withReturnType(JavaTypes.STRING())
+      .withStatic(true)
+      .withCallHandler((ctx, args) -> _classTableName)
+      .build(this);
+    result.add(getName);
+
     return result;
   }
 

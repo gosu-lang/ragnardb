@@ -4,6 +4,7 @@ import gw.lang.reflect.IType;
 import gw.util.GosuExceptionUtil;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -15,6 +16,7 @@ public class SQLQuery<T> implements Iterable<T>{
   private IType _rootType;
   private SQLConstraint _whereExpr;
   private SQLConstraint _joinExpr;
+  private SQLConstraint _onExpr;
   private SQLQuery _parent;
   private ITypeToSQLMetadata _metadata;
 
@@ -28,12 +30,20 @@ public class SQLQuery<T> implements Iterable<T>{
     SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
     newQuery._whereExpr = constraint;
     newQuery._joinExpr = this._joinExpr; //Carrying data over
+    newQuery._onExpr = this._onExpr; //Carrying data over
     return newQuery;
   }
 
-  public SQLQuery<T> join( SQLConstraint constraint) {
+  public SQLQuery<T> join( IType type) {
     SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
-    newQuery._joinExpr = constraint;
+    newQuery._joinExpr =  SQLConstraint.join(type);
+    return newQuery;
+  }
+
+  public SQLQuery<T> on( SQLConstraint constraint) {
+    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    newQuery._onExpr = constraint;
+    newQuery._joinExpr = this._joinExpr;
     return newQuery;
   }
 
@@ -60,7 +70,17 @@ public class SQLQuery<T> implements Iterable<T>{
 
   public List<Object> getArgs()
   {
-    return _whereExpr.getArgs();
+    List answer = new ArrayList();
+    if(_joinExpr!=null) {
+      answer.addAll(_joinExpr.getArgs());
+    }
+    if(_onExpr!=null) {
+      answer.addAll(_onExpr.getArgs());
+    }
+    if(_whereExpr!=null) {
+      answer.addAll(_whereExpr.getArgs());
+    }
+    return answer;
   }
 
   private Iterable<T> execQuery()
