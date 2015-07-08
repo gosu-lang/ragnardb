@@ -1,14 +1,10 @@
 package ragnardb.runtime;
 
-import com.sun.tools.javac.util.StringUtils;
 import gw.lang.reflect.IPropertyInfo;
-import ragnardb.parser.ast.SQL;
+import gw.lang.reflect.IType;
+import ragnardb.plugin.ISQLTableType;
 
-import java.awt.font.NumericShaper;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public abstract class SQLConstraint
 {
@@ -30,6 +26,11 @@ public abstract class SQLConstraint
     return new IsLikeConstraint( pr, s );
   }
 
+  public static SQLConstraint join( IType s )
+  {
+    return new JoinConstraint( s );
+  }
+
   abstract String getSQL( ITypeToSQLMetadata metadata );
 
   abstract List<Object> getArgs();
@@ -41,6 +42,27 @@ public abstract class SQLConstraint
 
   public SQLConstraint orElse(SQLConstraint sql){
     return new OrConstraint(_propertyInfo, this, sql);
+  }
+
+  private static class JoinConstraint extends SQLConstraint
+  {
+    IType _obj;
+
+    JoinConstraint( IType o )
+    {
+      _obj = o;
+    }
+
+    public String getSQL( ITypeToSQLMetadata metadata )
+    {
+      return " CROSS JOIN " +
+        ((ISQLTableType) _obj).getTable().getTableName() + " ";
+    }
+
+    List<Object> getArgs()
+    {
+      return Collections.emptyList();
+    }
   }
 
   private static class AndConstraint extends SQLConstraint

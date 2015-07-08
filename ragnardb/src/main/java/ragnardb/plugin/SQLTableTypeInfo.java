@@ -15,12 +15,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SQLTableTypeInfo extends SQLBaseTypeInfo {
-
   private SQLMetadata _md = new SQLMetadata();
+  private String _classTableName;
 
   public SQLTableTypeInfo(ISQLTableType type) {
     super(type);
     resolveProperties(type);
+    _classTableName = type.getName();
   }
 
   private void resolveProperties( ISQLTableType type ) {
@@ -75,13 +76,12 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     methodList.add(generateCreateMethod());
     methodList.add(generateInitMethod());
     methodList.add(generateWhereMethod());
+    methodList.add(generateGetNameMethod());
 
     List<? extends IMethodInfo> domainMethods = maybeGetDomainMethods();
     List<? extends IPropertyInfo> domainProperties = maybeGetDomainProperties();
 
-    for(IMethodInfo domainMethod : domainMethods) {
-      methodList.add(domainMethod);
-    }
+    methodList.addAll(domainMethods);
 
     _methodList = methodList;
 
@@ -164,10 +164,17 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .build(this);
   }
 
-  /**
-   * TODO singularize fqn properly
-   * @return
-   */
+  private IMethodInfo generateGetNameMethod() {
+    return new MethodInfoBuilder()
+        .withName("getName")
+        .withDescription("Returns Table Name")
+        .withParameters()
+        .withReturnType(JavaTypes.STRING())
+        .withStatic(true)
+        .withCallHandler((ctx, args) -> _classTableName)
+        .build(this);
+  }
+
   private IType maybeGetDomainLogic() {
     ISQLTableType tableType = (ISQLTableType) getOwnersType();
     ISQLDdlType ddlType = (ISQLDdlType) tableType.getEnclosingType();
