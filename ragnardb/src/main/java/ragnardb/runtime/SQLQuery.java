@@ -13,12 +13,12 @@ import java.util.List;
  */
 public class SQLQuery<T> implements Iterable<T>{
 
-  private IType _rootType;
+  protected IType _rootType;
   private SQLConstraint _whereExpr;
   private SQLConstraint _joinExpr;
   private SQLConstraint _onExpr;
   private SQLQuery _parent;
-  private ITypeToSQLMetadata _metadata;
+  protected ITypeToSQLMetadata _metadata;
 
   public SQLQuery( ITypeToSQLMetadata md, IType rootType )
   {
