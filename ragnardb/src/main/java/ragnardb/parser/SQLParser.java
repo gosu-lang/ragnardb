@@ -1218,12 +1218,15 @@ public class SQLParser {
         t = new StringTerm(x);
         break;
       case AT:
-        next();
         int l1 = currentToken.getLine();
         int c1 = currentToken.getCol();
+        int skiplen = 1;
+        next();
         String name = match(TokenType.IDENT);
+        skiplen += name.length();
         JavaVar variable = new JavaVar(name);
         if(tokEquals(TokenType.COLON)){
+          skiplen++;
           next();
           String _type = match(TokenType.IDENT);
           while(tokEquals(TokenType.DOT)){
@@ -1234,6 +1237,7 @@ public class SQLParser {
           }
           variable.setVarType(_type);
           variables.put(variable.getVarName(), variable.getVarType());
+          skiplen += _type.length();
         } else {
           String type = variables.get(variable.getVarName());
           if(type == null){
@@ -1243,6 +1247,7 @@ public class SQLParser {
         }
         variable.setLine(l1);
         variable.setCol(c1);
+        variable.setSkiplen(skiplen);
         _vars.add(variable);
         t = new VariableTerm(variable);
         t.setLocation(l1, c1);

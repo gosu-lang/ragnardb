@@ -2,16 +2,23 @@ package ragnardb.plugin;
 
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
+import ragnardb.RagnarDB;
 import ragnardb.parser.ast.JavaVar;
 import ragnardb.parser.ast.JoinClause;
 import ragnardb.parser.ast.ResultColumn;
 import ragnardb.parser.ast.SelectStatement;
+import ragnardb.runtime.ExecutableQuery;
+import ragnardb.runtime.SQLMetadata;
+import ragnardb.runtime.SQLQuery;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
 import java.util.*;
 
 public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
   private ArrayList<JavaVar> coalescedVars;
+  private SQLMetadata _md = new SQLMetadata();
 
   public SQLQueryTypeInfo(ISQLQueryType type) {
     super(type);
@@ -61,6 +68,30 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
       .withReturnType(JavaTypes.ITERABLE().getParameterizedType(returnType(tree, type)))
       .withStatic(true)
       .withCallHandler((ctx, args) -> {
+        ISQLQueryType owner = (ISQLQueryType) getOwnersType();
+        SelectStatement statement = (SelectStatement) owner.getParseTree();
+        ArrayList<JavaVar> variables = statement.getVariables();
+        try {
+          String rawSQL = owner.getSqlSource();
+          String[] places = rawSQL.split("\n");
+          for (int i = 0; i < coalescedVars.size(); i++) {
+            for (JavaVar var : variables) {
+              if (var.equals(coalescedVars.get(i))) {
+                String replacement = args[i].toString();
+                String currentLine = places[var.getLine() - 1];
+                String finalLine = currentLine.substring(0, var.getCol() - 1)
+                  + replacement + currentLine.substring(var.getCol() - 1 + var.getSkiplen());
+                places[var.getLine() - 1] = finalLine;
+              }
+            }
+          }
+          String finalSQL = String.join("\n", places);
+          ExecutableQuery query = new ExecutableQuery(_md, returnType(tree, type));
+          query = query.setup(finalSQL);
+          return query;
+        } catch (Exception e) {
+          //TODO: What to do in the event of a read failure?
+        }
         return null;
       })
       .build(this);
@@ -70,9 +101,12 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
 
   private void setCoalescedVars(ArrayList<JavaVar> init){
     coalescedVars = new ArrayList<>();
-    Set<JavaVar> c = new HashSet<>(init);
-    for(JavaVar v: c){
-      coalescedVars.add(v);
+    ArrayList<String> names = new ArrayList<>();
+    for(JavaVar v: init){
+      if(!names.contains(v.getVarName())){
+        coalescedVars.add(v);
+        names.add(v.getVarName());
+      }
     }
   }
 

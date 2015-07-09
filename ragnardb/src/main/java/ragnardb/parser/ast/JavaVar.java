@@ -6,7 +6,7 @@ package ragnardb.parser.ast;
 public class JavaVar {
   private String _varName;
   private String _varType;
-  private int line, col;
+  private int line, col, skiplen;
 
   public JavaVar(){}
 
@@ -33,9 +33,13 @@ public class JavaVar {
 
   public int getCol(){return col;}
 
+  public void setSkiplen(int len){skiplen = len;}
+
+  public int getSkiplen(){return skiplen;}
+
   @Override
   public boolean equals(Object o){
     JavaVar var = (JavaVar) o;
-    return ((this._varName.equals(var._varName)) && (this._varType.equals(var._varType)));
+    return this._varName.equals(var._varName);
   }
 }

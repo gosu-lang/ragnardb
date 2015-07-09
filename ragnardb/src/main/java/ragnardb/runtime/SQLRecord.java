@@ -108,8 +108,8 @@ public class SQLRecord implements ISQLResult
       Map.Entry<String, Object> pair = values.next();
       if( !pair.getKey().equals( _idColumn ) )
       {
-        valNames.append( pair.getKey() ).append( "=?" );
-        vals.add( pair.getValue() );
+        valNames.append( pair.getKey() ).append("=?");
+        vals.add(pair.getValue());
         if( values.hasNext() )
         {
           valNames.append( "," );

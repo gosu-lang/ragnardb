@@ -69,6 +69,18 @@ public class SQLPluginTest {
   }
 
   @Test
+  public void testSQLExecute() {
+    ISQLQueryType result = (ISQLQueryType) TypeSystem.getByFullNameIfValid("ragnardb.foo.MyQuery");
+    assertNotNull(result);
+    SQLBaseTypeInfo ti = (SQLBaseTypeInfo) result.getTypeInfo();
+    IMethodInfo execute = ti.getMethod("execute", JavaTypes.STRING());
+    assertNotNull(execute);
+    execute.getCallHandler().handleCall(result, "foo");
+    IParameterInfo[] parameters = execute.getParameters();
+  }
+
+
+  @Test
   public void oneSourceWithMultipleTypes() {
     IType result = TypeSystem.getByFullNameIfValid("ragnardb.foo.Vehicles.Car");
     assertNotNull(result);

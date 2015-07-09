@@ -1,10 +1,6 @@
 package ragnardb;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -67,6 +63,13 @@ public class RagnarDB
     return stmt.execute();
   }
 
+  public static ResultSet execQuery(String sqlSrc) throws SQLException
+  {
+    Connection conn = getConnection();
+    Statement statement = conn.createStatement();
+    maybeLog(sqlSrc, Collections.emptyList());
+    return statement.executeQuery(sqlSrc);
+  }
   public static int count( String tableName ) throws SQLException
   {
     Connection conn = getConnection();

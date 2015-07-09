@@ -1,1 +1,1 @@
-SELECT * FROM Contacts WHERE Age < 3;
+SELECT * FROM Contacts WHERE Name = @name:java.lang.String;
