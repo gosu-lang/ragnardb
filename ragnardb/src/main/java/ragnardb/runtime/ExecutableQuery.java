@@ -13,18 +13,18 @@ import java.util.Iterator;
 public class ExecutableQuery<T> extends SQLQuery<T>{
   private String statement;
 
-  public ExecutableQuery(ITypeToSQLMetadata md, IType rootType){
+  public ExecutableQuery(ITypeToSQLMetadata md, IType rootType, String s){
     super(md, rootType);
+    statement = s;
   }
 
-  public ExecutableQuery<T> setup(String string){
-    ExecutableQuery<T> query = new ExecutableQuery<T>(_metadata, _rootType);
-    statement = string;
+  public ExecutableQuery<T> setup(){
+    ExecutableQuery<T> query = new ExecutableQuery<T>(_metadata, _rootType, this.statement);
     return query;
   }
 
   @Override
-  public Iterator<T> iterator(){return execQuery().iterator();}
+  public Iterator<T> iterator(){return this.execQuery().iterator();}
 
   private Iterable<T> execQuery(){
     try{

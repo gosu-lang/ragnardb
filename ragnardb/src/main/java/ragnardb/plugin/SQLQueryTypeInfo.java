@@ -77,7 +77,19 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
           for (int i = 0; i < coalescedVars.size(); i++) {
             for (JavaVar var : variables) {
               if (var.equals(coalescedVars.get(i))) {
-                String replacement = args[i].toString();
+                Object rep = args[i];
+                String replacement;
+                if (rep instanceof java.lang.String || rep instanceof java.lang.Character) {
+                  replacement = "'" + rep.toString() + "'";
+                } else if (rep instanceof java.lang.Boolean) {
+                  if ((Boolean) rep){
+                    replacement = "1";
+                  } else {
+                    replacement = "0";
+                  }
+                } else {
+                  replacement = rep.toString();
+                }
                 String currentLine = places[var.getLine() - 1];
                 String finalLine = currentLine.substring(0, var.getCol() - 1)
                   + replacement + currentLine.substring(var.getCol() - 1 + var.getSkiplen());
@@ -86,8 +98,9 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
             }
           }
           String finalSQL = String.join("\n", places);
-          ExecutableQuery query = new ExecutableQuery(_md, returnType(tree, type));
-          query = query.setup(finalSQL);
+          finalSQL = finalSQL.replace(";", "");
+          ExecutableQuery query = new ExecutableQuery(_md, returnType(tree, type), finalSQL);
+          query = query.setup();
           return query;
         } catch (Exception e) {
           //TODO: What to do in the event of a read failure?
