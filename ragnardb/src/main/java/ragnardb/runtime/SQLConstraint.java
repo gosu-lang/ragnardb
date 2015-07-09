@@ -13,9 +13,9 @@ public abstract class SQLConstraint
 
   IPropertyInfo _propertyInfo;
 
-  public static SQLConstraint isEqualTo( IPropertyInfo pr, Object o )
+  public static SQLConstraint isComparator( IPropertyInfo pr, Object o, String s )
   {
-    return new IsEqualToConstraint( pr, o );
+    return new ComparatorConstraint( pr, o , s );
   }
 
   public static SQLConstraint isIn( IPropertyInfo pr, List<Object> l )
@@ -153,14 +153,16 @@ public abstract class SQLConstraint
     }
   }
 
-  private static class IsEqualToConstraint extends SQLConstraint
+  private static class ComparatorConstraint extends SQLConstraint
   {
     List<Object> _objs;
     String RHS;
+    String _comparator;
 
-    IsEqualToConstraint( IPropertyInfo pi, Object o )
+    ComparatorConstraint( IPropertyInfo pi, Object o, String comparator )
     {
       _propertyInfo = pi;
+      _comparator = comparator;
       if( o instanceof PropertyReference){
         IFeatureInfo info = ((PropertyReference) o).getFeatureInfo();
         RHS = ((ISQLTableType) info.getOwnersType()).getTable().getTableName()+"."+info.getDisplayName();
@@ -174,7 +176,7 @@ public abstract class SQLConstraint
 
     public String getSQL( ITypeToSQLMetadata metadata )
     {
-      return metadata.getColumnForProperty( _propertyInfo ) + "= " + RHS;
+      return metadata.getColumnForProperty( _propertyInfo ) + _comparator + RHS;
     }
 
     List<Object> getArgs()

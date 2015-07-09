@@ -106,7 +106,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withStatic(true)
         .withCallHandler(( ctx, args ) -> {
           SQLQuery query = new SQLQuery(_md, getOwnersType());
-          SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
+          SQLConstraint constraint = SQLConstraint.isComparator(prop, args[0],"=");
           query = query.where(constraint);
           return query.iterator().hasNext() ? query.iterator().next() : null;
         })
@@ -126,7 +126,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withStatic(true)
         .withCallHandler(( ctx, args ) -> {
           SQLQuery query = new SQLQuery(_md, getOwnersType());
-          SQLConstraint constraint = SQLConstraint.isEqualTo(prop, args[0]);
+          SQLConstraint constraint = SQLConstraint.isComparator(prop, args[0],"=");
           query = query.where(constraint);
           return query;
         })
