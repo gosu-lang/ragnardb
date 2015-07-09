@@ -1,6 +1,7 @@
 package ragnardb.plugin;
 
 import gw.lang.reflect.*;
+import gw.lang.reflect.features.PropertyReference;
 import gw.lang.reflect.java.JavaTypes;
 import ragnardb.runtime.SQLConstraint;
 import ragnardb.runtime.SQLMetadata;
@@ -61,7 +62,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     constructorInfos.add( constructorMethod );
 
     return constructorInfos;
-  }
+}
 
   private void createMethodInfos() {
     MethodList methodList = new MethodList();
@@ -126,7 +127,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withStatic(true)
         .withCallHandler(( ctx, args ) -> {
           SQLQuery query = new SQLQuery(_md, getOwnersType());
-          SQLConstraint constraint = SQLConstraint.isComparator(prop, args[0],"=");
+          SQLConstraint constraint = SQLConstraint.isComparator(prop, args[0], "=");
           query = query.where(constraint);
           return query;
         })
@@ -174,6 +175,28 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withStatic(true)
         .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
         .build(this);
+  }
+
+  private IMethodInfo generateSingleObjectSelectMethod() {
+    return new MethodInfoBuilder()
+      .withName("select")
+      .withDescription("Creates a new table query")
+      .withParameters(new ParameterInfoBuilder().withName("Column").withType(TypeSystem.get(PropertyReference.class)))
+        .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
+        .withStatic(true)
+        .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
+        .build(this);
+  }
+
+  private IMethodInfo generateJoinMethod() {
+    return new MethodInfoBuilder()
+      .withName("join")
+      .withDescription("Creates a new table query")
+      .withParameters()
+      .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
+      .withStatic(true)
+      .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
+      .build(this);
   }
 
   private IMethodInfo generateGetNameMethod() {

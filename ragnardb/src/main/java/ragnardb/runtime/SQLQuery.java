@@ -1,7 +1,9 @@
 package ragnardb.runtime;
 
 import gw.lang.reflect.IType;
+import gw.lang.reflect.features.PropertyReference;
 import gw.util.GosuExceptionUtil;
+import ragnardb.plugin.SQLColumnPropertyInfo;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -17,15 +19,25 @@ public class SQLQuery<T> implements Iterable<T>{
   private SQLConstraint _whereExpr;
   private SQLConstraint _joinExpr;
   private SQLConstraint _onExpr;
+  private String _select;
   private SQLQuery _parent;
   protected ITypeToSQLMetadata _metadata;
+
 
   public SQLQuery( ITypeToSQLMetadata md, IType rootType )
   {
     _metadata = md;
     _rootType = rootType;
+    _select = _metadata.getTableForType( getRoot()._rootType ) + ".* ";
   }
 
+  public SQLQuery( ITypeToSQLMetadata md, IType rootType, PropertyReference p)
+  {
+    _metadata = md;
+    _rootType = rootType;
+    _select = _metadata.getTableForType( getRoot()._rootType ) + ".* ";
+
+  }
 
 
   public SQLQuery<T> where(SQLConstraint constraint) {
@@ -92,6 +104,11 @@ public class SQLQuery<T> implements Iterable<T>{
     return newQuery;
   }
 
+  public  SQLQuery<T> pick( PropertyReference ref){
+    this._select =    ((SQLColumnPropertyInfo) ref.getPropertyInfo()).getColumnName();
+    return this;
+  }
+
   public Iterator<T> iterator()
   {
     return execQuery().iterator();
@@ -106,7 +123,7 @@ public class SQLQuery<T> implements Iterable<T>{
   }
 
   public String  getSQLString() {
-    String select =  "SELECT " +  _metadata.getTableForType( getRoot()._rootType ) + ".* ";
+    String select =  "SELECT " +  _select;
     String from = "FROM " + _metadata.getTableForType( getRoot()._rootType );
     String join = _joinExpr == null ? "" : _joinExpr.getSQL( _metadata);
     String on =  _onExpr == null ? "" : _onExpr.getSQL( _metadata);
