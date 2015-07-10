@@ -4,8 +4,8 @@ import gw.lang.Gosu;
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.IJavaType;
 import gw.lang.reflect.java.JavaTypes;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -70,7 +70,7 @@ public class SQLPluginTest {
   }
 
   @Test
-  @org.junit.Ignore
+  @Ignore
   public void testSQLExecute() {
     ISQLQueryType result = (ISQLQueryType) TypeSystem.getByFullNameIfValid("ragnardb.foo.MyQuery");
     assertNotNull(result);
