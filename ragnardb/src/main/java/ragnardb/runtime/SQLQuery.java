@@ -6,9 +6,7 @@ import gw.util.GosuExceptionUtil;
 import ragnardb.plugin.SQLColumnPropertyInfo;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by carson on 7/1/15.
@@ -21,6 +19,7 @@ public class SQLQuery<T> implements Iterable<T>{
   private SQLConstraint _onExpr;
   private String _select;
   private SQLQuery _parent;
+  private PropertyReference _singlePick;
   protected ITypeToSQLMetadata _metadata;
 
 
@@ -104,9 +103,16 @@ public class SQLQuery<T> implements Iterable<T>{
     return newQuery;
   }
 
-  public  SQLQuery<T> pick( PropertyReference ref){
+  public Iterable<T> pick( PropertyReference ref){
+
     this._select =    ((SQLColumnPropertyInfo) ref.getPropertyInfo()).getColumnName();
-    return this;
+    this._singlePick = ref;
+    List col = new ArrayList<>();
+    for ( T s : this){
+      col.add(((SQLRecord) s).getRawValue(_select));
+    }
+    return col;
+
   }
 
   public Iterator<T> iterator()

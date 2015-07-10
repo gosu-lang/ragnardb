@@ -169,14 +169,13 @@ public class SQLPluginTest {
     ISQLDdlType result = (ISQLDdlType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Users", result.getName());
-    String nl = System.getProperty("line.separator");
 
-    String expectedSource = "CREATE TABLE CONTACTS (" + nl +
-        "    UserId int," + nl +
-        "    FirstName nchar(50)," + nl +
-        "    LastName nchar(50)," + nl +
-        "    Age int" + nl +
-        "    -- TODO add Gender" + nl +
+    String expectedSource = "CREATE TABLE CONTACTS (\n" +
+        "    UserId int,\n" +
+        "    FirstName nchar(50),\n" +
+        "    LastName nchar(50),\n" +
+        "    Age int\n" +
+        "    -- TODO add Gender\n" +
         ");";
     String actualSource = null;
 
