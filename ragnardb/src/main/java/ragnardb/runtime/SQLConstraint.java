@@ -23,6 +23,10 @@ public abstract class SQLConstraint
     return new IsInConstraint( pr, l );
   }
 
+  public static SQLConstraint isIn( IPropertyInfo pr, SQLQuery<Object> s ) {
+    return new IsInConstraint(pr, s);
+  }
+
   public static SQLConstraint isLike( IPropertyInfo pr, String s )
   {
     return new IsLikeConstraint( pr, s );
@@ -53,20 +57,20 @@ public abstract class SQLConstraint
 
   private static class JoinConstraint extends SQLConstraint
   {
-    IType _obj;
+    String _obj;
     String _joinType;
 
     JoinConstraint( IType o , String joinType)
     {
-      _obj = o;
+      _obj = ((ISQLTableType) o).getTable().getTableName();
       _joinType = joinType;
     }
 
 
     public String getSQL( ITypeToSQLMetadata metadata  )
     {
-      return " " + _joinType + " " +
-        ((ISQLTableType) _obj).getTable().getTableName() + " ";
+      return " " + _joinType + " ( " + _obj
+         + " ) ";
     }
 
     List<Object> getArgs()
@@ -188,6 +192,7 @@ public abstract class SQLConstraint
   private static class IsInConstraint extends SQLConstraint
   {
     List _list;
+    SQLQuery _query;
 
     IsInConstraint( IPropertyInfo pi, List list )
     {
@@ -195,19 +200,33 @@ public abstract class SQLConstraint
       _list = list;
     }
 
+    IsInConstraint( IPropertyInfo pi, SQLQuery query )
+    {
+      _propertyInfo = pi;
+      _list = query.getArgs();
+      _query = query;
+
+    }
+
     public String getSQL( ITypeToSQLMetadata metadata )
     {
-      String ans = "";
-      ans += metadata.getColumnForProperty(_propertyInfo);
-      ans += " IN (";
-      if(_list.size() != 0) {
-        for (int x = 0; x < _list.size() - 1; x++){
-          ans += " ? ,";
-        }
-        ans += " ? ";
+      if(_query!=null){
+        return  metadata.getColumnForProperty(_propertyInfo)
+        + " IN (" + _query.getSQLString() + ") ";
       }
-      ans += " ) ";
-      return ans;
+      else {
+        String ans = "";
+        ans += metadata.getColumnForProperty(_propertyInfo);
+        ans += " IN (";
+        if (_list.size() != 0) {
+          for (int x = 0; x < _list.size() - 1; x++) {
+            ans += " ? ,";
+          }
+          ans += " ? ";
+        }
+        ans += " ) ";
+        return ans;
+      }
     }
 
     List<Object> getArgs()

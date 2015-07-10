@@ -191,8 +191,8 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private IMethodInfo generateJoinMethod() {
     return new MethodInfoBuilder()
       .withName("join")
-      .withDescription("Creates a new table query")
-      .withParameters()
+      .withDescription("Creates a join statement form table (Not a full query)")
+      .withParameters(new ParameterInfoBuilder().withName("Table").withType(TypeSystem.get(IType.class)))
       .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
       .withStatic(true)
       .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))

@@ -32,9 +32,16 @@ enhancement SQLRecordPropertyReferenceEnhancement : IPropertyReference<SQLRecord
     return SQLConstraint.isIn(this.PropertyInfo,  l)
   }
 
+  function isInQuery( s : SQLQuery<Object> ) : SQLConstraint {
+    return SQLConstraint.isIn(this.PropertyInfo,  s)
+  }
+
+
   function isLike( s : String ) : SQLConstraint {
     return SQLConstraint.isLike(this.PropertyInfo, s)
   }
+
+
 
 
 
