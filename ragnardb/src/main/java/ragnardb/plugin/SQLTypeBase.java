@@ -53,7 +53,7 @@ public abstract class SQLTypeBase extends TypeBase implements ISQLTypeBase {
   private void setParseTree(){
     SQLParser p = null;
     try {
-      p = new SQLParser(new SQLTokenizer(getReader()));
+      p = new SQLParser(new SQLTokenizer(getReader(), getFile().getBaseName()));
     } catch (Exception e) {
       throw new RuntimeException( e );
     }

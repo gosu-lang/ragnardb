@@ -108,7 +108,13 @@ public class SQLParser {
   }
 
   private void error(Token token, String message) {
-    throw new SQLParseError("[" + token.getLine() + ", " + token.getCol() + "] - ERROR: " + message);
+    String fileName = _tokenizer.getFileName();
+    if(SQLTokenizer.MEMORY_FILE.equals(fileName)) {
+      fileName = "";
+    } else {
+      fileName = fileName + "- ";
+    }
+    throw new SQLParseError(fileName + "["+ token.getLine() + ", " + token.getCol() + "] - ERROR: " + message);
   }
 
   public SQL parse() {
@@ -556,12 +562,24 @@ public class SQLParser {
         current.addToken(currentToken);
         next();
       }
-      ResultColumn rc = parseResultColumn(current);
-      current.addResultColumn(rc);
-      while (tokEquals(TokenType.COMMA)) {
+      if(tokEquals(TokenType.LPAREN)) {
         next();
-        rc = parseResultColumn(current);
+        ResultColumn rc = parseResultColumn(current);
         current.addResultColumn(rc);
+        while (tokEquals(TokenType.COMMA)) {
+          next();
+          rc = parseResultColumn(current);
+          current.addResultColumn(rc);
+        }
+        match(TokenType.RPAREN);
+      } else {
+        ResultColumn rc = parseResultColumn(current);
+        current.addResultColumn(rc);
+        while (tokEquals(TokenType.COMMA)) {
+          next();
+          rc = parseResultColumn(current);
+          current.addResultColumn(rc);
+        }
       }
       parseSelectSub2(current);
     } else if(tokEquals(TokenType.VALUES)){
@@ -688,7 +706,7 @@ public class SQLParser {
         _rc = new ResultColumn(tempname);
         parseSelectSub2(current);
       } else {
-        error(currentToken, "Expecting tablename.* or column but found '" + currentToken.getType() + "'.");
+        _rc = new ResultColumn(tempname);
       }
     } else if(tokEquals(TokenType.LPAREN)){
       _rc = new ResultColumn();
@@ -696,11 +714,6 @@ public class SQLParser {
       next();
       Expression e = parseExpr();
       _rc.addExpression(e);
-      while(tokEquals(TokenType.COMMA)){
-        next();
-        e = parseExpr();
-        _rc.addExpression(e);
-      }
       _rc.addToken(currentToken);
       match(TokenType.RPAREN);
     } else {
