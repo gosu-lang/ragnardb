@@ -217,6 +217,32 @@ public class SQLPluginTest {
   }
 
   @Test
+  public void domainLogicMustExtendSQLRecord() {
+    ISQLTableType baseType = (ISQLTableType) TypeSystem.getByFullName("ragnardb.foo.BadExamples.Invalid");
+    assertEquals("ragnardb.foo.BadExamples.Invalid", baseType.getName());
+    assertEquals("ragnardb.foo.BadExamples", baseType.getNamespace());
+    assertEquals("Invalid", baseType.getRelativeName());
+
+    //assert the extension type exists ...
+    IType extensionType = TypeSystem.getByFullName("ragnardb.foo.BadExampleExtensions.InvalidExt");
+    assertEquals("ragnardb.foo.BadExampleExtensions.InvalidExt", extensionType.getName());
+    assertEquals("ragnardb.foo.BadExampleExtensions", extensionType.getNamespace());
+    assertEquals("InvalidExt", extensionType.getRelativeName());
+
+    final String extensionTypeMethodName = "sayHi";
+    IMethodInfo extensionTypeMethod = extensionType.getTypeInfo().getMethod(extensionTypeMethodName, JavaTypes.STRING());
+    assertNotNull(extensionTypeMethod);
+
+    // ... but that the base type is not decorated with the extension type's methods
+    SQLTableTypeInfo ti = (SQLTableTypeInfo) baseType.getTypeInfo();
+    assertEquals("Invalid", ti.getName());
+
+    IMethodInfo domainLogicMethod = ti.getMethod(extensionTypeMethodName, JavaTypes.STRING());
+    assertNull(domainLogicMethod);
+  }
+
+
+  @Test
   public void getInjectedProperty() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
     assertNotNull(result);

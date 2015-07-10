@@ -238,7 +238,14 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     final String domainLogicFqn = ddlType.getNamespace() + '.' +
         singularizedDdlType + domainLogicPackageSuffix + tableType.getRelativeName() + domainLogicTableSuffix;
 
-    return TypeSystem.getByFullNameIfValid(domainLogicFqn);
+    IType correctlyNamedDomainLogic = TypeSystem.getByFullNameIfValid(domainLogicFqn);
+    IType sqlRecord = TypeSystem.getByFullName("ragnardb.runtime.SQLRecord"); //ok to throw here if we can't find SQLRecord
+
+    if(correctlyNamedDomainLogic != null && sqlRecord.isAssignableFrom(correctlyNamedDomainLogic)) {
+      return correctlyNamedDomainLogic;
+    }
+
+    return null;
   }
 
   private List<? extends IMethodInfo> maybeGetDomainMethods() {
