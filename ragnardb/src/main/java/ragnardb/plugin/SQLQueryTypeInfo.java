@@ -10,6 +10,7 @@ import ragnardb.parser.ast.SelectStatement;
 import ragnardb.runtime.ExecutableQuery;
 import ragnardb.runtime.SQLMetadata;
 import ragnardb.runtime.SQLQuery;
+import ragnardb.runtime.SQLRecord;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -82,7 +83,7 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
                 if (rep instanceof java.lang.String || rep instanceof java.lang.Character) {
                   replacement = "'" + rep.toString() + "'";
                 } else if (rep instanceof java.lang.Boolean) {
-                  if ((Boolean) rep){
+                  if ((Boolean) rep) {
                     replacement = "1";
                   } else {
                     replacement = "0";
@@ -150,8 +151,11 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
         if(tableNames.size() == 1){
           return type.getTable(tableNames.get(0).toLowerCase());
         }
+      } else { //now we presume that we are dealing with a single column
+        String column = col.getResult();
+        return type.getColumn(column);
       }
     }
-    return null;
+    return type.getResults(select, type);
   }
 }
