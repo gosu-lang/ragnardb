@@ -1,10 +1,8 @@
 package ragnardb.plugin;
 
 import gw.lang.reflect.*;
-import gw.lang.reflect.gs.IGosuObject;
 import gw.lang.reflect.features.PropertyReference;
 import gw.lang.reflect.java.JavaTypes;
-import ragnardb.api.ISQLResult;
 import ragnardb.runtime.SQLConstraint;
 import ragnardb.runtime.SQLMetadata;
 import ragnardb.runtime.SQLQuery;
@@ -57,28 +55,22 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private void createConstructorInfos() {
     List<IConstructorInfo> constructorInfos = new ArrayList<>();
 
+    final String tableName = ((ISQLTableType) getOwnersType()).getTable().getTableName();
+    final String idColumn = "id";
+
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
       .withDescription( "Creates a new Table object" )
       .withParameters()
-      .withConstructorHandler((args) -> new SQLRecord(((ISQLTableType) getOwnersType()).getTable().getTableName(),
-        "id")).build(this);
+      .withConstructorHandler((args) -> {
+        //reflectively instantiate the domain logic class, if it exists
+        if (_domainLogic != null) {
+          ReflectUtil.constructGosuClassInstance(_domainLogic.getName(), tableName, idColumn);
+        }
+        return new SQLRecord(tableName, idColumn);
+      })
+        .build(this);
 
     constructorInfos.add( constructorMethod );
-
-    //now add domain logic constructor, if applicable
-    if(_domainLogic != null) {
-      IConstructorInfo domainLogicConstructorMethod = new ConstructorInfoBuilder()
-          .withDescription("")
-//          .withAccessibility(IRelativeTypeInfo.Accessibility.PRIVATE)
-          .withParameters(new ParameterInfoBuilder()
-              .withName(getOwnersType().getRelativeName())
-//              .withType(getOwnersType())
-              .withType(ISQLResult.class)
-              .withDescription("Constructor for domain logic class related to a SQLTableType; to be instantiated reflectively"))
-          .build(_domainLogic.getTypeInfo());
-
-      constructorInfos.add(domainLogicConstructorMethod);
-    }
 
     _constructorList = constructorInfos;
   }
@@ -263,19 +255,8 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
           .collect(Collectors.toList());
 
       for (IMethodInfo method : domainMethods) {
-        final IParameterInfo[] params = method.getParameters();
-        ParameterInfoBuilder[] paramInfos = new ParameterInfoBuilder[params.length];
-        for(int i = 0; i < params.length; i++) {
-          IParameterInfo param = params[i];
-          paramInfos[i] = new ParameterInfoBuilder().like(param);
-        }
-        IMethodInfo syntheticMethod = new MethodInfoBuilder().like(method)
-            .withCallHandler((ctx, args) -> {
-              //instantiate the domain logic class reflectively, passing this TypeInfo's owner's instance (!) as constructor arg
-              IGosuObject domainLogicObject = ReflectUtil.constructGosuClassInstance(domainLogic.getName(),  ctx.getClass().cast(getOwnersType())); //ctx is a SQLRecord at runtime
-              //reflectively call and return the return value of the... method we are currently generating??! Face. Melted.
-              return ReflectUtil.invokeMethod(domainLogicObject, method.getName(), args);
-            })
+        IMethodInfo syntheticMethod = new MethodInfoBuilder()
+            .like(method)
             .build(this);
 
         methodList.add(syntheticMethod);
