@@ -11,16 +11,26 @@ public class SQLTokenizer {
   private int offset;
   private char ch;
   private boolean EOF;
-
+  private String fileName;
+  public static String MEMORY_FILE = "MEMORY_FILE";
   public SQLTokenizer(Reader r) {
+    this(r, MEMORY_FILE);
+  }
+
+  public SQLTokenizer(Reader r, String fileName) {
     reader = new BufferedReader(r);
     line = 1;
     col = 0;
     offset = 0;
     EOF = false;
+    this.fileName = fileName;
     next();
   }
 
+  public String getFileName() {
+    return fileName;
+
+  }
   private boolean isBlank(char c) {
     return c == ' ' || c == '\t' || c == '\n' || c == '\r';
   }
@@ -88,8 +98,8 @@ public class SQLTokenizer {
       } else {
         tok = new Token(TokenType.MINUS, line, col - 1, offset - 1);
       }
-    } else if(ch == '"') {
-      tok = stringLiteralIdentifier();
+    } else if(ch == '"' || ch == '\'') {
+      tok = stringLiteralIdentifier(ch);
     } else if(isIdent(ch)) {
       tok = identifier();
     } else if(isNumberOrDot(ch)) {
@@ -320,14 +330,14 @@ public class SQLTokenizer {
   }
 
 
-  private Token stringLiteralIdentifier() {
+  private Token stringLiteralIdentifier(char character) {
     StringBuilder sb = new StringBuilder();
     int l = line;
     int c = col;
 
     next();
 
-    while(ch != '"') {
+    while(ch != character) {
       sb.append(ch);
       next();
     }

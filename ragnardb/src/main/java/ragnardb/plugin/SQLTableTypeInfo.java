@@ -2,6 +2,7 @@ package ragnardb.plugin;
 
 import gw.lang.reflect.*;
 import gw.lang.reflect.features.PropertyReference;
+import gw.lang.reflect.gs.IGosuClass;
 import gw.lang.reflect.java.JavaTypes;
 import ragnardb.runtime.SQLConstraint;
 import ragnardb.runtime.SQLMetadata;
@@ -18,6 +19,8 @@ import java.util.stream.Collectors;
 public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private SQLMetadata _md = new SQLMetadata();
   private String _classTableName;
+  private IGosuClass _domainLogic;
+  private IConstructorHandler _constructor;
 
   public SQLTableTypeInfo(ISQLTableType type) {
     super(type);
@@ -36,8 +39,9 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add( prop );
     }
+    _domainLogic = maybeGetDomainLogic();
     createMethodInfos();
-    _constructorList = createConstructorInfos();
+    createConstructorInfos();
   }
 
   @Override
@@ -50,19 +54,34 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     return ((ISQLTableType) getOwnersType()).getTable().getTypeName().length();
   }
 
-  private List<IConstructorInfo> createConstructorInfos() {
+  private void createConstructorInfos() {
     List<IConstructorInfo> constructorInfos = new ArrayList<>();
+
+    final String tableName = ((ISQLTableType) getOwnersType()).getTable().getTableName();
+    final String idColumn = "id";
+
+    final IConstructorInfo domainCtor = _domainLogic == null ? null : _domainLogic.getTypeInfo().getConstructor( JavaTypes.STRING(), JavaTypes.STRING() );
+    _constructor = ( args ) -> {
+      //reflectively instantiate the domain logic class, if it exists
+      if( domainCtor != null )
+      {
+        return domainCtor.getConstructor().newInstance( tableName, idColumn );
+      }
+      else
+      {
+        return new SQLRecord( tableName, idColumn );
+      }
+    };
 
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
       .withDescription( "Creates a new Table object" )
       .withParameters()
-      .withConstructorHandler((args) -> new SQLRecord(((ISQLTableType) getOwnersType()).getTable().getTableName(),
-        "id")).build(this);
+      .withConstructorHandler( _constructor ).build( this );
 
     constructorInfos.add( constructorMethod );
 
-    return constructorInfos;
-}
+    _constructorList = constructorInfos;
+  }
 
   private void createMethodInfos() {
     MethodList methodList = new MethodList();
@@ -75,7 +94,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     }
 
     methodList.add(generateCreateMethod());
-    methodList.add(generateInitMethod());
     methodList.add(generateWhereMethod());
     methodList.add(generateSelectMethod());
     methodList.add(generateGetNameMethod());
@@ -144,17 +162,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .build(this);
   }
 
-  private IMethodInfo generateInitMethod() {
-    return new MethodInfoBuilder()
-        .withName("init")
-        .withDescription("Creates a new table entry")
-        .withParameters()
-        .withReturnType(this.getOwnersType())
-        .withStatic(true)
-        .withCallHandler(( ctx, args ) -> new SQLRecord(((ISQLTableType) getOwnersType()).getTable().getTableName(), "id"))
-        .build(this);
-  }
-
   private IMethodInfo generateWhereMethod() {
     return new MethodInfoBuilder()
         .withName("where")
@@ -210,7 +217,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .build(this);
   }
 
-  private IType maybeGetDomainLogic() {
+  private IGosuClass maybeGetDomainLogic() {
     ISQLTableType tableType = (ISQLTableType) getOwnersType();
     ISQLDdlType ddlType = (ISQLDdlType) tableType.getEnclosingType();
     final String singularizedDdlType = new NounHandler(ddlType.getRelativeName()).getSingular();
@@ -219,72 +226,58 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     final String domainLogicFqn = ddlType.getNamespace() + '.' +
         singularizedDdlType + domainLogicPackageSuffix + tableType.getRelativeName() + domainLogicTableSuffix;
 
-    return TypeSystem.getByFullNameIfValid(domainLogicFqn);
+    IType correctlyNamedDomainLogic = TypeSystem.getByFullNameIfValid(domainLogicFqn);
+
+    IType sqlRecord = TypeSystem.getByFullName( "ragnardb.runtime.SQLRecord" ); //ok to throw here if we can't find SQLRecord
+
+    if( correctlyNamedDomainLogic != null )
+    {
+      if( sqlRecord.isAssignableFrom( correctlyNamedDomainLogic ) )
+      {
+        if( correctlyNamedDomainLogic instanceof IGosuClass )
+        {
+          return (IGosuClass)correctlyNamedDomainLogic;
+        }
+        else
+        {
+          System.out.println( "Ragnar extension classes must be Gosu classes" );
+        }
+      }
+      else
+      {
+        System.out.println( "Ragnar extension classes must extend SQLRecord" );
+      }
+    }
+
+    return null;
   }
 
   private List<? extends IMethodInfo> maybeGetDomainMethods() {
-    List<IMethodInfo> methodList = Collections.emptyList();
-
-    final IType domainLogic = maybeGetDomainLogic();
-
-    if (domainLogic != null) {
-      methodList = new ArrayList<>();
-      final IRelativeTypeInfo domainLogicTypeInfo = (IRelativeTypeInfo) domainLogic.getTypeInfo();
-      List<? extends IMethodInfo> domainMethods = domainLogicTypeInfo.getDeclaredMethods()
-          .stream()
-          .filter(IAttributedFeatureInfo::isPublic)
-          .filter(method -> !method.getName().startsWith("@"))
-          .collect(Collectors.toList());
-
-      for (IMethodInfo method : domainMethods) {
-        final IParameterInfo[] params = method.getParameters();
-        ParameterInfoBuilder[] paramInfos = new ParameterInfoBuilder[params.length];
-        for(int i = 0; i < params.length; i++) {
-          IParameterInfo param = params[i];
-          paramInfos[i] = new ParameterInfoBuilder().like(param);
-        }
-        IMethodInfo syntheticMethod = new MethodInfoBuilder()
-            .withName(method.getDisplayName())
-            .withDescription(method.getDescription())
-            .withParameters(paramInfos)
-            .withReturnType(method.getReturnType())
-            .withStatic(method.isStatic())
-            .withCallHandler(method.getCallHandler())
-            .build(this);
-
-        methodList.add(syntheticMethod);
-      }
+    if ( _domainLogic != null)
+    {
+      return _domainLogic.getTypeInfo().getDeclaredMethods()
+        .stream()
+        .filter(IAttributedFeatureInfo::isPublic)
+        .collect( Collectors.toList() );
     }
-    return methodList;
+    else
+    {
+      return Collections.emptyList();
+    }
   }
 
   private List<? extends IPropertyInfo> maybeGetDomainProperties() {
-    List<IPropertyInfo> propertyList = Collections.emptyList();
-
-    final IType domainLogic = maybeGetDomainLogic();
-
-    if (domainLogic != null) {
-      propertyList = new ArrayList<>();
-      final IRelativeTypeInfo domainLogicTypeInfo = (IRelativeTypeInfo) domainLogic.getTypeInfo();
-      List<? extends IPropertyInfo> domainProperties = domainLogicTypeInfo.getDeclaredProperties()
+    if ( _domainLogic != null)
+    {
+      return _domainLogic.getTypeInfo().getDeclaredProperties()
           .stream()
           .filter(IAttributedFeatureInfo::isPublic)
-          .collect(Collectors.toList());
-
-      for (IPropertyInfo prop : domainProperties) {
-        IPropertyInfo syntheticProperty = new PropertyInfoBuilder()
-            .withName(prop.getName())
-            .withDescription(prop.getDescription())
-            .withStatic(prop.isStatic())
-            .withWritable(prop.isWritable())
-            .withType(prop.getFeatureType())
-            .withAccessor(prop.getAccessor())
-            .build(this);
-
-        propertyList.add(syntheticProperty);
-      }
+          .collect( Collectors.toList() );
     }
-    return propertyList;
+    else
+    {
+      return Collections.emptyList();
+    }
   }
 
 }

@@ -169,6 +169,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public void refreshedNamespace( String namespace, IDirectory dir, RefreshKind kind ) {
+    clear();
     if( _namespaces != null ) {
       if( kind == RefreshKind.CREATION )  {
         _namespaces.add( namespace );
@@ -201,6 +202,9 @@ public class SQLPlugin extends TypeLoaderBase {
       for(CreateTable table : getOrCreateDdlType(pkg).getTables()) {
         result.add(pkg + '.' + table.getTypeName());
       }
+    }
+    for(String query: _sqlSourcesByPackage.get().keySet()) {
+      result.add(query);
     }
     return result;
   }
@@ -265,6 +269,10 @@ public class SQLPlugin extends TypeLoaderBase {
     if( ddlTypeName != null ) {
       return new String[] {ddlTypeName};
     }
+    String sqlTypeName = _fileToSqlTypeName.get().get(file);
+    if(sqlTypeName != null ) {
+      return new String[] {sqlTypeName};
+    }
     return NO_TYPES;
   }
 
@@ -290,8 +298,11 @@ public class SQLPlugin extends TypeLoaderBase {
 
   private void clear() {
     _fileToDdlTypeName.clear();
+    _sqlSourcesByPackage.clear();
+    _fileToSqlTypeName.clear();
     _ddlSourcesByPackage.clear();
     _fqnToDdlType.clear();
+    _fqnToSqlType.clear();
     //_namespaces.clear();
   }
 
@@ -323,7 +334,41 @@ public class SQLPlugin extends TypeLoaderBase {
       }
       namespace = namespace.contains("\\.")?namespace.substring(0, namespace.lastIndexOf('.')):"";
     }
+    return null;
+  }
 
+  protected IType getColumnFromRelativeName(String relativeName, String namespace){
+    String currentName;
+    if(relativeName.contains("\\.")){
+      currentName = relativeName.split("\\.")[1];
+    } else {currentName = relativeName;}
+
+    Set<String> files = _fqnToDdlType.keySet();
+
+    while(!namespace.equals("")) {
+      Set<String> filesInCurrentDirectory = new HashSet<>();
+      for (String file : files) {
+        if (file.contains(namespace)) {
+          filesInCurrentDirectory.add(file);
+        }
+      }
+
+      for (String fileinCD : filesInCurrentDirectory) {
+        ISQLDdlType currentType = _fqnToDdlType.get(fileinCD);
+        List<CreateTable> tables = currentType.getTables();
+        for (CreateTable table : tables) {
+          for(ColumnDefinition col: table.getColumnDefinitions()){
+            if(col.getColumnName().equals(currentName)){
+              ISQLTableType cTable = (ISQLTableType) getType(fileinCD+"."+table.getTypeName());
+              SQLTableTypeInfo cInfo = (SQLTableTypeInfo)cTable.getTypeInfo();
+              SQLColumnPropertyInfo pInfo = (SQLColumnPropertyInfo)cInfo._propertiesMap.get(col.getPropertyName());
+              return pInfo.getFeatureType();
+            }
+          }
+        }
+      }
+      namespace = namespace.contains("\\.")?namespace.substring(0, namespace.lastIndexOf('.')):"";
+    }
     return null;
   }
 }

@@ -1,8 +1,6 @@
-package ragnardb.foo.BarExtensions
+package ragnardb.foo.BadExampleExtensions
 
-uses ragnardb.runtime.SQLRecord
-
-public class BazExt extends SQLRecord {
+public class InvalidExt {
 
   public function sayHi(arg : String) {
     print("Hi, ${arg}")
