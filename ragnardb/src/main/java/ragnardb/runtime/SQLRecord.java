@@ -176,7 +176,7 @@ public class SQLRecord implements ISQLResult
     List<T> results = new LinkedList<>();
     while( resultSet.next() )
     {
-      SQLRecord record = (SQLRecord)impl.getTypeInfo().getCallableConstructor().getConstructor().newInstance();
+      SQLRecord record = (SQLRecord) impl.getTypeInfo().getCallableConstructor().getConstructor().newInstance();
       ResultSetMetaData metaData = resultSet.getMetaData();
       int columnCount = metaData.getColumnCount();
       int i = 1;
