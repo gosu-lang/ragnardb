@@ -213,6 +213,7 @@ public class SQLPluginTest {
     IMethodInfo domainLogicMethod = ti.getMethod("sayHi", JavaTypes.STRING());
     assertNotNull(domainLogicMethod);
     assertEquals("void", domainLogicMethod.getReturnType().getName());
+    //String returnValue = ReflectUtil.invokeMethod(domainLogicMethod.getName(), "hello world");
   }
 
   @Test

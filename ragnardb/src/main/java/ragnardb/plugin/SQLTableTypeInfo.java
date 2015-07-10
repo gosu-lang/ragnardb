@@ -1,8 +1,10 @@
 package ragnardb.plugin;
 
 import gw.lang.reflect.*;
+import gw.lang.reflect.gs.IGosuObject;
 import gw.lang.reflect.features.PropertyReference;
 import gw.lang.reflect.java.JavaTypes;
+import ragnardb.api.ISQLResult;
 import ragnardb.runtime.SQLConstraint;
 import ragnardb.runtime.SQLMetadata;
 import ragnardb.runtime.SQLQuery;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private SQLMetadata _md = new SQLMetadata();
   private String _classTableName;
+  private IType _domainLogic;
 
   public SQLTableTypeInfo(ISQLTableType type) {
     super(type);
@@ -36,8 +39,9 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add( prop );
     }
+    _domainLogic = maybeGetDomainLogic();
     createMethodInfos();
-    _constructorList = createConstructorInfos();
+    createConstructorInfos();
   }
 
   @Override
@@ -50,7 +54,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     return ((ISQLTableType) getOwnersType()).getTable().getTypeName().length();
   }
 
-  private List<IConstructorInfo> createConstructorInfos() {
+  private void createConstructorInfos() {
     List<IConstructorInfo> constructorInfos = new ArrayList<>();
 
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
@@ -61,8 +65,23 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
     constructorInfos.add( constructorMethod );
 
-    return constructorInfos;
-}
+    //now add domain logic constructor, if applicable
+    if(_domainLogic != null) {
+      IConstructorInfo domainLogicConstructorMethod = new ConstructorInfoBuilder()
+          .withDescription("")
+//          .withAccessibility(IRelativeTypeInfo.Accessibility.PRIVATE)
+          .withParameters(new ParameterInfoBuilder()
+              .withName(getOwnersType().getRelativeName())
+//              .withType(getOwnersType())
+              .withType(ISQLResult.class)
+              .withDescription("Constructor for domain logic class related to a SQLTableType; to be instantiated reflectively"))
+          .build(_domainLogic.getTypeInfo());
+
+      constructorInfos.add(domainLogicConstructorMethod);
+    }
+
+    _constructorList = constructorInfos;
+  }
 
   private void createMethodInfos() {
     MethodList methodList = new MethodList();
@@ -225,7 +244,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private List<? extends IMethodInfo> maybeGetDomainMethods() {
     List<IMethodInfo> methodList = Collections.emptyList();
 
-    final IType domainLogic = maybeGetDomainLogic();
+    final IType domainLogic = _domainLogic;
 
     if (domainLogic != null) {
       methodList = new ArrayList<>();
@@ -243,13 +262,13 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
           IParameterInfo param = params[i];
           paramInfos[i] = new ParameterInfoBuilder().like(param);
         }
-        IMethodInfo syntheticMethod = new MethodInfoBuilder()
-            .withName(method.getDisplayName())
-            .withDescription(method.getDescription())
-            .withParameters(paramInfos)
-            .withReturnType(method.getReturnType())
-            .withStatic(method.isStatic())
-            .withCallHandler(method.getCallHandler())
+        IMethodInfo syntheticMethod = new MethodInfoBuilder().like(method)
+            .withCallHandler((ctx, args) -> {
+              //instantiate the domain logic class reflectively, passing this TypeInfo's owner's instance (!) as constructor arg
+              IGosuObject domainLogicObject = ReflectUtil.constructGosuClassInstance(domainLogic.getName(),  ctx.getClass().cast(getOwnersType())); //ctx is a SQLRecord at runtime
+              //reflectively call and return the return value of the... method we are currently generating??! Face. Melted.
+              return ReflectUtil.invokeMethod(domainLogicObject, method.getName(), args);
+            })
             .build(this);
 
         methodList.add(syntheticMethod);
@@ -261,7 +280,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private List<? extends IPropertyInfo> maybeGetDomainProperties() {
     List<IPropertyInfo> propertyList = Collections.emptyList();
 
-    final IType domainLogic = maybeGetDomainLogic();
+    final IType domainLogic = _domainLogic;
 
     if (domainLogic != null) {
       propertyList = new ArrayList<>();
@@ -272,13 +291,13 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
           .collect(Collectors.toList());
 
       for (IPropertyInfo prop : domainProperties) {
-        IPropertyInfo syntheticProperty = new PropertyInfoBuilder()
-            .withName(prop.getName())
-            .withDescription(prop.getDescription())
-            .withStatic(prop.isStatic())
-            .withWritable(prop.isWritable())
-            .withType(prop.getFeatureType())
-            .withAccessor(prop.getAccessor())
+        IPropertyInfo syntheticProperty = new PropertyInfoBuilder().like(prop)
+//            .withName(prop.getName())
+//            .withDescription(prop.getDescription())
+//            .withStatic(prop.isStatic())
+//            .withWritable(prop.isWritable())
+//            .withType(prop.getFeatureType())
+//            .withAccessor(prop.getAccessor()) //TODO needs some kind of special accessor in order to invoke a property defined on another class
             .build(this);
 
         propertyList.add(syntheticProperty);
