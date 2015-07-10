@@ -200,8 +200,7 @@ public class SQLPluginTest {
   }
 
   @Test
-  @Ignore
-  public void getInjectedMethod() {
+  public void getSynthesizedMethod() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Bars.Baz", result.getName());
@@ -241,10 +240,9 @@ public class SQLPluginTest {
     IMethodInfo domainLogicMethod = ti.getMethod(extensionTypeMethodName, JavaTypes.STRING());
     assertNull(domainLogicMethod);
   }
-  
+
   @Test
-  @Ignore
-  public void getInjectedProperty() {
+  public void getSynthesizedProperty() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
     assertNotNull(result);
     assertEquals("ragnardb.foo.Bars.Baz", result.getName());
