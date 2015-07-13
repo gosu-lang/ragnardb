@@ -131,6 +131,7 @@ public class SQLQuery<T> implements Iterable<T>{
       };
 
 
+
   }
 
   public Iterator<T> iterator()
