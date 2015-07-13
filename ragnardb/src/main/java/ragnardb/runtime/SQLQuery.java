@@ -103,15 +103,33 @@ public class SQLQuery<T> implements Iterable<T>{
     return newQuery;
   }
 
-  public Iterable<T> pick( PropertyReference ref){
+  public SQLQuery<T> pick( PropertyReference ref){
 
+    SQLQuery base = this;
     this._select =    ((SQLColumnPropertyInfo) ref.getPropertyInfo()).getColumnName();
     this._singlePick = ref;
-    List col = new ArrayList<>();
-    for ( T s : this){
-      col.add(((SQLRecord) s).getRawValue(_select));
-    }
-    return col;
+
+
+
+      return new SQLQuery(_metadata,_rootType){
+          public Iterator<T> iterator()
+          {
+            List col = new ArrayList<>();
+            for ( Object s : base){
+              col.add(((SQLRecord) s).getRawValue(_select));
+            }
+            return col.iterator();
+          }
+
+          public List<Object> getArgs(){
+            return base.getArgs();
+          }
+
+          public String  getSQLString() {
+            return base.getSQLString();
+          }
+      };
+
 
   }
 
