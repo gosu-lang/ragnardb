@@ -41,7 +41,12 @@ public class SQLQuery<T> implements Iterable<T>{
 
   public SQLQuery<T> where(SQLConstraint constraint) {
     SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
-    newQuery._whereExpr = constraint;
+    if(this._whereExpr == null) {
+      newQuery._whereExpr = constraint;
+    }
+    else{
+      newQuery._whereExpr = this._whereExpr.andAlso(constraint);
+    }
     newQuery._joinExpr = this._joinExpr; //Carrying data over
     newQuery._onExpr = this._onExpr; //Carrying data over
     return newQuery;
