@@ -172,7 +172,7 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
       int i = 0;
       for( IType innerClass : ((IHasInnerClass)type).getInnerClasses() )
       {
-        ITypeInfo ti = innerClass.getTypeInfo();
+        ITypeInfo ti = safeGetTypeInfo( innerClass );
         sb.append( "  @InnerClassInfoId(" ).append( i++ ).append( ", \"" ).append( type.getName() ).append( "\", " ).append( ti.getOffset() ).append( ", " ).append( ti.getTextLength() ).append( ")\n" );
         generateClass( innerClass, sb );
       }
@@ -181,7 +181,7 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
 
   private void generateConstructors( IType type, StringBuilder sb )
   {
-    ITypeInfo ti = type.getTypeInfo();
+    ITypeInfo ti = safeGetTypeInfo( type );
     List<? extends IConstructorInfo> constructors;
     if( ti instanceof IRelativeTypeInfo )
     {
@@ -208,9 +208,22 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
     }
   }
 
+  private ITypeInfo safeGetTypeInfo( IType type )
+  {
+    try
+    {
+      return type.getTypeInfo();
+    }
+    catch( Exception e )
+    {
+      e.printStackTrace();
+      return TypeSystem.getErrorType().getTypeInfo();
+    }
+  }
+
   private void generateMethods( IType type, StringBuilder sb )
   {
-    ITypeInfo ti = type.getTypeInfo();
+    ITypeInfo ti = safeGetTypeInfo( type );
     MethodList methods;
     if( ti instanceof IRelativeTypeInfo )
     {
@@ -246,7 +259,7 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
 
   private void generateProperties( IType type, StringBuilder sb )
   {
-    ITypeInfo ti = type.getTypeInfo();
+    ITypeInfo ti = safeGetTypeInfo( type );
     List<? extends IPropertyInfo> properties;
     if( ti instanceof IRelativeTypeInfo )
     {
