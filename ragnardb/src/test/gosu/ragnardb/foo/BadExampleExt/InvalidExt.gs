@@ -1,4 +1,4 @@
-package ragnardb.foo.BadExampleExtensions
+package ragnardb.foo.BadExampleExt
 
 public class InvalidExt {
 

@@ -1,4 +1,4 @@
-package ragnardb.foo.BarExtensions
+package ragnardb.foo.BarExt
 
 uses ragnardb.runtime.SQLRecord
 

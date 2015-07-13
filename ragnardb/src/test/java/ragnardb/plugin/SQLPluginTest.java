@@ -224,9 +224,9 @@ public class SQLPluginTest {
     assertEquals("Invalid", baseType.getRelativeName());
 
     //assert the extension type exists ...
-    IType extensionType = TypeSystem.getByFullName("ragnardb.foo.BadExampleExtensions.InvalidExt");
-    assertEquals("ragnardb.foo.BadExampleExtensions.InvalidExt", extensionType.getName());
-    assertEquals("ragnardb.foo.BadExampleExtensions", extensionType.getNamespace());
+    IType extensionType = TypeSystem.getByFullName("ragnardb.foo.BadExampleExt.InvalidExt");
+    assertEquals("ragnardb.foo.BadExampleExt.InvalidExt", extensionType.getName());
+    assertEquals("ragnardb.foo.BadExampleExt", extensionType.getNamespace());
     assertEquals("InvalidExt", extensionType.getRelativeName());
 
     final String extensionTypeMethodName = "sayHi";
