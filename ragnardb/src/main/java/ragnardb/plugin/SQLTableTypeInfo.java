@@ -221,7 +221,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     ISQLTableType tableType = (ISQLTableType) getOwnersType();
     ISQLDdlType ddlType = (ISQLDdlType) tableType.getEnclosingType();
     final String singularizedDdlType = new NounHandler(ddlType.getRelativeName()).getSingular();
-    final String domainLogicPackageSuffix = "Extensions.";
+    final String domainLogicPackageSuffix = "Ext.";
     final String domainLogicTableSuffix = "Ext";
     final String domainLogicFqn = ddlType.getNamespace() + '.' +
         singularizedDdlType + domainLogicPackageSuffix + tableType.getRelativeName() + domainLogicTableSuffix;
