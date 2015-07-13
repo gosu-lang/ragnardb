@@ -16,9 +16,18 @@ public class SQLQuery<T> implements Iterable<T> {
   protected ITypeToSQLMetadata _metadata;
   protected IType _rootType;
   private SQLConstraint _whereExpr;
-  private SQLConstraint _joinExpr;
+  private SQLConstraint _joinExpr; // Includes On expressions as well!
   private SQLConstraint _onExpr;
   private PropertyReference _pick;
+
+  private void addJoin(SQLConstraint cons){
+    if(_joinExpr == null){
+      _joinExpr = cons;
+    }
+    else{
+      _joinExpr = _joinExpr.addOn(cons);
+    }
+  }
 
   public SQLQuery( ITypeToSQLMetadata md, IType rootType )
   {
@@ -34,57 +43,56 @@ public class SQLQuery<T> implements Iterable<T> {
 
   public SQLQuery<T> crossJoin( IType type) {
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._joinExpr =  SQLConstraint.join(type , "CROSS JOIN");
+    newQuery.addJoin(SQLConstraint.join(type , "CROSS JOIN"));
     return newQuery;
   }
 
   public SQLQuery<T> join( IType type) {
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._joinExpr =  SQLConstraint.join(type , "JOIN");
+    addJoin(SQLConstraint.join(type , "JOIN"));
     return newQuery;
   }
 
   public SQLQuery<T> innerJoin( IType type) {
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._joinExpr =  SQLConstraint.join(type , "INNER JOIN");
+    newQuery.addJoin(SQLConstraint.join(type , "INNER JOIN"));
     return newQuery;
   }
 
   public SQLQuery<T> leftOuterJoin( IType type) {
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._joinExpr =  SQLConstraint.join(type , "LEFT OUTER JOIN");
+    newQuery.addJoin(SQLConstraint.join(type , "LEFT OUTER JOIN"));
     return newQuery;
   }
 
   public SQLQuery<T> rightOuterJoin( IType type) {
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._joinExpr =  SQLConstraint.join(type , "RIGHT OUTER JOIN");
+    newQuery.addJoin(SQLConstraint.join(type , "RIGHT OUTER JOIN"));
     return newQuery;
   }
 
   public SQLQuery<T> rightJoin( IType type) {
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._joinExpr =  SQLConstraint.join(type , "RIGHT JOIN");
+    newQuery.addJoin(SQLConstraint.join(type , "RIGHT JOIN"));
     return newQuery;
   }
 
   public SQLQuery<T> leftJoin( IType type) {
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._joinExpr =  SQLConstraint.join(type , "LEFT JOIN");
+    newQuery.addJoin(SQLConstraint.join(type , "LEFT JOIN"));
     return newQuery;
   }
 
   public SQLQuery<T> naturalJoin( IType type) {
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._joinExpr =  SQLConstraint.join(type , "NATURAL JOIN");
+    newQuery.addJoin(SQLConstraint.join(type , "NATURAL JOIN"));
     return newQuery;
   }
 
 
   public SQLQuery<T> on( SQLConstraint constraint) {
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._onExpr = SQLConstraint.on(constraint);
-    newQuery._joinExpr = this._joinExpr;
+    newQuery.addJoin(constraint);
     return newQuery;
   }
 
