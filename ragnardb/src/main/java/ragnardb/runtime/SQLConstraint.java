@@ -4,6 +4,7 @@ import gw.lang.reflect.IFeatureInfo;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.features.PropertyReference;
+import ragnardb.parser.ast.Constraint;
 import ragnardb.plugin.ISQLTableType;
 
 import java.util.*;
@@ -46,6 +47,9 @@ public abstract class SQLConstraint
 
   abstract List<Object> getArgs();
 
+  public SQLConstraint addOn(SQLConstraint sql){
+    return new CombinedConstraint( this, sql);
+  }
 
   public SQLConstraint andAlso(SQLConstraint sql){
     return new AndConstraint(_propertyInfo, this, sql);
@@ -54,6 +58,35 @@ public abstract class SQLConstraint
   public SQLConstraint orElse(SQLConstraint sql){
     return new OrConstraint(_propertyInfo, this, sql);
   }
+
+
+  private static class CombinedConstraint extends SQLConstraint
+  {
+    SQLConstraint c1;
+    SQLConstraint c2;
+
+    CombinedConstraint( SQLConstraint _c1 , SQLConstraint _c2)
+    {
+      c1 = _c1;
+      c2 = _c2;
+    }
+
+
+    public String getSQL( ITypeToSQLMetadata metadata  )
+    {
+      return c1.getSQL(metadata) + " " + c2.getSQL(metadata);
+    }
+
+    List<Object> getArgs()
+    {
+      List answer = new ArrayList();
+      answer.addAll(c1.getArgs());
+      answer.addAll(c2.getArgs());
+      return answer;
+    }
+  }
+
+
 
   private static class JoinConstraint extends SQLConstraint
   {
