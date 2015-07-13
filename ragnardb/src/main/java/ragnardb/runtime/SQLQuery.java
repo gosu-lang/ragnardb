@@ -11,132 +11,88 @@ import java.util.*;
 /**
  * Created by carson on 7/1/15.
  */
-public class SQLQuery<T> implements Iterable<T>{
+public class SQLQuery<T> implements Iterable<T> {
 
+  protected ITypeToSQLMetadata _metadata;
   protected IType _rootType;
   private SQLConstraint _whereExpr;
   private SQLConstraint _joinExpr;
   private SQLConstraint _onExpr;
-  private String _select;
-  private SQLQuery _parent;
-  private PropertyReference _singlePick;
-  protected ITypeToSQLMetadata _metadata;
-
+  private PropertyReference _pick;
 
   public SQLQuery( ITypeToSQLMetadata md, IType rootType )
   {
     _metadata = md;
     _rootType = rootType;
-    _select = _metadata.getTableForType( getRoot()._rootType ) + ".* ";
   }
-
-  public SQLQuery( ITypeToSQLMetadata md, IType rootType, PropertyReference p)
-  {
-    _metadata = md;
-    _rootType = rootType;
-    _select = _metadata.getTableForType( getRoot()._rootType ) + ".* ";
-
-  }
-
 
   public SQLQuery<T> where(SQLConstraint constraint) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
-    if(this._whereExpr == null) {
-      newQuery._whereExpr = constraint;
-    }
-    else{
-      newQuery._whereExpr = this._whereExpr.andAlso(constraint);
-    }
-    newQuery._joinExpr = this._joinExpr; //Carrying data over
-    newQuery._onExpr = this._onExpr; //Carrying data over
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery._whereExpr = (this._whereExpr == null) ? constraint : this._whereExpr.andAlso( constraint );
     return newQuery;
   }
 
   public SQLQuery<T> crossJoin( IType type) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    SQLQuery<T> newQuery = cloneMe();
     newQuery._joinExpr =  SQLConstraint.join(type , "CROSS JOIN");
     return newQuery;
   }
 
   public SQLQuery<T> join( IType type) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    SQLQuery<T> newQuery = cloneMe();
     newQuery._joinExpr =  SQLConstraint.join(type , "JOIN");
     return newQuery;
   }
 
   public SQLQuery<T> innerJoin( IType type) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    SQLQuery<T> newQuery = cloneMe();
     newQuery._joinExpr =  SQLConstraint.join(type , "INNER JOIN");
     return newQuery;
   }
 
   public SQLQuery<T> leftOuterJoin( IType type) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    SQLQuery<T> newQuery = cloneMe();
     newQuery._joinExpr =  SQLConstraint.join(type , "LEFT OUTER JOIN");
     return newQuery;
   }
 
   public SQLQuery<T> rightOuterJoin( IType type) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    SQLQuery<T> newQuery = cloneMe();
     newQuery._joinExpr =  SQLConstraint.join(type , "RIGHT OUTER JOIN");
     return newQuery;
   }
 
   public SQLQuery<T> rightJoin( IType type) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    SQLQuery<T> newQuery = cloneMe();
     newQuery._joinExpr =  SQLConstraint.join(type , "RIGHT JOIN");
     return newQuery;
   }
 
   public SQLQuery<T> leftJoin( IType type) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    SQLQuery<T> newQuery = cloneMe();
     newQuery._joinExpr =  SQLConstraint.join(type , "LEFT JOIN");
     return newQuery;
   }
 
   public SQLQuery<T> naturalJoin( IType type) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    SQLQuery<T> newQuery = cloneMe();
     newQuery._joinExpr =  SQLConstraint.join(type , "NATURAL JOIN");
     return newQuery;
   }
 
 
   public SQLQuery<T> on( SQLConstraint constraint) {
-    SQLQuery<T> newQuery = new SQLQuery<T>( _metadata, _rootType );
+    SQLQuery<T> newQuery = cloneMe();
     newQuery._onExpr = SQLConstraint.on(constraint);
     newQuery._joinExpr = this._joinExpr;
     return newQuery;
   }
 
-  public SQLQuery<T> pick( PropertyReference ref){
-
-    SQLQuery base = this;
-    this._select =    ((SQLColumnPropertyInfo) ref.getPropertyInfo()).getColumnName();
-    this._singlePick = ref;
-
-
-
-      return new SQLQuery(_metadata,_rootType){
-          public Iterator<T> iterator()
-          {
-            List col = new ArrayList<>();
-            for ( Object s : base){
-              col.add(((SQLRecord) s).getRawValue(_select));
-            }
-            return col.iterator();
-          }
-
-          public List<Object> getArgs(){
-            return base.getArgs();
-          }
-
-          public String  getSQLString() {
-            return base.getSQLString();
-          }
-      };
-
-
-
+  public <U> SQLQuery<U> pick( PropertyReference<Object, U> ref)
+  {
+    SQLQuery<U> sqlQuery = (SQLQuery<U>) cloneMe();
+    sqlQuery._pick = ref;
+    return sqlQuery;
   }
 
   public Iterator<T> iterator()
@@ -144,21 +100,29 @@ public class SQLQuery<T> implements Iterable<T>{
     return execQuery().iterator();
   }
 
-  private SQLQuery getRoot() {
-    if(_parent != null) {
-      return _parent.getRoot();
-    } else {
-      return this;
-    }
-  }
-
   public String  getSQLString() {
-    String select =  "SELECT " +  _select;
-    String from = "FROM " + _metadata.getTableForType( getRoot()._rootType );
+    String select =  "SELECT " + getSelect();
+    String from = "FROM " + _metadata.getTableForType( _rootType );
     String join = _joinExpr == null ? "" : _joinExpr.getSQL( _metadata);
     String on =  _onExpr == null ? "" : _onExpr.getSQL( _metadata);
     String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
     return select + " " +  from + " "  + join + on + " " + " " + where;
+  }
+
+  //--------------------------------------------------------------------------------
+  // Implementation
+  //--------------------------------------------------------------------------------
+
+  private String getSelect()
+  {
+    if( _pick != null )
+    {
+      return ((SQLColumnPropertyInfo)_pick.getPropertyInfo()).getColumnName();
+    }
+    else
+    {
+      return _metadata.getTableForType( _rootType ) + ".* ";
+    }
   }
 
   public List<Object> getArgs()
@@ -176,11 +140,27 @@ public class SQLQuery<T> implements Iterable<T>{
     return answer;
   }
 
+  private SQLQuery<T> cloneMe()
+  {
+    SQLQuery<T> child = new SQLQuery<T>( _metadata, _rootType );
+    child._metadata = this._metadata;
+    child._rootType = this._rootType;
+    child._whereExpr = this._whereExpr;
+    child._joinExpr = this._joinExpr;
+    child._onExpr = this._onExpr;
+    child._pick = this._pick;
+    return child;
+  }
+
   private Iterable<T> execQuery()
   {
     try
     {
-      return SQLRecord.select( getSQLString(), getArgs(), _rootType );
+      if(_pick != null) {
+        return SQLRecord.selectSingleColumn( getSQLString(), getArgs() );
+      } else {
+        return SQLRecord.select( getSQLString(), getArgs(), _rootType );
+      }
     }
     catch( SQLException e )
     {

@@ -203,6 +203,30 @@ public class SQLRecord implements ISQLResult
     return results;
   }
 
+  static Iterable selectSingleColumn( String sql, List vals ) throws SQLException {
+    PreparedStatement preparedStatement = RagnarDB.prepareStatement( sql, vals );
+    ResultSet resultSet = preparedStatement.executeQuery();
+    List results = new LinkedList<>();
+    while( resultSet.next() )
+    {
+      ResultSetMetaData metaData = resultSet.getMetaData();
+      int columnType = metaData.getColumnType( 1 );
+      switch( columnType )
+      {
+        case Types.INTEGER:
+          results.add( resultSet.getInt( 1 ) );
+          break;
+        case Types.BIGINT:
+          results.add( resultSet.getLong( 1 ) );
+          break;
+        default:
+          results.add( resultSet.getObject( 1 ) );
+          break;
+      }
+    }
+    return results;
+  }
+
   public boolean delete()
   {
     LinkedList<Object> vals = new LinkedList<>();
