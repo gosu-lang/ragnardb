@@ -4,6 +4,7 @@ import gw.lang.reflect.IPropertyAccessor;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.MethodList;
 import gw.lang.reflect.PropertyInfoBuilder;
+import gw.lang.reflect.TypeSystem;
 import gw.lang.reflect.java.JavaTypes;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ public class SQLDdlTypeInfo extends SQLBaseTypeInfo {
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
 
-    IPropertyInfo prop = new PropertyInfoBuilder()
+    IPropertyInfo sqlSource = new PropertyInfoBuilder()
       .withName("SqlSource")
       .withDescription("Returns the source of this ISQLDdlType")
       .withStatic()
@@ -47,9 +48,36 @@ public class SQLDdlTypeInfo extends SQLBaseTypeInfo {
         }
       })
       .build(this);
+    _propertiesMap.put( sqlSource.getName(), sqlSource );
+    _propertiesList.add(sqlSource);
 
-    _propertiesMap.put(prop.getName(), prop);
-    _propertiesList.add(prop);
+    IPropertyInfo tables = new PropertyInfoBuilder()
+      .withName("Tables")
+      .withDescription("Returns the source of this ISQLDdlType")
+      .withStatic()
+      .withWritable( false )
+      .withType( JavaTypes.LIST().getParameterizedType( TypeSystem.get( ISQLTableType.class ) ) )
+      .withAccessor( new IPropertyAccessor()
+      {
+        @Override
+        public Object getValue( Object ctx )
+        {
+          return ((ISQLDdlType)getOwnersType()).getTableTypes();
+        }
+
+        @Override
+        public void setValue( Object ctx, Object value )
+        {
+          throw new IllegalStateException( "Calling setter on readonly property" );
+        }
+      } )
+      .build( this );
+    _propertiesMap.put( tables.getName(), tables );
+    _propertiesList.add(tables);
+
+    _propertiesMap.put( tables.getName(), tables );
+    _propertiesList.add(tables);
+
     _methodList = new MethodList();
     _constructorList = Collections.emptyList();
   }

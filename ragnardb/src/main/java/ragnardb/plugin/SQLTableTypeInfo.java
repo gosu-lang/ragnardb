@@ -217,6 +217,23 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .build(this);
   }
 
+  private IMethodInfo generateDeleteAllMethod() {
+    return new MethodInfoBuilder()
+        .withName( "deleteAll" )
+        .withDescription( "Deletes all records in table" )
+        .withParameters( new ParameterInfoBuilder().withName( "confirm" ).withType( JavaTypes.pBOOLEAN() ) )
+        .withStatic( true )
+        .withCallHandler( ( ctx, args ) -> {
+          getOwnersType().deleteAll( (Boolean)args[0] );
+          return null;
+        } )
+        .build( this );
+  }
+
+  public ISQLTableType getOwnersType() {
+    return (ISQLTableType) super.getOwnersType();
+  }
+
   private IGosuClass maybeGetDomainLogic() {
     ISQLTableType tableType = (ISQLTableType) getOwnersType();
     ISQLDdlType ddlType = (ISQLDdlType) tableType.getEnclosingType();

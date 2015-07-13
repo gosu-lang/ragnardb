@@ -303,7 +303,7 @@ public class SQLPlugin extends TypeLoaderBase {
     _ddlSourcesByPackage.clear();
     _fqnToDdlType.clear();
     _fqnToSqlType.clear();
-    //_namespaces.clear();
+    //_namespaces.deleteAll();
   }
 
   protected ISQLTableType getTypeFromRelativeName(String relativeName, String namespace){

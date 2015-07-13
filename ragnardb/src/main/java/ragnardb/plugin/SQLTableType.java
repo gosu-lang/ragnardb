@@ -8,10 +8,13 @@ import gw.lang.reflect.Modifier;
 import gw.lang.reflect.TypeBase;
 import gw.lang.reflect.TypeSystem;
 import gw.util.GosuClassUtil;
+import gw.util.GosuExceptionUtil;
 import gw.util.concurrent.LockingLazyVar;
+import ragnardb.RagnarDB;
 import ragnardb.parser.ast.CreateTable;
 import ragnardb.runtime.SQLRecord;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -89,6 +92,22 @@ public class SQLTableType extends TypeBase implements ISQLTableType {
 
   public List<ColumnDefinition> getColumnDefinitions() {
     return getTable().getColumnDefinitions();
+  }
+
+  @Override
+  public void deleteAll( boolean confirm )
+  {
+    if( confirm )
+    {
+      try
+      {
+        RagnarDB.execStatement( "DELETE FROM " + _table.getTableName() );
+      }
+      catch( SQLException e )
+      {
+        throw GosuExceptionUtil.forceThrow( e );
+      }
+    }
   }
 
   @Override

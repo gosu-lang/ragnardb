@@ -10,4 +10,6 @@ public interface ISQLTableType extends IType, IFileBasedType {
   CreateTable getTable();
 
   List<ColumnDefinition> getColumnDefinitions();
+
+  void deleteAll( boolean confirm );
 }

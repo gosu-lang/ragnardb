@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface ISQLDdlType extends IHasInnerClass, ISQLTypeBase {
   List<CreateTable> getTables();
+  List<? extends ISQLTableType> getTableTypes();
 }
