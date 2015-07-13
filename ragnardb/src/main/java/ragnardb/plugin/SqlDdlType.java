@@ -44,6 +44,10 @@ public class SqlDdlType extends SQLTypeBase implements ISQLDdlType {
     return null;
   }
 
+  public List<? extends ISQLTableType> getTableTypes() {
+    return _innerClasses.get();
+  }
+
   @Override
   public List<? extends IType> getInnerClasses() {
     return _innerClasses.get();
