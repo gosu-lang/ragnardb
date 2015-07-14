@@ -200,6 +200,8 @@ public class SQLRecord implements ISQLResult
           case Types.BIGINT:
             record.setRawValue( columnName, resultSet.getLong( i ) );
             break;
+          case Types.VARCHAR:
+            record.setRawValue( columnName, resultSet.getString( i ));
           default:
             record.setRawValue( columnName, resultSet.getObject( i ) );
             break;
