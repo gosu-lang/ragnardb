@@ -8,4 +8,6 @@ import java.util.List;
 public interface ISQLQueryResultType extends ISQLTypeBase{
   List<ColumnDefinition> getColumnDefinitions();
 
+  ISQLTableType getTable();
+
 }

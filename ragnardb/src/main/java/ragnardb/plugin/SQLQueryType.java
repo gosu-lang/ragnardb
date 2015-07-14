@@ -13,8 +13,10 @@ public class SQLQueryType extends SQLTypeBase implements ISQLQueryType {
   }
 
   public ISQLTableType getTable(String name){
-    return _plugin.getTypeFromRelativeName(name, this.getNamespace());
+    return _plugin.getTypeFromRelativeName(name.toLowerCase(), this.getNamespace());
   }
+
+  public SQLPlugin getPlugin() {return _plugin;}
 
   public IType getColumn(String name){
     return _plugin.getColumnFromRelativeName(name, this.getNamespace());
@@ -22,6 +24,11 @@ public class SQLQueryType extends SQLTypeBase implements ISQLQueryType {
 
   public ISQLQueryResultType getResults(SelectStatement statement, ISQLQueryType type){
     return new SQLQueryResultType(this.getFile(), this._plugin, statement, type);
+  }
+
+  public ISQLQueryResultType getResultType(){
+    SQLQueryTypeInfo typeinfo = (SQLQueryTypeInfo) initTypeInfo();
+    return typeinfo.getResultType(this);
   }
 
   @Override

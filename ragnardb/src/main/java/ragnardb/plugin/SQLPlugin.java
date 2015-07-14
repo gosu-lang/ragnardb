@@ -85,6 +85,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   private Map<String, ISQLDdlType> _fqnToDdlType = new HashMap<>();
   private Map<String, ISQLQueryType> _fqnToSqlType = new HashMap<>();
+  private Map<String, ISQLQueryResultType> _fqnToResultType = new HashMap<>();
   private Set<String> _namespaces;
 
   public SQLPlugin(IModule module) {
@@ -113,6 +114,15 @@ public class SQLPlugin extends TypeLoaderBase {
 
     if(_sqlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //a query type
       return ((SQLQueryType) getOrCreateQueryType(fullyQualifiedName)).getTypeRef();
+    }
+
+    if(fullyQualifiedName.endsWith("Result")){
+      if(_sqlSourcesByPackage.get().keySet().contains(fullyQualifiedName.substring(0,
+        fullyQualifiedName.length()-6))){
+        SQLQueryType query = (SQLQueryType) getOrCreateQueryType(fullyQualifiedName.substring(0,
+          fullyQualifiedName.length()-6));
+        return query.getResultType();
+      }
     }
 
     String[] packagesAndType = fullyQualifiedName.split("\\.");
@@ -182,7 +192,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public boolean hasNamespace( String namespace ) {
-    return getAllNamespaces().contains( namespace );
+    return getAllNamespaces().contains(namespace);
   }
 
   @Override
@@ -278,7 +288,7 @@ public class SQLPlugin extends TypeLoaderBase {
 
   @Override
   public boolean handlesFile(IFile file) {
-    return DDL_EXTENSION.substring( 1 ).equals(file.getExtension());
+    return DDL_EXTENSION.substring( 1 ).equals(file.getExtension()) || SQL_EXTENSION.substring( 1 ).equals(file.getExtension()) ;
   }
 
   @Override
@@ -312,18 +322,20 @@ public class SQLPlugin extends TypeLoaderBase {
        currentName = relativeName.split("\\.")[1];
     } else {currentName = relativeName;}
 
-    Set<String> files = _fqnToDdlType.keySet();
+    List<Pair<String, IFile>> allFilesByExtension = findAllFilesByExtension(DDL_EXTENSION);
 
     while(!namespace.equals("")) {
       Set<String> filesInCurrentDirectory = new HashSet<>();
-      for (String file : files) {
-        if (file.contains(namespace)) {
-          filesInCurrentDirectory.add(file);
+      for (Pair<String, IFile> pair : allFilesByExtension) {
+        String fileName = pair.getFirst();
+        String fqn = fileName.substring(0, fileName.length() - SQL_EXTENSION.length()).replace('/', '.');
+        if (fqn.contains(namespace)) {
+          filesInCurrentDirectory.add(fqn);
         }
       }
 
       for (String fileinCD : filesInCurrentDirectory) {
-        ISQLDdlType currentType = _fqnToDdlType.get(fileinCD);
+        ISQLDdlType currentType = getOrCreateDdlType(fileinCD);
         List<CreateTable> tables = currentType.getTables();
         for (CreateTable table : tables) {
           if (currentName.equals(table.getTableName())) {
@@ -343,18 +355,20 @@ public class SQLPlugin extends TypeLoaderBase {
       currentName = relativeName.split("\\.")[1];
     } else {currentName = relativeName;}
 
-    Set<String> files = _fqnToDdlType.keySet();
+    List<Pair<String, IFile>> allFilesByExtension = findAllFilesByExtension(DDL_EXTENSION);
 
     while(!namespace.equals("")) {
       Set<String> filesInCurrentDirectory = new HashSet<>();
-      for (String file : files) {
-        if (file.contains(namespace)) {
-          filesInCurrentDirectory.add(file);
+      for (Pair<String, IFile> pair : allFilesByExtension) {
+        String fileName = pair.getFirst();
+        String fqn = fileName.substring(0, fileName.length() - SQL_EXTENSION.length()).replace('/', '.');
+        if (fqn.contains(namespace)) {
+          filesInCurrentDirectory.add(fqn);
         }
       }
 
       for (String fileinCD : filesInCurrentDirectory) {
-        ISQLDdlType currentType = _fqnToDdlType.get(fileinCD);
+        ISQLDdlType currentType = getOrCreateDdlType(fileinCD);
         List<CreateTable> tables = currentType.getTables();
         for (CreateTable table : tables) {
           for(ColumnDefinition col: table.getColumnDefinitions()){
