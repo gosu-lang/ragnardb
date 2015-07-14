@@ -1,26 +1,24 @@
 package ragnardb.runtime;
 
 import gw.lang.reflect.IType;
+import gw.util.GosuExceptionUtil;
 import ragnardb.RagnarDB;
 import ragnardb.api.ISQLResult;
 import ragnardb.plugin.ISQLQueryResultType;
 import ragnardb.plugin.ISQLTableType;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class SQLRecord implements ISQLResult
 {
@@ -171,95 +169,17 @@ public class SQLRecord implements ISQLResult
     }
   }
 
-  static <T> Iterable<T> select(String sql, List vals, IType impl) throws SQLException
+  static <T> Iterator<T> select(String sql, List vals, IType impl) throws SQLException
   {
     PreparedStatement preparedStatement = RagnarDB.prepareStatement( sql, vals );
     ResultSet resultSet = preparedStatement.executeQuery();
-    List<T> results = new LinkedList<>();
-    while( resultSet.next() )
-    {
-      SQLRecord record = (SQLRecord) impl.getTypeInfo().getCallableConstructor().getConstructor().newInstance();
-      ResultSetMetaData metaData = resultSet.getMetaData();
-      int columnCount = metaData.getColumnCount();
-      int i = 1;
-      while( i <= columnCount )
-      {
-        int columnType = metaData.getColumnType( i );
-        String columnName = metaData.getColumnName( i );
-        switch( columnType )
-        {
-          case Types.INTEGER:
-            record.setRawValue( columnName, resultSet.getInt( i ) );
-            break;
-          case Types.BIGINT:
-            record.setRawValue( columnName, resultSet.getLong( i ) );
-            break;
-          default:
-            record.setRawValue( columnName, resultSet.getObject( i ) );
-            break;
-        }
-        i++;
-      }
-      results.add( (T) record );
-    }
-    return results;
+    return new SQLRecordResultSetIterator<T>(resultSet, impl);
   }
 
-  static Iterable<SQLRecord> executeStatement(String sql, IType impl) throws SQLException
-  {
-   PreparedStatement preparedStatement = RagnarDB.prepareStatement(sql, Collections.emptyList());
-    ResultSet resultSet = preparedStatement.executeQuery();
-    List<SQLRecord> results = new LinkedList<>();
-    while (resultSet.next()){
-      SQLRecord record = (SQLRecord) impl.getTypeInfo().getCallableConstructor().getConstructor().newInstance();
-      ResultSetMetaData metaData = resultSet.getMetaData();
-      int columnCount = metaData.getColumnCount();
-      int i = 1;
-      while( i <= columnCount )
-      {
-        int columnType = metaData.getColumnType( i );
-        String columnName = metaData.getColumnName( i );
-        switch( columnType )
-        {
-          case Types.INTEGER:
-            record.setRawValue( columnName, resultSet.getInt( i ) );
-            break;
-          case Types.BIGINT:
-            record.setRawValue( columnName, resultSet.getLong( i ) );
-            break;
-          default:
-            record.setRawValue( columnName, resultSet.getObject( i ) );
-            break;
-        }
-        i++;
-      }
-      results.add(record);
-    }
-    return results;
-  }
-
-  static Iterable selectSingleColumn( String sql, List vals ) throws SQLException {
+  static <T> Iterator<T> selectSingleColumn( String sql, List vals ) throws SQLException {
     PreparedStatement preparedStatement = RagnarDB.prepareStatement( sql, vals );
     ResultSet resultSet = preparedStatement.executeQuery();
-    List results = new LinkedList<>();
-    while( resultSet.next() )
-    {
-      ResultSetMetaData metaData = resultSet.getMetaData();
-      int columnType = metaData.getColumnType( 1 );
-      switch( columnType )
-      {
-        case Types.INTEGER:
-          results.add( resultSet.getInt( 1 ) );
-          break;
-        case Types.BIGINT:
-          results.add( resultSet.getLong( 1 ) );
-          break;
-        default:
-          results.add( resultSet.getObject( 1 ) );
-          break;
-      }
-    }
-    return results;
+    return new SingleColumnResultSetIterator<T>(resultSet);
   }
 
   public boolean delete()
@@ -293,4 +213,138 @@ public class SQLRecord implements ISQLResult
       return super.get( ((String) key).toLowerCase() );
     }
   }
+
+  private static abstract class ResultSetIterator<Q> implements Iterator<Q> {
+
+    protected final ResultSetMetaData _metaData;
+    protected final int _columnCount;
+    private final ResultSet _resultSet;
+    private boolean didNext = false;
+    private boolean hasNext = false;
+
+    public ResultSetIterator( ResultSet resultSet )
+    {
+      try
+      {
+        _resultSet = resultSet;
+        _metaData = resultSet.getMetaData();
+        _columnCount = _metaData.getColumnCount();
+      }
+      catch( SQLException e )
+      {
+        throw GosuExceptionUtil.forceThrow( e );
+      }
+    }
+
+    public Q next(){
+      try
+      {
+        if( !didNext )
+        {
+          _resultSet.next();
+        }
+        Q val = transform( _resultSet );
+        didNext = false;
+        if( !hasNext() )
+        {
+          _resultSet.close();
+        }
+        return val;
+      }
+      catch( SQLException e )
+      {
+        throw GosuExceptionUtil.forceThrow( e );
+      }
+    }
+
+    protected abstract Q transform( ResultSet resultSet );
+
+    public boolean hasNext(){
+      if (!didNext) {
+        try
+        {
+          hasNext = _resultSet.next();
+        }
+        catch( SQLException e )
+        {
+          throw GosuExceptionUtil.forceThrow( e );
+        }
+        didNext = true;
+      }
+      return hasNext;
+    }
+  }
+
+  private static class SQLRecordResultSetIterator<T> extends ResultSetIterator<T> {
+    private final IType _sqlRecordType;
+
+    public SQLRecordResultSetIterator( ResultSet resultSet, IType sqlRecordType )
+    {
+      super( resultSet );
+      _sqlRecordType = sqlRecordType;
+    }
+
+    @Override
+    protected T transform( ResultSet resultSet )
+    {
+        SQLRecord record = (SQLRecord) _sqlRecordType.getTypeInfo().getCallableConstructor().getConstructor().newInstance();
+        return (T) record.initFromResultSet( resultSet, _columnCount, _metaData );
+    }
+  }
+
+  private static class SingleColumnResultSetIterator<T> extends ResultSetIterator<T> {
+
+    public SingleColumnResultSetIterator( ResultSet resultSet )
+    {
+      super( resultSet );
+    }
+
+    @Override
+    protected T transform( ResultSet resultSet )
+    {
+      try
+      {
+        return (T)getColumnValue( resultSet, _metaData.getColumnType( 1 ), 1 );
+      }
+      catch( SQLException e )
+      {
+        throw GosuExceptionUtil.forceThrow( e );
+      }
+    }
+  }
+
+  private SQLRecord initFromResultSet( ResultSet resultSet, int columnCount, ResultSetMetaData metaData )
+  {
+    try
+    {
+      int i = 1;
+      while( i <= columnCount )
+      {
+        int columnType = metaData.getColumnType( i );
+        String columnName = metaData.getColumnName( i );
+        Object value = getColumnValue(resultSet, columnType, i);
+        setRawValue( columnName, value );
+        i++;
+      }
+      return this;
+    }
+    catch( SQLException e )
+    {
+      throw GosuExceptionUtil.forceThrow( e );
+    }
+  }
+
+  private static Object getColumnValue( ResultSet resultSet, int columnType, int column ) throws SQLException
+  {
+    switch( columnType )
+    {
+      case Types.INTEGER:
+        return resultSet.getInt( column );
+      case Types.BIGINT:
+        return resultSet.getLong( column );
+      default:
+        return resultSet.getObject( column );
+    }
+  }
+
 }

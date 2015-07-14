@@ -130,7 +130,20 @@ public class SQLQuery<T> implements Iterable<T> {
 
   public Iterator<T> iterator()
   {
-    return execQuery().iterator();
+    Iterator<T> result;
+    try
+    {
+      if(_pick != null) {
+        result = SQLRecord.selectSingleColumn( getSQLString(), getArgs() );
+      } else {
+        result = SQLRecord.select( getSQLString(), getArgs(), _rootType );
+      }
+    }
+    catch( SQLException e )
+    {
+      throw GosuExceptionUtil.forceThrow( e );
+    }
+    return result;
   }
 
   public String  getSQLString() {
@@ -186,19 +199,5 @@ public class SQLQuery<T> implements Iterable<T> {
     return child;
   }
 
-  private Iterable<T> execQuery()
-  {
-    try
-    {
-      if(_pick != null) {
-        return SQLRecord.selectSingleColumn( getSQLString(), getArgs() );
-      } else {
-        return SQLRecord.select( getSQLString(), getArgs(), _rootType );
-      }
-    }
-    catch( SQLException e )
-    {
-      throw GosuExceptionUtil.forceThrow( e );
-    }
-  }
+
 }

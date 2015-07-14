@@ -32,25 +32,28 @@ public class ExecutableQuery<T> extends SQLQuery<T>{
   }
 
   @Override
-  public Iterator<T> iterator(){return this.execQuery().iterator();}
-
-  private Iterable<T> execQuery(){
-    try{
-      List<T> results = new LinkedList<>();
-      Iterable<SQLRecord> records = SQLRecord.executeStatement(statement, _rootType);
-      if(returnType instanceof ISQLTableType){
-        for(SQLRecord record: records){
-          results.add((T) record);
-        }
-      } else if(returnType instanceof ISQLQueryResultType){
-        for(SQLRecord record: records){
-          results.add((T) record);
-        }
+  public Iterator<T> iterator(){
+    List<T> results = new LinkedList<>();
+    Iterable<SQLRecord> records = () -> {
+      try
+      {
+        return SQLRecord.select( statement, Collections.emptyList(), _rootType );
       }
-      return results;
-    }catch(SQLException e){
-      throw GosuExceptionUtil.forceThrow(e);
-    }
-  }
+      catch( SQLException e )
+      {
+        throw GosuExceptionUtil.forceThrow( e );
+      }
+    };
 
+    if(returnType instanceof ISQLTableType){
+      for(SQLRecord record: records){
+        results.add((T) record);
+      }
+    } else if(returnType instanceof ISQLQueryResultType){
+      for(SQLRecord record: records){
+        results.add((T) record);
+      }
+    }
+    return results.iterator();
+  }
 }
