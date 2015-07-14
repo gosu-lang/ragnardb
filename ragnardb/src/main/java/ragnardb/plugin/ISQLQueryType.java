@@ -9,5 +9,9 @@ public interface ISQLQueryType extends ISQLTypeBase {
 
   public IType getColumn(String name);
 
+  public SQLPlugin getPlugin();
+
   public ISQLQueryResultType getResults(SelectStatement statement, ISQLQueryType type);
+
+  public ISQLQueryResultType getResultType();
 }

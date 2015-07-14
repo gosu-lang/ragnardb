@@ -1,7 +1,10 @@
 package ragnardb.plugin;
 
 import gw.fs.IFile;
+import gw.lang.reflect.ITypeInfo;
+import gw.util.concurrent.LockingLazyVar;
 import ragnardb.parser.ast.SelectStatement;
+import ragnardb.runtime.SQLRecord;
 
 import java.util.List;
 
@@ -11,12 +14,20 @@ import java.util.List;
 public class SQLQueryResultType extends SQLTypeBase implements ISQLQueryResultType{
   private SelectStatement statement;
   private ISQLQueryType query;
-
+  private SQLRecord record;
 
   public SQLQueryResultType(IFile file, SQLPlugin plugin, SelectStatement statement, ISQLQueryType type) {
     super(file, plugin);
     this.statement = statement;
     query = type;
+    record = null;
+  }
+
+  public SQLQueryResultType(SQLRecord record, SelectStatement statement, IFile file, SQLPlugin plugin, ISQLQueryType type){
+    super(file, plugin);
+    this.statement = statement;
+    query = type;
+    this.record = record;
   }
 
   @Override
@@ -27,7 +38,11 @@ public class SQLQueryResultType extends SQLTypeBase implements ISQLQueryResultTy
 
   @Override
   protected SQLBaseTypeInfo initTypeInfo() {
-    return new SQLQueryResultTypeInfo((ISQLQueryResultType) getTypeRef(), statement, query);
+    if(record == null) {
+      return new SQLQueryResultTypeInfo((ISQLQueryResultType) getTypeRef(), statement, query);
+    } else {
+      return new SQLQueryResultTypeInfo(record ,(ISQLQueryResultType) getTypeRef(), statement, query);
+    }
   }
 
   @Override
@@ -43,5 +58,10 @@ public class SQLQueryResultType extends SQLTypeBase implements ISQLQueryResultTy
   @Override
   public String getNamespace() {
     return query.getNamespace();
+  }
+
+  @Override
+  public ISQLTableType getTable(){
+    return query.getTable(statement.getTable());
   }
 }

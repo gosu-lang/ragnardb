@@ -7,10 +7,7 @@ import ragnardb.parser.ast.JavaVar;
 import ragnardb.parser.ast.JoinClause;
 import ragnardb.parser.ast.ResultColumn;
 import ragnardb.parser.ast.SelectStatement;
-import ragnardb.runtime.ExecutableQuery;
-import ragnardb.runtime.SQLMetadata;
-import ragnardb.runtime.SQLQuery;
-import ragnardb.runtime.SQLRecord;
+import ragnardb.runtime.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -19,7 +16,7 @@ import java.util.*;
 
 public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
   private ArrayList<JavaVar> coalescedVars;
-  private SQLMetadata _md = new SQLMetadata();
+  private ITypeToSQLMetadata _md;
 
   public SQLQueryTypeInfo(ISQLQueryType type) {
     super(type);
@@ -62,11 +59,13 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
     MethodList result = new MethodList();
     SelectStatement tree = (SelectStatement) type.getParseTree();
     setCoalescedVars(tree.getVariables());
+    IType returnType = returnType(tree, type);
+    ISQLTableType table = type.getTable(tree.getTables().get(0).toLowerCase());
     IMethodInfo execute = new MethodInfoBuilder()
       .withName("execute")
       .withDescription("Executes the following query with replacement of variables")
       .withParameters(getParams())
-      .withReturnType(JavaTypes.ITERABLE().getParameterizedType(returnType(tree, type)))
+      .withReturnType(JavaTypes.ITERABLE().getParameterizedType(returnType))
       .withStatic(true)
       .withCallHandler((ctx, args) -> {
         ISQLQueryType owner = (ISQLQueryType) getOwnersType();
@@ -100,11 +99,18 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
           }
           String finalSQL = String.join("\n", places);
           finalSQL = finalSQL.replace(";", "");
-          ExecutableQuery query = new ExecutableQuery(_md, returnType(tree, type), finalSQL);
+          if (returnType instanceof ISQLQueryResultType) {
+            _md = new SQLQueryResultMetadata((ISQLQueryResultType) returnType);
+          } else if (returnType instanceof ISQLTableType) {
+            _md = new SQLMetadata();
+          } else {
+            _md = new SQLQueryResultMetadata(owner.getTable(statement.getTable()));
+          }
+          ExecutableQuery query = new ExecutableQuery(_md, returnType, finalSQL, returnType, table);
           query = query.setup();
           return query;
         } catch (Exception e) {
-          //TODO: What to do in the event of a read failure?
+          e.printStackTrace();
         }
         return null;
       })
@@ -157,5 +163,9 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
       }
     }
     return type.getResults(select, type);
+  }
+
+  protected ISQLQueryResultType getResultType(ISQLQueryType type){
+    return (ISQLQueryResultType) returnType((SelectStatement) type.getParseTree(), type);
   }
 }

@@ -70,13 +70,25 @@ public class SQLPluginTest {
   }
 
   @Test
-  @Ignore
   public void testSQLExecute() {
     ISQLQueryType result = (ISQLQueryType) TypeSystem.getByFullNameIfValid("ragnardb.foo.MyQuery");
     assertNotNull(result);
     SQLBaseTypeInfo ti = (SQLBaseTypeInfo) result.getTypeInfo();
     IMethodInfo execute = ti.getMethod("execute", JavaTypes.STRING());
     assertNotNull(execute);
+  }
+
+  @Test
+  public void testSQLResult() {
+    TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
+    ISQLQueryType result = (ISQLQueryType) TypeSystem.getByFullNameIfValid("ragnardb.foo.MyQuery2");
+    assertNotNull(result);
+    SQLBaseTypeInfo ti = (SQLBaseTypeInfo) result.getTypeInfo();
+    IMethodInfo execute = ti.getMethod("execute");
+    assertNotNull(execute);
+    IType[] typeParameters = execute.getReturnType().getTypeParameters();
+    ITypeInfo typeInfo = typeParameters[0].getTypeInfo();
+    int a = 0;
   }
 
 
@@ -165,6 +177,7 @@ public class SQLPluginTest {
   }
 
   @Test
+  @Ignore
   public void getRawSQL() {
     ISQLDdlType result = (ISQLDdlType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
     assertNotNull(result);
@@ -200,6 +213,14 @@ public class SQLPluginTest {
   }
 
   @Test
+  public void getResultInfo() {
+    TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
+    ISQLQueryResultType result = (ISQLQueryResultType) TypeSystem.getByFullNameIfValid("ragnardb.foo.MyQuery2Result");
+    assertNotNull(result);
+    assertEquals(result.getTable().getTable().getTypeName(), "Contact");
+  }
+
+  //@Test
   public void getSynthesizedMethod() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
     assertNotNull(result);
@@ -242,6 +263,7 @@ public class SQLPluginTest {
   }
 
   @Test
+  @Ignore
   public void getSynthesizedProperty() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
     assertNotNull(result);
