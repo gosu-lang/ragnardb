@@ -176,6 +176,42 @@ public class SQLRecord implements ISQLResult
     return new SQLRecordResultSetIterator<T>(resultSet, impl);
   }
 
+  static Iterable<SQLRecord> executeStatement(String sql, IType impl) throws SQLException
+  {
+//    System.out.println(sql + " @SQLRecord 210"); debugging logging info
+   PreparedStatement preparedStatement = RagnarDB.prepareStatement(sql, Collections.emptyList());
+    ResultSet resultSet = preparedStatement.executeQuery();
+//    System.out.println(sql + " @SQLRecord 213");
+    List<SQLRecord> results = new LinkedList<>();
+    while (resultSet.next()){
+      SQLRecord record = (SQLRecord) impl.getTypeInfo().getCallableConstructor().getConstructor().newInstance();
+      ResultSetMetaData metaData = resultSet.getMetaData();
+      int columnCount = metaData.getColumnCount();
+      int i = 1;
+      while( i <= columnCount )
+      {
+        int columnType = metaData.getColumnType( i );
+        String columnName = metaData.getColumnName( i );
+        switch( columnType )
+        {
+          case Types.INTEGER:
+            record.setRawValue( columnName, resultSet.getInt( i ) );
+            break;
+          case Types.BIGINT:
+            record.setRawValue( columnName, resultSet.getLong( i ) );
+            break;
+          default:
+            record.setRawValue( columnName, resultSet.getObject( i ) );
+            break;
+        }
+        i++;
+      }
+      results.add(record);
+    }
+    return results;
+  }
+
+  
   static <T> Iterator<T> selectSingleColumn( String sql, List vals ) throws SQLException {
     PreparedStatement preparedStatement = RagnarDB.prepareStatement( sql, vals );
     ResultSet resultSet = preparedStatement.executeQuery();

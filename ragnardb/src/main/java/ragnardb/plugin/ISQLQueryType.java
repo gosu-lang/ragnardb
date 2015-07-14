@@ -14,4 +14,6 @@ public interface ISQLQueryType extends ISQLTypeBase {
   public ISQLQueryResultType getResults(SelectStatement statement, ISQLQueryType type);
 
   public ISQLQueryResultType getResultType();
+
+  public void setResultType(ISQLQueryResultType type);
 }

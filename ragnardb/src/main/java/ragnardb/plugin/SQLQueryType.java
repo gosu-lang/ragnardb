@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class SQLQueryType extends SQLTypeBase implements ISQLQueryType {
+  private ISQLQueryResultType resultType;
+
   public SQLQueryType(IFile file, SQLPlugin plugin) {
     super(file, plugin);
   }
@@ -27,8 +29,11 @@ public class SQLQueryType extends SQLTypeBase implements ISQLQueryType {
   }
 
   public ISQLQueryResultType getResultType(){
-    SQLQueryTypeInfo typeinfo = (SQLQueryTypeInfo) initTypeInfo();
-    return typeinfo.getResultType(this);
+    return resultType;
+  }
+
+  public void setResultType(ISQLQueryResultType type){
+    resultType = type;
   }
 
   @Override

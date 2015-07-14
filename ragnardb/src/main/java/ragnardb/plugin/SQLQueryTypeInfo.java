@@ -60,6 +60,9 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
     SelectStatement tree = (SelectStatement) type.getParseTree();
     setCoalescedVars(tree.getVariables());
     IType returnType = returnType(tree, type);
+    if(returnType instanceof ISQLQueryResultType){
+      ((ISQLQueryType) this.getOwnersType()).setResultType((ISQLQueryResultType) returnType);
+    }
     ISQLTableType table = type.getTable(tree.getTables().get(0).toLowerCase());
     IMethodInfo execute = new MethodInfoBuilder()
       .withName("execute")
@@ -99,6 +102,7 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
           }
           String finalSQL = String.join("\n", places);
           finalSQL = finalSQL.replace(";", "");
+//          System.out.println(finalSQL + " @SQLQueryTypeInfo 105"); debugging logging info
           if (returnType instanceof ISQLQueryResultType) {
             _md = new SQLQueryResultMetadata((ISQLQueryResultType) returnType);
           } else if (returnType instanceof ISQLTableType) {
