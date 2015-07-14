@@ -97,9 +97,9 @@ public class SQLQuery<T> implements Iterable<T> {
     return newQuery;
   }
 
-  public SQLQuery<T> orderBy(SQLConstraint constraint1, SQLConstraint ... constraints){
+  public SQLQuery<T> orderBy(SQLConstraint ... constraints){
     SQLQuery<T> newQuery = cloneMe();
-    newQuery._orderByExpr = SQLConstraint.orderBy(constraint1,constraints);
+    newQuery._orderByExpr = SQLConstraint.orderBy(constraints);
     return newQuery;
   }
 
@@ -122,7 +122,8 @@ public class SQLQuery<T> implements Iterable<T> {
     String from = "FROM " + _metadata.getTableForType( _rootType );
     String join = _joinExpr == null ? "" : _joinExpr.getSQL( _metadata);
     String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
-    return select + " " +  from + " "  + join + " " + " " + where;
+    String orderBy =  _orderByExpr == null ? "" :  _orderByExpr.getSQL(_metadata);
+    return select + " " +  from + " "  + join + " " + " " + where + " " + orderBy;
   }
 
   //--------------------------------------------------------------------------------

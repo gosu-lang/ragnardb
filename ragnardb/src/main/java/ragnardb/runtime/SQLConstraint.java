@@ -47,8 +47,8 @@ public abstract class SQLConstraint
     return new DirectionConstraint(s,p);
   }
 
-  protected static SQLConstraint orderBy( SQLConstraint constraint1, SQLConstraint ... constraints) {
-    return new OrderByConstraint(constraint1,constraints);
+  protected static SQLConstraint orderBy( SQLConstraint ... constraints) {
+    return new OrderByConstraint(constraints);
   }
 
 
@@ -152,18 +152,24 @@ public abstract class SQLConstraint
     SQLConstraint constraint1;
 
 
-    OrderByConstraint( SQLConstraint _constraint1 ,SQLConstraint ... _constraints  )
+    OrderByConstraint( SQLConstraint ... _constraints  )
     {
-      constraint1 = constraint1;
       constraints = _constraints;
     }
 
 
     public String getSQL( ITypeToSQLMetadata metadata  )
     {
-      String ans = "ORDER BY " + constraint1.getSQL(metadata);
+      boolean isFirstTime = true;
+      String ans = "ORDER BY ";
       for(SQLConstraint cons : constraints){
-        ans += " , " + cons.getSQL(metadata);
+        if(isFirstTime){
+          ans += cons.getSQL(metadata);
+          isFirstTime = false;
+        }
+        else{
+          ans += " , " + cons.getSQL(metadata);
+        }
       }
       return  ans;
     }
