@@ -5,6 +5,7 @@ import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.features.PropertyReference;
 import ragnardb.parser.ast.Constraint;
+import ragnardb.parser.ast.SQL;
 import ragnardb.plugin.ISQLTableType;
 
 import java.util.*;
@@ -42,6 +43,15 @@ public abstract class SQLConstraint
     return new OnConstraint(s);
   }
 
+  protected static SQLConstraint direction( String s, IPropertyInfo p) {
+    return new DirectionConstraint(s,p);
+  }
+
+  protected static SQLConstraint orderBy( SQLConstraint constraint1, SQLConstraint ... constraints) {
+    return new OrderByConstraint(constraint1,constraints);
+  }
+
+
 
   abstract String getSQL( ITypeToSQLMetadata metadata );
 
@@ -50,6 +60,8 @@ public abstract class SQLConstraint
   public SQLConstraint addOn(SQLConstraint sql){
     return new CombinedConstraint( this, sql);
   }
+
+
 
   public SQLConstraint andAlso(SQLConstraint sql){
     return new AndConstraint(_propertyInfo, this, sql);
@@ -85,6 +97,88 @@ public abstract class SQLConstraint
       return answer;
     }
   }
+
+  private static class DirectionConstraint extends SQLConstraint
+  {
+    String direction;
+    IPropertyInfo prop;
+
+    DirectionConstraint( String _direction, IPropertyInfo _prop )
+    {
+      direction = _direction;
+      prop = _prop;
+    }
+
+
+    public String getSQL( ITypeToSQLMetadata metadata )
+    {
+      return metadata.getColumnForProperty(prop) + " " + direction;
+    }
+
+    List<Object> getArgs()
+    {
+      return new ArrayList<>();
+    }
+  }
+
+  private static class AddConstraint extends SQLConstraint
+  {
+    SQLConstraint constraint;
+    String prepend;
+    String append;
+
+    AddConstraint( String _prepend, SQLConstraint _constraint, String _append )
+    {
+      constraint = _constraint;
+      prepend = _prepend;
+      append = _append;
+    }
+
+
+    public String getSQL( ITypeToSQLMetadata metadata  )
+    {
+      return prepend + constraint.getSQL(metadata) + append;
+    }
+
+    List<Object> getArgs()
+    {
+      return constraint.getArgs();
+    }
+  }
+
+  private static class OrderByConstraint extends SQLConstraint
+  {
+    SQLConstraint[] constraints;
+    SQLConstraint constraint1;
+
+
+    OrderByConstraint( SQLConstraint _constraint1 ,SQLConstraint ... _constraints  )
+    {
+      constraint1 = constraint1;
+      constraints = _constraints;
+    }
+
+
+    public String getSQL( ITypeToSQLMetadata metadata  )
+    {
+      String ans = "ORDER BY " + constraint1.getSQL(metadata);
+      for(SQLConstraint cons : constraints){
+        ans += " , " + cons.getSQL(metadata);
+      }
+      return  ans;
+    }
+
+    List<Object> getArgs()
+    {
+      List answer = new ArrayList();
+      for(SQLConstraint cons : constraints){
+        answer.addAll(cons.getArgs());
+      }
+      return answer;
+    }
+  }
+
+
 
 
 

@@ -41,6 +41,13 @@ enhancement SQLRecordPropertyReferenceEnhancement : IPropertyReference<SQLRecord
     return SQLConstraint.isLike(this.PropertyInfo, s)
   }
 
+  function asc( ) : SQLConstraint {
+    return SQLConstraint.direction("asc" , this.PropertyInfo)
+  }
+
+    function desc( ) : SQLConstraint {
+      return SQLConstraint.direction("desc" , this.PropertyInfo)
+    }
 
 
 

@@ -3,6 +3,7 @@ package ragnardb.runtime;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.features.PropertyReference;
 import gw.util.GosuExceptionUtil;
+import ragnardb.parser.ast.SQL;
 import ragnardb.plugin.SQLColumnPropertyInfo;
 
 import java.sql.SQLException;
@@ -17,6 +18,7 @@ public class SQLQuery<T> implements Iterable<T> {
   protected IType _rootType;
   private SQLConstraint _whereExpr;
   private SQLConstraint _joinExpr; // Includes On expressions as well!
+  private SQLConstraint _orderByExpr;
   private PropertyReference _pick;
 
   private void addJoin(SQLConstraint cons){
@@ -95,12 +97,20 @@ public class SQLQuery<T> implements Iterable<T> {
     return newQuery;
   }
 
+  public SQLQuery<T> orderBy(SQLConstraint constraint1, SQLConstraint ... constraints){
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery._orderByExpr = SQLConstraint.orderBy(constraint1,constraints);
+    return newQuery;
+  }
+
   public <U> SQLQuery<U> pick( PropertyReference<Object, U> ref)
   {
     SQLQuery<U> sqlQuery = (SQLQuery<U>) cloneMe();
     sqlQuery._pick = ref;
     return sqlQuery;
   }
+
+
 
   public Iterator<T> iterator()
   {
@@ -151,6 +161,7 @@ public class SQLQuery<T> implements Iterable<T> {
     child._whereExpr = this._whereExpr;
     child._joinExpr = this._joinExpr;
     child._pick = this._pick;
+    child._orderByExpr = this._orderByExpr;
     return child;
   }
 
