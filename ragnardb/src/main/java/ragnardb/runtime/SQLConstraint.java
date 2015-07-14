@@ -1,5 +1,6 @@
 package ragnardb.runtime;
 
+import com.sun.tools.javac.util.StringUtils;
 import gw.lang.reflect.IFeatureInfo;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
@@ -45,6 +46,14 @@ public abstract class SQLConstraint
 
   protected static SQLConstraint direction( String s, IPropertyInfo p) {
     return new DirectionConstraint(s,p);
+  }
+
+  protected static SQLConstraint limit( int i) {
+    return new LimitConstraint(i);
+  }
+
+  protected static SQLConstraint offset( int i) {
+    return new OffsetConstraint(i);
   }
 
   protected static SQLConstraint orderBy( SQLConstraint ... constraints) {
@@ -259,6 +268,50 @@ public abstract class SQLConstraint
     List<Object> getArgs()
     {
       return constraint1.getArgs();
+    }
+  }
+
+
+  private static class LimitConstraint extends SQLConstraint
+  {
+
+    int limit;
+
+
+    LimitConstraint( int _limit )
+    {
+      limit = _limit;
+    }
+
+    public String getSQL( ITypeToSQLMetadata metadata ){
+
+      return new StringBuilder().append(" LIMIT ").append(limit).append(" ").toString();
+    }
+
+    List<Object> getArgs()
+    {
+      return new ArrayList<>();
+    }
+  }
+
+  private static class OffsetConstraint extends SQLConstraint
+  {
+
+    int limit;
+
+
+    OffsetConstraint( int _limit )
+    {
+      limit = _limit;
+    }
+
+    public String getSQL( ITypeToSQLMetadata metadata ){
+      return new StringBuilder().append(" OFFSET ").append(limit).append(" ").toString();
+    }
+
+    List<Object> getArgs()
+    {
+      return new ArrayList<>();
     }
   }
 
