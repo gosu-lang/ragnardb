@@ -20,7 +20,7 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
   private final int _offset;
   private final int _length;
 
-  protected SQLColumnPropertyInfo(String columnName, String propName, IType propertyType, ITypeInfo container, int offset, int length)
+  protected SQLColumnPropertyInfo(String columnName, String propName, IType propertyType, SQLBaseTypeInfo container, int offset, int length)
   {
     super( container );
     _columnName = columnName;
@@ -29,15 +29,15 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
     _accessor = new IPropertyAccessor()
     {
       @Override
-      public Object getValue( Object obj )
-      {
-        return ((SQLRecord)obj).getRawValue( _columnName );
+      public Object getValue( Object obj ) {
+        return ((SQLRecord) obj).getRawValue(_columnName);
       }
 
       @Override
-      public void setValue( Object obj, Object val )
-      {
-        ((SQLRecord)obj).setRawValue( _columnName, val );
+      public void setValue( Object obj, Object val ) {
+        //TODO look for listeners here
+        ((ISQLTableType) getOwnersType()).fireListener(SQLColumnPropertyInfo.this);
+        ((SQLRecord) obj).setRawValue(_columnName, val);
       }
     };
     _offset = offset;

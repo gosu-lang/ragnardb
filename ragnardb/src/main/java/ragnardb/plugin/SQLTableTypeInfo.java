@@ -1,13 +1,12 @@
 package ragnardb.plugin;
 
 import gw.lang.reflect.*;
+import gw.lang.reflect.features.BoundPropertyReference;
+import gw.lang.reflect.features.IPropertyReference;
 import gw.lang.reflect.features.PropertyReference;
 import gw.lang.reflect.gs.IGosuClass;
 import gw.lang.reflect.java.JavaTypes;
-import ragnardb.runtime.SQLConstraint;
-import ragnardb.runtime.SQLMetadata;
-import ragnardb.runtime.SQLQuery;
-import ragnardb.runtime.SQLRecord;
+import ragnardb.runtime.*;
 import ragnardb.utils.NounHandler;
 
 import java.util.ArrayList;
@@ -97,6 +96,8 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     methodList.add(generateWhereMethod());
     methodList.add(generateSelectMethod());
     methodList.add(generateGetNameMethod());
+    methodList.add(generateDeleteAllMethod());
+    methodList.add(generateAddListenerMethod());
 
     List<? extends IMethodInfo> domainMethods = maybeGetDomainMethods();
     List<? extends IPropertyInfo> domainProperties = maybeGetDomainProperties();
@@ -184,28 +185,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .build(this);
   }
 
-  private IMethodInfo generateSingleObjectSelectMethod() {
-    return new MethodInfoBuilder()
-      .withName("select")
-      .withDescription("Creates a new table query")
-      .withParameters(new ParameterInfoBuilder().withName("Column").withType(TypeSystem.get(PropertyReference.class)))
-        .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
-        .withStatic(true)
-        .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
-        .build(this);
-  }
-
-  private IMethodInfo generateJoinMethod() {
-    return new MethodInfoBuilder()
-      .withName("join")
-      .withDescription("Creates a join statement form table (Not a full query)")
-      .withParameters(new ParameterInfoBuilder().withName("Table").withType(TypeSystem.get(IType.class)))
-      .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
-      .withStatic(true)
-      .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
-      .build(this);
-  }
-
   private IMethodInfo generateGetNameMethod() {
     return new MethodInfoBuilder()
         .withName("getName")
@@ -213,20 +192,40 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withParameters()
         .withReturnType(JavaTypes.STRING())
         .withStatic(true)
-        .withCallHandler((ctx, args) -> _classTableName)
+        .withCallHandler(( ctx, args ) -> _classTableName)
+        .build(this);
+  }
+
+  private IMethodInfo generateAddListenerMethod() {
+    //TODO IPropertyReference param
+    ParameterInfoBuilder propRef = new ParameterInfoBuilder().withName("propRef").withType(IPropertyReference.class);
+    // TODO block / ILIstenerAction param
+    ParameterInfoBuilder listenerAction = new ParameterInfoBuilder().withName("action").withType(IListenerAction.class);
+
+
+    return new MethodInfoBuilder()
+        .withName("addListener")
+        .withDescription("Add property listener")
+        .withParameters(propRef, listenerAction)
+        .withReturnType(JavaTypes.pVOID())
+        .withStatic(true)
+        .withCallHandler(( ctx, args ) -> {
+          getOwnersType().addListener(((IPropertyReference) args[0]).getPropertyInfo(), (IListenerAction) args[1]);
+          return null;
+        })
         .build(this);
   }
 
   private IMethodInfo generateDeleteAllMethod() {
     return new MethodInfoBuilder()
-        .withName( "deleteAll" )
-        .withDescription( "Deletes all records in table" )
-        .withParameters( new ParameterInfoBuilder().withName( "confirm" ).withType( JavaTypes.pBOOLEAN() ) )
-        .withStatic( true )
-        .withCallHandler( ( ctx, args ) -> {
-          getOwnersType().deleteAll( (Boolean)args[0] );
+        .withName("deleteAll")
+        .withDescription("Deletes all records in table")
+        .withParameters(new ParameterInfoBuilder().withName("confirm").withType(JavaTypes.pBOOLEAN()))
+        .withStatic(true)
+        .withCallHandler(( ctx, args ) -> {
+          getOwnersType().deleteAll((Boolean) args[0]);
           return null;
-        } )
+        })
         .build( this );
   }
 
@@ -235,7 +234,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   }
 
   private IGosuClass maybeGetDomainLogic() {
-    ISQLTableType tableType = (ISQLTableType) getOwnersType();
+    ISQLTableType tableType = getOwnersType();
     ISQLDdlType ddlType = (ISQLDdlType) tableType.getEnclosingType();
     final String singularizedDdlType = new NounHandler(ddlType.getRelativeName()).getSingular();
     final String domainLogicPackageSuffix = "Ext.";
