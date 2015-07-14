@@ -32,9 +32,7 @@ public class ExecutableQuery<T> extends SQLQuery<T>{
   }
 
   @Override
-  public Iterator<T> iterator(){return this.execQuery().iterator();}
-
-  private Iterable<T> execQuery(){
+  public Iterator<T> iterator(){
     try{
       List<T> results = new LinkedList<>();
       Iterable<SQLRecord> records = SQLRecord.executeStatement(statement, _rootType);
@@ -52,5 +50,4 @@ public class ExecutableQuery<T> extends SQLQuery<T>{
       throw GosuExceptionUtil.forceThrow(e);
     }
   }
-
 }
