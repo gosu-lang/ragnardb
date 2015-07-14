@@ -184,28 +184,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .build(this);
   }
 
-  private IMethodInfo generateSingleObjectSelectMethod() {
-    return new MethodInfoBuilder()
-      .withName("select")
-      .withDescription("Creates a new table query")
-      .withParameters(new ParameterInfoBuilder().withName("Column").withType(TypeSystem.get(PropertyReference.class)))
-        .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
-        .withStatic(true)
-        .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
-        .build(this);
-  }
-
-  private IMethodInfo generateJoinMethod() {
-    return new MethodInfoBuilder()
-      .withName("join")
-      .withDescription("Creates a join statement form table (Not a full query)")
-      .withParameters(new ParameterInfoBuilder().withName("Table").withType(TypeSystem.get(IType.class)))
-      .withReturnType(JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()))
-      .withStatic(true)
-      .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
-      .build(this);
-  }
-
   private IMethodInfo generateGetNameMethod() {
     return new MethodInfoBuilder()
         .withName("getName")
