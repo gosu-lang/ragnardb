@@ -2,22 +2,18 @@ package ragnardb.plugin;
 
 import gw.fs.IFile;
 import gw.lang.reflect.*;
-import gw.lang.reflect.features.IPropertyReference;
 import gw.util.GosuClassUtil;
 import gw.util.GosuExceptionUtil;
 import gw.util.concurrent.LockingLazyVar;
 import ragnardb.RagnarDB;
 import ragnardb.parser.ast.CreateTable;
-import ragnardb.runtime.IHasListenableProperties;
 import ragnardb.runtime.IListenerAction;
 import ragnardb.runtime.SQLRecord;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class SQLTableType extends TypeBase implements ISQLTableType {
 
@@ -126,7 +122,7 @@ public class SQLTableType extends TypeBase implements ISQLTableType {
   public void fireListener(IPropertyInfo prop) {
     IListenerAction listener = _propertyListeners.get(prop); //TODO expand to support multiple properties
     if(listener != null) {
-      listener.action(this);
+      listener.action(this); //TODO unchecked call... do we care?
     }
   }
 

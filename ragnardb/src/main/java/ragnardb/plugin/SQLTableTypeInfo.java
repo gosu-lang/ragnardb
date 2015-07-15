@@ -69,6 +69,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
       else
       {
         return new SQLRecord( tableName, idColumn );
+//        return TypeSystem.get(SQLRecord.class).getTypeInfo().getConstructor( JavaTypes.STRING(), JavaTypes.STRING() ).getConstructor().newInstance( tableName, idColumn );
       }
     };
 
@@ -197,11 +198,9 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   }
 
   private IMethodInfo generateAddListenerMethod() {
-    //TODO IPropertyReference param
-    ParameterInfoBuilder propRef = new ParameterInfoBuilder().withName("propRef").withType(IPropertyReference.class);
-    // TODO block / ILIstenerAction param
-    ParameterInfoBuilder listenerAction = new ParameterInfoBuilder().withName("action").withType(IListenerAction.class);
-
+    ParameterInfoBuilder propRef = new ParameterInfoBuilder().withName( "propRef" ).withType( IPropertyReference.class );
+    IType listenerType = TypeSystem.get( IListenerAction.class ).getParameterizedType( getOwnersType() );
+    ParameterInfoBuilder listenerAction = new ParameterInfoBuilder().withName( "action" ).withType( listenerType );
 
     return new MethodInfoBuilder()
         .withName("addListener")
