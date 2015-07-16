@@ -140,14 +140,17 @@ public class SQLParser {
       parseDropTable();
       return null;
     } else if(tokEquals(TokenType.UPDATE)){
-      parseUpdate();
-      return null;
+      UpdateStatement _update = parseUpdate();
+      _update.setVars(_vars);
+      return _update;
     } else if(tokEquals(TokenType.INSERT) || tokEquals(TokenType.REPLACE)){
-      parseInsert();
-      return null;
+      InsertStatement _insert = parseInsert();
+      _insert.setVars(_vars);
+      return _insert;
     } else if(tokEquals(TokenType.DELETE)){
-      parseDelete();
-      return null;
+      DeleteStatement _delete = parseDelete();
+      _delete.setVars(_vars);
+      return _delete;
     } else {
       SelectStatement _select = parseSelect();
       _select.setVariables(_vars);
@@ -261,7 +264,8 @@ public class SQLParser {
     return table;
   }
 
-  private void parseInsert(){
+  private InsertStatement parseInsert(){
+    InsertStatement _insert;
     if(tokEquals(TokenType.REPLACE)){
       next();
     } else if(tokEquals(TokenType.INSERT)){
@@ -274,33 +278,43 @@ public class SQLParser {
       error(currentToken, "Expecting INSERT or REPLACE but found '" + currentToken.getType() + "'.");
     }
     match(TokenType.INTO);
-    match(TokenType.IDENT);
+    String name = match(TokenType.IDENT);
     if(tokEquals(TokenType.DOT)){
       next();
-      match(TokenType.IDENT);
+      name += ".";
+      name += match(TokenType.IDENT);
     }
+    _insert = new InsertStatement(name);
     if(tokEquals(TokenType.LPAREN)){
       next();
-      list(TokenType.IDENT);
+      ArrayList<String> cols = list(TokenType.IDENT);
       match(TokenType.RPAREN);
+      for(String col: cols){
+        _insert.addColumn(col);
+      }
     }
     if(tokEquals(TokenType.DEFAULT)){
       next();
       match(TokenType.VALUES);
+      _insert.setDefault(_insert.getColumns().size());
     } else if(tokEquals(TokenType.VALUES)){
       next();
       match(TokenType.LPAREN);
       if(tokEquals(TokenType.DEFAULT)){
         next();
+        _insert.addExpression(new Default());
       } else {
-        parseExpr();
+        Expression e = parseExpr();
+        _insert.addExpression(e);
       }
       while(tokEquals(TokenType.COMMA)){
         next();
         if(tokEquals(TokenType.DEFAULT)){
           next();
+          _insert.addExpression(new Default());
         } else {
-          parseExpr();
+          Expression e = parseExpr();
+          _insert.addExpression(e);
         }
       }
       match(TokenType.RPAREN);
@@ -309,35 +323,44 @@ public class SQLParser {
         match(TokenType.LPAREN);
         if(tokEquals(TokenType.DEFAULT)){
           next();
+          _insert.addExpression(new Default());
         } else {
-          parseExpr();
+          Expression e = parseExpr();
+          _insert.addExpression(e);
         }
         while(tokEquals(TokenType.COMMA)){
           next();
           if(tokEquals(TokenType.DEFAULT)){
             next();
+            _insert.addExpression(new Default());
           } else {
-            parseExpr();
+            Expression e = parseExpr();
+            _insert.addExpression(e);
           }
         }
         match(TokenType.RPAREN);
       }
     } else {
-      parseSelect();
+      SelectStatement statement = parseSelect();
+      _insert.setSelect(statement);
     }
+    return _insert;
   }
 
-  private void parseUpdate(){
+  private UpdateStatement parseUpdate(){
+    UpdateStatement _statement;
     match(TokenType.UPDATE);
     if(tokEquals(TokenType.OR)){
       next();
       matchIn(TokenType.ROLLBACK, TokenType.ABORT, TokenType.REPLACE, TokenType.FAIL, TokenType.IGNORE);
     }
-    match(TokenType.IDENT);
+    String name = match(TokenType.IDENT);
     if(tokEquals(TokenType.DOT)){
+      name += ".";
       next();
-      match(TokenType.IDENT);
+      name += match(TokenType.IDENT);
     }
+    _statement = new UpdateStatement(name);
     if(tokEquals(TokenType.AS)){
       next();
       match(TokenType.IDENT);
@@ -351,12 +374,14 @@ public class SQLParser {
       match(TokenType.INDEXED);
     }
     match(TokenType.SET);
-    match(TokenType.IDENT);
+    String colName = match(TokenType.IDENT);
+    _statement.addColumn(colName);
     match(TokenType.EQ);
     parseExpr();
     while(tokEquals(TokenType.COMMA)){
       next();
-      match(TokenType.IDENT);
+      colName = match(TokenType.IDENT);
+      _statement.addColumn(colName);
       match(TokenType.EQ);
       parseExpr();
     }
@@ -368,6 +393,7 @@ public class SQLParser {
       next();
       parseExpr();
     }
+    return _statement;
   }
 
   private void parseDropTable(){
@@ -391,14 +417,17 @@ public class SQLParser {
     }
   }
 
-  private void parseDelete(){
+  private DeleteStatement parseDelete(){
+    DeleteStatement _delete;
     match(TokenType.DELETE);
     match(TokenType.FROM);
-    match(TokenType.IDENT);
+    String name = match(TokenType.IDENT);
     if(tokEquals(TokenType.DOT)){
+      name += ".";
       next();
-      match(TokenType.IDENT);
+      name += match(TokenType.IDENT);
     }
+    _delete = new DeleteStatement(name);
     if(tokEquals(TokenType.INDEXED)){
       next();
       match(TokenType.BY);
@@ -409,12 +438,15 @@ public class SQLParser {
     }
     if(tokEquals(TokenType.WHERE)){
       next();
-      parseExpr();
+      Expression e = parseExpr();
+      _delete.setExpr(e);
     }
     if(tokEquals(TokenType.LIMIT)){
       next();
-      parseTerm();
+      Term t = parseTerm();
+      _delete.setTerm(t);
     }
+    return _delete;
   }
 
   private void parseAlterTable(){

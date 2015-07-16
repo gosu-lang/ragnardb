@@ -1,5 +1,6 @@
 package ragnardb.parser.ast;
 
+import gw.lang.parser.resources.Res;
 import ragnardb.parser.Token;
 
 import java.util.ArrayList;
@@ -7,7 +8,7 @@ import java.util.ArrayList;
 /**
  * Created by klu on 7/7/2015.
  */
-public class InsertStatement extends SQL{
+public class InsertStatement extends Statement{
   private String _tableName;
   private ArrayList<String> _columns;
   private ArrayList<Expression> _expressions;
@@ -79,7 +80,7 @@ public class InsertStatement extends SQL{
     this._select = _select;
   }
 
-  public ArrayList<JavaVar> getVars() {
+  public ArrayList<JavaVar> getVariables() {
     return _vars;
   }
 
@@ -87,5 +88,21 @@ public class InsertStatement extends SQL{
 
   public void setVars(ArrayList<JavaVar> _vars) {
     this._vars = _vars;
+  }
+
+  public void setDefault(int i){
+    for(int j = 0; j<i; j++){
+      addExpression(new Default());
+    }
+  }
+
+  public ArrayList<ResultColumn> getResultColumns(){
+    return null;
+  }
+
+  public ArrayList<String> getTables(){
+    ArrayList<String> e = new ArrayList<>();
+    e.add(_tableName);
+    return e;
   }
 }

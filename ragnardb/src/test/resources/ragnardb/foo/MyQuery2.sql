@@ -1,1 +1,1 @@
-SELECT (FirstName, LastName) FROM Contacts WHERE UserID = 1;
+SELECT FirstName, LastName FROM Contacts WHERE UserID = 1;
