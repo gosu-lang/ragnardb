@@ -3,6 +3,7 @@ package ragnardb.plugin;
 import gw.fs.IFile;
 import gw.lang.reflect.IType;
 import ragnardb.parser.ast.SelectStatement;
+import ragnardb.parser.ast.Statement;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -24,7 +25,7 @@ public class SQLQueryType extends SQLTypeBase implements ISQLQueryType {
     return _plugin.getColumnFromRelativeName(name, this.getNamespace());
   }
 
-  public ISQLQueryResultType getResults(SelectStatement statement, ISQLQueryType type){
+  public ISQLQueryResultType getResults(Statement statement, ISQLQueryType type){
     return new SQLQueryResultType(this.getFile(), this._plugin, statement, type);
   }
 

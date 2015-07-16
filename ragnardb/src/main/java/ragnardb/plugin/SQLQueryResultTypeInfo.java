@@ -3,6 +3,7 @@ package ragnardb.plugin;
 import gw.lang.reflect.*;
 import ragnardb.parser.ast.ResultColumn;
 import ragnardb.parser.ast.SelectStatement;
+import ragnardb.parser.ast.Statement;
 import ragnardb.runtime.SQLRecord;
 
 import java.util.ArrayList;
@@ -15,17 +16,17 @@ import java.util.List;
 public class SQLQueryResultTypeInfo extends SQLBaseTypeInfo{
   private IConstructorHandler _constructor;
 
-  public SQLQueryResultTypeInfo(SQLRecord record, ISQLQueryResultType type, SelectStatement statement, ISQLQueryType query){
+  public SQLQueryResultTypeInfo(SQLRecord record, ISQLQueryResultType type, Statement statement, ISQLQueryType query){
     super(type);
     decorateType(statement, record, query);
   }
 
-  public SQLQueryResultTypeInfo(ISQLQueryResultType type, SelectStatement statement, ISQLQueryType query) {
+  public SQLQueryResultTypeInfo(ISQLQueryResultType type, Statement statement, ISQLQueryType query) {
     super(type);
     decorateType(type, statement, query);
   }
 
-  private void decorateType(ISQLQueryResultType type, SelectStatement statement, ISQLQueryType query){
+  private void decorateType(ISQLQueryResultType type, Statement statement, ISQLQueryType query){
     _propertiesMap = new HashMap<>();
     _propertiesList = new ArrayList<>();
     _methodList = new MethodList();
@@ -45,7 +46,7 @@ public class SQLQueryResultTypeInfo extends SQLBaseTypeInfo{
     }
   }
 
-  private void decorateType(SelectStatement statement, SQLRecord record, ISQLQueryType query) {
+  private void decorateType(Statement statement, SQLRecord record, ISQLQueryType query) {
     _propertiesMap = new HashMap<>();
     _propertiesList = new ArrayList<>();
     _methodList = new MethodList();

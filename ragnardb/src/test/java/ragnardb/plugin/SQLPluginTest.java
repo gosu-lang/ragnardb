@@ -220,7 +220,7 @@ public class SQLPluginTest {
     assertEquals(result.getTable().getTable().getTypeName(), "Contact");
   }
 
-  //@Test
+  @Test
   public void getSynthesizedMethod() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
     assertNotNull(result);
@@ -263,7 +263,6 @@ public class SQLPluginTest {
   }
 
   @Test
-  @Ignore
   public void getSynthesizedProperty() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
     assertNotNull(result);

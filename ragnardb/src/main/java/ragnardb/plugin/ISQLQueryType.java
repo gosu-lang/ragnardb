@@ -3,6 +3,7 @@ package ragnardb.plugin;
 import gw.lang.reflect.IFileBasedType;
 import gw.lang.reflect.IType;
 import ragnardb.parser.ast.SelectStatement;
+import ragnardb.parser.ast.Statement;
 
 public interface ISQLQueryType extends ISQLTypeBase {
   public ISQLTableType getTable(String name);
@@ -11,7 +12,7 @@ public interface ISQLQueryType extends ISQLTypeBase {
 
   public SQLPlugin getPlugin();
 
-  public ISQLQueryResultType getResults(SelectStatement statement, ISQLQueryType type);
+  public ISQLQueryResultType getResults(Statement statement, ISQLQueryType type);
 
   public ISQLQueryResultType getResultType();
 

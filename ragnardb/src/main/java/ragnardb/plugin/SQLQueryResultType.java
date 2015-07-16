@@ -4,6 +4,7 @@ import gw.fs.IFile;
 import gw.lang.reflect.ITypeInfo;
 import gw.util.concurrent.LockingLazyVar;
 import ragnardb.parser.ast.SelectStatement;
+import ragnardb.parser.ast.Statement;
 import ragnardb.runtime.SQLRecord;
 
 import java.util.List;
@@ -12,18 +13,18 @@ import java.util.List;
  * Created by klu on 7/9/2015.
  */
 public class SQLQueryResultType extends SQLTypeBase implements ISQLQueryResultType{
-  private SelectStatement statement;
+  private Statement statement;
   private ISQLQueryType query;
   private SQLRecord record;
 
-  public SQLQueryResultType(IFile file, SQLPlugin plugin, SelectStatement statement, ISQLQueryType type) {
+  public SQLQueryResultType(IFile file, SQLPlugin plugin, Statement statement, ISQLQueryType type) {
     super(file, plugin);
     this.statement = statement;
     query = type;
     record = null;
   }
 
-  public SQLQueryResultType(SQLRecord record, SelectStatement statement, IFile file, SQLPlugin plugin, ISQLQueryType type){
+  public SQLQueryResultType(SQLRecord record, Statement statement, IFile file, SQLPlugin plugin, ISQLQueryType type){
     super(file, plugin);
     this.statement = statement;
     query = type;
@@ -62,6 +63,6 @@ public class SQLQueryResultType extends SQLTypeBase implements ISQLQueryResultTy
 
   @Override
   public ISQLTableType getTable(){
-    return query.getTable(statement.getTable());
+    return query.getTable(statement.getTables().get(0));
   }
 }
