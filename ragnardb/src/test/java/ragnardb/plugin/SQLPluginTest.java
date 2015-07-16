@@ -213,11 +213,14 @@ public class SQLPluginTest {
   }
 
   @Test
-  public void getResultInfo() {
-    TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
-    TypeSystem.getByFullNameIfValid("ragnardb.foo.MyQuery2");
-    ISQLQueryResultType result = (ISQLQueryResultType) TypeSystem.getByFullNameIfValid("ragnardb.foo.MyQuery2Result");
-    assertNotNull(result);
+ // @Ignore("Fails individually on result != null, but succeeds in the whole test")
+  public void getResultInfo() throws InterruptedException{
+    TypeSystem.getByFullName("ragnardb.foo.Users");
+    ISQLQueryType query = (ISQLQueryType)TypeSystem.getByFullName("ragnardb.foo.MyQuery2");
+    query.getTypeInfo();
+    ISQLQueryResultType expectedResult = query.getResultType();
+    assertNotNull(expectedResult);
+    ISQLQueryResultType result = (ISQLQueryResultType) TypeSystem.getByFullName("ragnardb.foo.MyQuery2Result");
     assertEquals(result.getTable().getTable().getTypeName(), "Contact");
   }
 
