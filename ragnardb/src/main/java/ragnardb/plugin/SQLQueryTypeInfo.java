@@ -1,5 +1,6 @@
 package ragnardb.plugin;
 
+import gw.lang.parser.resources.Res;
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
 import ragnardb.RagnarDB;
@@ -154,6 +155,9 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
   private IType returnType(Statement select, ISQLQueryType type){
     ArrayList<ResultColumn> resultColumns = select.getResultColumns();
     ArrayList<String> tableNames = select.getTables();
+    if(tableNames.size() > 1){
+      return handleMultipleTables(select, type);
+    }
     if(resultColumns.size() == 1){
       ResultColumn col = resultColumns.get(0);
       String finalChar = col.getResult().substring(col.getResult().length()-1);
@@ -163,14 +167,46 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
         }
       } else { //now we presume that we are dealing with a single column
         String column = col.getResult();
-        return type.getColumn(column);
+        return type.getColumn(column, tableNames.get(0).toLowerCase());
       }
     }
     return type.getResults(select, type);
   }
 
-  protected ISQLQueryResultType getResultType(ISQLQueryType type){
-    return (ISQLQueryResultType) returnType((Statement) type.getParseTree(), type);
+  private IType handleMultipleTables(Statement select, ISQLQueryType type){
+    ArrayList<ResultColumn> resultColumns = select.getResultColumns();
+    ArrayList<String> tableNames = select.getTables();
+    ArrayList<SQLColumnPropertyInfo> columns = new ArrayList<>();
+    ArrayList<String> columnNames = new ArrayList<>();
+    if(resultColumns.size() == 1){
+      ResultColumn col = resultColumns.get(0);
+      String finalChar = col.getResult().substring(col.getResult().length() - 1);
+      if(finalChar.equals("*")){
+        ArrayList<ISQLTableType> tables = new ArrayList<>();
+        for(String tName: tableNames){
+          tables.add(type.getTable(tName.toLowerCase()));
+        }
+        for(ISQLTableType table: tables){
+          for(ColumnDefinition column: table.getColumnDefinitions()){
+            SQLColumnPropertyInfo propertyInfo = type.getColumnProperty(column.getColumnName(),table.getTable().getTableName().toLowerCase());
+            if(!columnNames.contains(propertyInfo.getColumnName())){
+              columns.add(propertyInfo);
+              columnNames.add(propertyInfo.getColumnName());
+            }
+          }
+        }
+        return type.getResults(columns);
+      } else {
+        String[] resultInfo = col.getResult().split("//.");
+        return type.getColumn(resultInfo[1], resultInfo[0].toLowerCase());
+      }
+    } else {
+      for(ResultColumn rc: resultColumns){
+        String[] split = rc.getResult().split("//.");
+        columns.add(type.getColumnProperty(split[1], split[0].toLowerCase()));
+      }
+      return type.getResults(columns);
+    }
   }
 
   private MethodList handleNonSelect(Statement statement, ISQLQueryType type){

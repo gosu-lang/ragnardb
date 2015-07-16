@@ -16,14 +16,14 @@ import java.util.List;
 public class SQLQueryResultTypeInfo extends SQLBaseTypeInfo{
   private IConstructorHandler _constructor;
 
-  public SQLQueryResultTypeInfo(SQLRecord record, ISQLQueryResultType type, Statement statement, ISQLQueryType query){
-    super(type);
-    decorateType(statement, record, query);
-  }
-
   public SQLQueryResultTypeInfo(ISQLQueryResultType type, Statement statement, ISQLQueryType query) {
     super(type);
     decorateType(type, statement, query);
+  }
+
+  public SQLQueryResultTypeInfo(ArrayList<SQLColumnPropertyInfo> propInfos, ISQLQueryResultType type){
+    super(type);
+    decorateType(type, propInfos);
   }
 
   private void decorateType(ISQLQueryResultType type, Statement statement, ISQLQueryType query){
@@ -31,7 +31,7 @@ public class SQLQueryResultTypeInfo extends SQLBaseTypeInfo{
     _propertiesList = new ArrayList<>();
     _methodList = new MethodList();
     ISQLTableType table = query.getTable(statement.getTables().get(0).toLowerCase());
-    createConstructorInfos(statement.getTables().get(0).toLowerCase());
+    createConstructorInfos(type.getRelativeName());
     List<ColumnDefinition> columnDefinitions =  table.getColumnDefinitions();
     ArrayList<ResultColumn> results = statement.getResultColumns();
     for(ResultColumn rc: results){
@@ -46,20 +46,14 @@ public class SQLQueryResultTypeInfo extends SQLBaseTypeInfo{
     }
   }
 
-  private void decorateType(Statement statement, SQLRecord record, ISQLQueryType query) {
-    _propertiesMap = new HashMap<>();
+  private void decorateType(ISQLQueryResultType type, ArrayList<SQLColumnPropertyInfo> propInfos){
     _propertiesList = new ArrayList<>();
+    _propertiesMap = new HashMap<>();
     _methodList = new MethodList();
-    ISQLTableType table = query.getTable(statement.getTables().get(0).toLowerCase());
-    createConstructorInfos(statement.getTables().get(0).toLowerCase());
-    List<ColumnDefinition> colDs = table.getColumnDefinitions();
-    for(ColumnDefinition cd: colDs){
-      if(record.getRawValue(cd.getColumnName()) != null){
-        SQLColumnPropertyInfo col = new SQLColumnPropertyInfo(cd.getColumnName(), cd.getPropertyName(),
-          getGosuType(cd.getSQLType()), this, cd.getOffset(), cd.getLength());
-        _propertiesMap.put(col.getName(), col);
-        _propertiesList.add(col);
-      }
+    createConstructorInfos(type.getRelativeName());
+    for(SQLColumnPropertyInfo propInfo: propInfos){
+      _propertiesMap.put(propInfo.getName(), propInfo);
+      _propertiesList.add(propInfo);
     }
   }
 

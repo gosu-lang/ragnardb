@@ -148,8 +148,9 @@ public class SQLParser {
       _insert.setVars(_vars);
       return _insert;
     } else if(tokEquals(TokenType.DELETE)){
-      parseDelete();
-      return null;
+      DeleteStatement _delete = parseDelete();
+      _delete.setVars(_vars);
+      return _delete;
     } else {
       SelectStatement _select = parseSelect();
       _select.setVariables(_vars);
@@ -416,14 +417,17 @@ public class SQLParser {
     }
   }
 
-  private void parseDelete(){
+  private DeleteStatement parseDelete(){
+    DeleteStatement _delete;
     match(TokenType.DELETE);
     match(TokenType.FROM);
-    match(TokenType.IDENT);
+    String name = match(TokenType.IDENT);
     if(tokEquals(TokenType.DOT)){
+      name += ".";
       next();
-      match(TokenType.IDENT);
+      name += match(TokenType.IDENT);
     }
+    _delete = new DeleteStatement(name);
     if(tokEquals(TokenType.INDEXED)){
       next();
       match(TokenType.BY);
@@ -434,12 +438,15 @@ public class SQLParser {
     }
     if(tokEquals(TokenType.WHERE)){
       next();
-      parseExpr();
+      Expression e = parseExpr();
+      _delete.setExpr(e);
     }
     if(tokEquals(TokenType.LIMIT)){
       next();
-      parseTerm();
+      Term t = parseTerm();
+      _delete.setTerm(t);
     }
+    return _delete;
   }
 
   private void parseAlterTable(){

@@ -215,6 +215,7 @@ public class SQLPluginTest {
   @Test
   public void getResultInfo() {
     TypeSystem.getByFullNameIfValid("ragnardb.foo.Users");
+    TypeSystem.getByFullNameIfValid("ragnardb.foo.MyQuery2");
     ISQLQueryResultType result = (ISQLQueryResultType) TypeSystem.getByFullNameIfValid("ragnardb.foo.MyQuery2Result");
     assertNotNull(result);
     assertEquals(result.getTable().getTable().getTypeName(), "Contact");

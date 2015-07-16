@@ -7,6 +7,7 @@ import ragnardb.parser.ast.SelectStatement;
 import ragnardb.parser.ast.Statement;
 import ragnardb.runtime.SQLRecord;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,6 +17,7 @@ public class SQLQueryResultType extends SQLTypeBase implements ISQLQueryResultTy
   private Statement statement;
   private ISQLQueryType query;
   private SQLRecord record;
+  private ArrayList<SQLColumnPropertyInfo> props = null;
 
   public SQLQueryResultType(IFile file, SQLPlugin plugin, Statement statement, ISQLQueryType type) {
     super(file, plugin);
@@ -24,11 +26,10 @@ public class SQLQueryResultType extends SQLTypeBase implements ISQLQueryResultTy
     record = null;
   }
 
-  public SQLQueryResultType(SQLRecord record, Statement statement, IFile file, SQLPlugin plugin, ISQLQueryType type){
+  public SQLQueryResultType(IFile file, SQLPlugin plugin, ArrayList<SQLColumnPropertyInfo> propertyInfos, ISQLQueryType t){
     super(file, plugin);
-    this.statement = statement;
-    query = type;
-    this.record = record;
+    props = propertyInfos;
+    query = t;
   }
 
   @Override
@@ -39,10 +40,10 @@ public class SQLQueryResultType extends SQLTypeBase implements ISQLQueryResultTy
 
   @Override
   protected SQLBaseTypeInfo initTypeInfo() {
-    if(record == null) {
+    if(props == null) {
       return new SQLQueryResultTypeInfo((ISQLQueryResultType) getTypeRef(), statement, query);
     } else {
-      return new SQLQueryResultTypeInfo(record ,(ISQLQueryResultType) getTypeRef(), statement, query);
+      return new SQLQueryResultTypeInfo(props, (ISQLQueryResultType) getTypeRef());
     }
   }
 
