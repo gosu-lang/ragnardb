@@ -195,17 +195,17 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
             }
           }
         }
-        return type.getResults(columns);
+        return type.getResults(columns, select);
       } else {
-        String[] resultInfo = col.getResult().split("//.");
+        String[] resultInfo = col.getResult().split("\\.");
         return type.getColumn(resultInfo[1], resultInfo[0].toLowerCase());
       }
     } else {
       for(ResultColumn rc: resultColumns){
-        String[] split = rc.getResult().split("//.");
+        String[] split = rc.getResult().split("\\.");
         columns.add(type.getColumnProperty(split[1], split[0].toLowerCase()));
       }
-      return type.getResults(columns);
+      return type.getResults(columns, select);
     }
   }
 

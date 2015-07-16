@@ -29,8 +29,8 @@ public class SQLQueryType extends SQLTypeBase implements ISQLQueryType {
     return new SQLQueryResultType(this.getFile(), this._plugin, statement, type);
   }
 
-  public ISQLQueryResultType getResults(ArrayList<SQLColumnPropertyInfo> propertyInfos){
-    return new SQLQueryResultType(this.getFile(), this._plugin, propertyInfos, this);
+  public ISQLQueryResultType getResults(ArrayList<SQLColumnPropertyInfo> propertyInfos, Statement statement){
+    return new SQLQueryResultType(this.getFile(), this._plugin, propertyInfos, this, statement);
   }
 
   public SQLColumnPropertyInfo getColumnProperty(String name, String tableName){

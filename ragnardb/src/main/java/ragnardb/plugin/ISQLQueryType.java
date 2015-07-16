@@ -16,7 +16,7 @@ public interface ISQLQueryType extends ISQLTypeBase {
 
   public ISQLQueryResultType getResults(Statement statement, ISQLQueryType type);
 
-  public ISQLQueryResultType getResults(ArrayList<SQLColumnPropertyInfo> columns);
+  public ISQLQueryResultType getResults(ArrayList<SQLColumnPropertyInfo> columns, Statement statement);
 
   public SQLColumnPropertyInfo getColumnProperty(String colName, String tableName);
 

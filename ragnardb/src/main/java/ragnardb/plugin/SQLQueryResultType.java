@@ -7,6 +7,7 @@ import ragnardb.parser.ast.SelectStatement;
 import ragnardb.parser.ast.Statement;
 import ragnardb.runtime.SQLRecord;
 
+import javax.swing.plaf.nimbus.State;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,10 +27,11 @@ public class SQLQueryResultType extends SQLTypeBase implements ISQLQueryResultTy
     record = null;
   }
 
-  public SQLQueryResultType(IFile file, SQLPlugin plugin, ArrayList<SQLColumnPropertyInfo> propertyInfos, ISQLQueryType t){
+  public SQLQueryResultType(IFile file, SQLPlugin plugin, ArrayList<SQLColumnPropertyInfo> propertyInfos, ISQLQueryType t, Statement statement){
     super(file, plugin);
     props = propertyInfos;
     query = t;
+    this.statement = statement;
   }
 
   @Override
