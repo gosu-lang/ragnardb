@@ -60,6 +60,10 @@ public abstract class SQLConstraint
     return new OrderByConstraint(constraints);
   }
 
+  public static SQLConstraint raw( String sql, List<Object> args) {
+    return new RawConstraint(sql,args);
+  }
+
 
 
   abstract String getSQL( ITypeToSQLMetadata metadata );
@@ -271,6 +275,30 @@ public abstract class SQLConstraint
     }
   }
 
+  private static class RawConstraint extends SQLConstraint
+  {
+
+    String _sql;
+    List<Object> _args;
+
+
+    RawConstraint( String sql, List<Object> args )
+    {
+
+      _sql = sql;
+      _args = args;
+    }
+
+    public String getSQL( ITypeToSQLMetadata metadata ){
+
+      return _sql;
+    }
+
+    List<Object> getArgs()
+    {
+      return _args;
+    }
+  }
 
   private static class LimitConstraint extends SQLConstraint
   {

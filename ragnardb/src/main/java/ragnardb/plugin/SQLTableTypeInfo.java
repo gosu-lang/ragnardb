@@ -4,6 +4,8 @@ import gw.lang.reflect.*;
 import gw.lang.reflect.features.PropertyReference;
 import gw.lang.reflect.gs.IGosuClass;
 import gw.lang.reflect.java.JavaTypes;
+import ragnardb.parser.ast.Constraint;
+import ragnardb.parser.ast.CreateTable;
 import ragnardb.runtime.SQLConstraint;
 import ragnardb.runtime.SQLMetadata;
 import ragnardb.runtime.SQLQuery;
@@ -18,12 +20,18 @@ import java.util.stream.Collectors;
 
 public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private SQLMetadata _md = new SQLMetadata();
+  private ISQLTableType _parent;
+  private ISQLDdlType _system;
+  private CreateTable _table;
   private String _classTableName;
   private IGosuClass _domainLogic;
   private IConstructorHandler _constructor;
 
-  public SQLTableTypeInfo(ISQLTableType type) {
+  public SQLTableTypeInfo(ISQLTableType type, CreateTable table,  ISQLDdlType system) {
     super(type);
+    _parent = type;
+    _system = system;
+    _table = table;
     resolveProperties(type);
     _classTableName = type.getName();
   }
@@ -32,6 +40,8 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
 
+
+    //Get column References
     List<ColumnDefinition> columns = type.getColumnDefinitions();
     for(ColumnDefinition column : columns) {
       SQLColumnPropertyInfo prop = new SQLColumnPropertyInfo(column.getColumnName(), column.getPropertyName(),
@@ -39,6 +49,47 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
       _propertiesMap.put(prop.getName(), prop);
       _propertiesList.add( prop );
     }
+
+    //Adding Foreign Key References that this table does
+
+    for( Constraint c : _table.getConstraints()) {
+      if (c.getType() == Constraint.constraintType.FOREIGN){
+        //For now, not supporting multiple references in one constraint
+        String keyName = c.getColumnNames().get(0);
+        ColumnDefinition referer = _table.getColumnDefinitionByName(keyName);
+
+        CreateTable foreignTable = null;
+        for(CreateTable possibleForiegnTable : _system.getTables()){
+          System.out.println(possibleForiegnTable.getTableName());
+          if(possibleForiegnTable.getTableName().equals(c.getReferentialName())){
+            foreignTable = possibleForiegnTable;
+          }
+        }
+
+        String foreignName = c.getReferentialColumnNames().get(0);
+        ColumnDefinition referee = foreignTable.getColumnDefinitionByName(foreignName);
+
+
+        SQLReferencePropertyInfo refProp =  new SQLReferencePropertyInfo(referer.getColumnName(), referee.getPropertyName(),
+          foreignTable.getTypeName(),
+          _system,
+          foreignTable.getTypeName(),
+          JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()),
+          this, referer.getOffset(), referer.getLength());
+
+        _propertiesMap.put(refProp.getName(), refProp);
+        _propertiesList.add(refProp);
+
+
+      }
+
+
+    }
+
+    // Adding Foreign Key References TO this table (The reverse query) TODO
+
+
+
     _domainLogic = maybeGetDomainLogic();
     createMethodInfos();
     createConstructorInfos();
@@ -87,7 +138,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     MethodList methodList = new MethodList();
 
     for (String propertyName : _propertiesMap.keySet()) {
-      SQLColumnPropertyInfo prop = (SQLColumnPropertyInfo) _propertiesMap.get(propertyName);
+      IPropertyInfo prop = _propertiesMap.get(propertyName);
 
       methodList.add(generateFindByMethod(prop));
       methodList.add(generateFindByAllMethod(prop));
@@ -118,9 +169,9 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withName( "findBy" + propertyName )
         .withDescription("Find single match based on the value of the " + propertyName + " column.")
         .withParameters(new ParameterInfoBuilder()
-            .withName(propertyName)
-            .withType(prop.getFeatureType())
-            .withDescription("Performs strict matching on this argument"))
+          .withName(propertyName)
+          .withType(prop.getFeatureType())
+          .withDescription("Performs strict matching on this argument"))
         .withReturnType(this.getOwnersType())
         .withStatic(true)
         .withCallHandler(( ctx, args ) -> {
@@ -182,6 +233,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withStatic(true)
         .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
         .build(this);
+
   }
 
   private IMethodInfo generateGetNameMethod() {

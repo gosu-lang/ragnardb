@@ -220,6 +220,15 @@ public class SQLPluginTest {
     assertEquals(result.getTable().getTable().getTypeName(), "Contact");
   }
 
+  @Test
+  public void foreignPropertyTest() {
+    //TypeSystem.getByFullNameIfValid("ragnardb.foo.Main");
+    ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Main.Contact");
+    List<? extends IPropertyInfo> properties = result.getTypeInfo().getProperties();
+    assertNotNull(result);
+    //assertEquals(result.getTable().getTable().getTypeName(), "Contact");
+  }
+
   //@Test
   public void getSynthesizedMethod() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Bars.Baz");
