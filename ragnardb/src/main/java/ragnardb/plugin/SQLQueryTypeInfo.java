@@ -1,16 +1,15 @@
 package ragnardb.plugin;
 
+import gw.lang.parser.resources.Res;
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
 import ragnardb.RagnarDB;
-import ragnardb.parser.ast.JavaVar;
-import ragnardb.parser.ast.JoinClause;
-import ragnardb.parser.ast.ResultColumn;
-import ragnardb.parser.ast.SelectStatement;
+import ragnardb.parser.ast.*;
 import ragnardb.runtime.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.*;
 
@@ -57,9 +56,15 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
 
   private MethodList getMethods(ISQLQueryType type){
     MethodList result = new MethodList();
-    SelectStatement tree = (SelectStatement) type.getParseTree();
+    Statement tree = (Statement) type.getParseTree();
     setCoalescedVars(tree.getVariables());
+    if(!(tree instanceof SelectStatement)){
+      return handleNonSelect(tree, type);
+    }
     IType returnType = returnType(tree, type);
+    if(returnType instanceof ISQLQueryResultType){
+      ((ISQLQueryType) this.getOwnersType()).setResultType((ISQLQueryResultType) returnType);
+    }
     ISQLTableType table = type.getTable(tree.getTables().get(0).toLowerCase());
     IMethodInfo execute = new MethodInfoBuilder()
       .withName("execute")
@@ -69,7 +74,7 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
       .withStatic(true)
       .withCallHandler((ctx, args) -> {
         ISQLQueryType owner = (ISQLQueryType) getOwnersType();
-        SelectStatement statement = (SelectStatement) owner.getParseTree();
+        Statement statement = (Statement) owner.getParseTree();
         ArrayList<JavaVar> variables = statement.getVariables();
         try {
           String rawSQL = owner.getSqlSource();
@@ -99,12 +104,13 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
           }
           String finalSQL = String.join("\n", places);
           finalSQL = finalSQL.replace(";", "");
+//          System.out.println(finalSQL + " @SQLQueryTypeInfo 105"); debugging logging info
           if (returnType instanceof ISQLQueryResultType) {
             _md = new SQLQueryResultMetadata((ISQLQueryResultType) returnType);
           } else if (returnType instanceof ISQLTableType) {
             _md = new SQLMetadata();
           } else {
-            _md = new SQLQueryResultMetadata(owner.getTable(statement.getTable()));
+            _md = new SQLQueryResultMetadata(owner.getTable(statement.getTables().get(0)));
           }
           ExecutableQuery query = new ExecutableQuery(_md, returnType, finalSQL, returnType, table);
           query = query.setup();
@@ -146,10 +152,12 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
     return parameters;
   }
 
-  private IType returnType(SelectStatement select, ISQLQueryType type){
+  private IType returnType(Statement select, ISQLQueryType type){
     ArrayList<ResultColumn> resultColumns = select.getResultColumns();
     ArrayList<String> tableNames = select.getTables();
-
+    if(tableNames.size() > 1){
+      return handleMultipleTables(select, type);
+    }
     if(resultColumns.size() == 1){
       ResultColumn col = resultColumns.get(0);
       String finalChar = col.getResult().substring(col.getResult().length()-1);
@@ -159,13 +167,95 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
         }
       } else { //now we presume that we are dealing with a single column
         String column = col.getResult();
-        return type.getColumn(column);
+        return type.getColumn(column, tableNames.get(0).toLowerCase());
       }
     }
     return type.getResults(select, type);
   }
 
-  protected ISQLQueryResultType getResultType(ISQLQueryType type){
-    return (ISQLQueryResultType) returnType((SelectStatement) type.getParseTree(), type);
+  private IType handleMultipleTables(Statement select, ISQLQueryType type){
+    ArrayList<ResultColumn> resultColumns = select.getResultColumns();
+    ArrayList<String> tableNames = select.getTables();
+    ArrayList<SQLColumnPropertyInfo> columns = new ArrayList<>();
+    ArrayList<String> columnNames = new ArrayList<>();
+    if(resultColumns.size() == 1){
+      ResultColumn col = resultColumns.get(0);
+      String finalChar = col.getResult().substring(col.getResult().length() - 1);
+      if(finalChar.equals("*")){
+        ArrayList<ISQLTableType> tables = new ArrayList<>();
+        for(String tName: tableNames){
+          tables.add(type.getTable(tName.toLowerCase()));
+        }
+        for(ISQLTableType table: tables){
+          for(ColumnDefinition column: table.getColumnDefinitions()){
+            SQLColumnPropertyInfo propertyInfo = type.getColumnProperty(column.getColumnName(),table.getTable().getTableName().toLowerCase());
+            if(!columnNames.contains(propertyInfo.getColumnName())){
+              columns.add(propertyInfo);
+              columnNames.add(propertyInfo.getColumnName());
+            }
+          }
+        }
+        return type.getResults(columns, select);
+      } else {
+        String[] resultInfo = col.getResult().split("\\.");
+        return type.getColumn(resultInfo[1], resultInfo[0].toLowerCase());
+      }
+    } else {
+      for(ResultColumn rc: resultColumns){
+        String[] split = rc.getResult().split("\\.");
+        columns.add(type.getColumnProperty(split[1], split[0].toLowerCase()));
+      }
+      return type.getResults(columns, select);
+    }
+  }
+
+  private MethodList handleNonSelect(Statement statement, ISQLQueryType type){
+    MethodList result = new MethodList();
+    IMethodInfo execute = new MethodInfoBuilder()
+      .withName("execute")
+      .withDescription("Executes the following query with replacement of variables")
+      .withParameters(getParams())
+      .withReturnType(JavaTypes.INTEGER())
+      .withStatic(true)
+      .withCallHandler((ctx, args) -> {
+        ArrayList<JavaVar> variables = statement.getVariables();
+        try {
+          String rawSQL = type.getSqlSource();
+          String[] places = rawSQL.split("\n");
+          for (int i = 0; i < coalescedVars.size(); i++) {
+            for (JavaVar var : variables) {
+              if (var.equals(coalescedVars.get(i))) {
+                Object rep = args[i];
+                String replacement;
+                if (rep instanceof java.lang.String || rep instanceof java.lang.Character) {
+                  replacement = "'" + rep.toString() + "'";
+                } else if (rep instanceof java.lang.Boolean) {
+                  if ((Boolean) rep) {
+                    replacement = "1";
+                  } else {
+                    replacement = "0";
+                  }
+                } else {
+                  replacement = rep.toString();
+                }
+                String currentLine = places[var.getLine() - 1];
+                String finalLine = currentLine.substring(0, var.getCol() - 1)
+                  + replacement + currentLine.substring(var.getCol() - 1 + var.getSkiplen());
+                places[var.getLine() - 1] = finalLine;
+              }
+            }
+          }
+          String finalSQL = String.join("\n", places);
+          finalSQL = finalSQL.replace(";", "");
+          PreparedStatement p = RagnarDB.prepareStatement(finalSQL, Collections.emptyList());
+          return p.executeUpdate();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        return null;
+      })
+      .build(this);
+    result.add(execute);
+    return result;
   }
 }

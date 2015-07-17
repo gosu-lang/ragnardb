@@ -3,6 +3,7 @@ package ragnardb.plugin;
 import gw.lang.reflect.*;
 import ragnardb.parser.ast.ResultColumn;
 import ragnardb.parser.ast.SelectStatement;
+import ragnardb.parser.ast.Statement;
 import ragnardb.runtime.SQLRecord;
 
 import java.util.ArrayList;
@@ -15,22 +16,22 @@ import java.util.List;
 public class SQLQueryResultTypeInfo extends SQLBaseTypeInfo{
   private IConstructorHandler _constructor;
 
-  public SQLQueryResultTypeInfo(SQLRecord record, ISQLQueryResultType type, SelectStatement statement, ISQLQueryType query){
-    super(type);
-    decorateType(statement, record, query);
-  }
-
-  public SQLQueryResultTypeInfo(ISQLQueryResultType type, SelectStatement statement, ISQLQueryType query) {
+  public SQLQueryResultTypeInfo(ISQLQueryResultType type, Statement statement, ISQLQueryType query) {
     super(type);
     decorateType(type, statement, query);
   }
 
-  private void decorateType(ISQLQueryResultType type, SelectStatement statement, ISQLQueryType query){
+  public SQLQueryResultTypeInfo(ArrayList<SQLColumnPropertyInfo> propInfos, ISQLQueryResultType type){
+    super(type);
+    decorateType(type, propInfos);
+  }
+
+  private void decorateType(ISQLQueryResultType type, Statement statement, ISQLQueryType query){
     _propertiesMap = new HashMap<>();
     _propertiesList = new ArrayList<>();
     _methodList = new MethodList();
     ISQLTableType table = query.getTable(statement.getTables().get(0).toLowerCase());
-    createConstructorInfos(statement.getTables().get(0).toLowerCase());
+    createConstructorInfos(type.getRelativeName());
     List<ColumnDefinition> columnDefinitions =  table.getColumnDefinitions();
     ArrayList<ResultColumn> results = statement.getResultColumns();
     for(ResultColumn rc: results){
@@ -45,20 +46,14 @@ public class SQLQueryResultTypeInfo extends SQLBaseTypeInfo{
     }
   }
 
-  private void decorateType(SelectStatement statement, SQLRecord record, ISQLQueryType query) {
-    _propertiesMap = new HashMap<>();
+  private void decorateType(ISQLQueryResultType type, ArrayList<SQLColumnPropertyInfo> propInfos){
     _propertiesList = new ArrayList<>();
+    _propertiesMap = new HashMap<>();
     _methodList = new MethodList();
-    ISQLTableType table = query.getTable(statement.getTables().get(0).toLowerCase());
-    createConstructorInfos(statement.getTables().get(0).toLowerCase());
-    List<ColumnDefinition> colDs = table.getColumnDefinitions();
-    for(ColumnDefinition cd: colDs){
-      if(record.getRawValue(cd.getColumnName()) != null){
-        SQLColumnPropertyInfo col = new SQLColumnPropertyInfo(cd.getColumnName(), cd.getPropertyName(),
-          getGosuType(cd.getSQLType()), this, cd.getOffset(), cd.getLength());
-        _propertiesMap.put(col.getName(), col);
-        _propertiesList.add(col);
-      }
+    createConstructorInfos(type.getRelativeName());
+    for(SQLColumnPropertyInfo propInfo: propInfos){
+      _propertiesMap.put(propInfo.getName(), propInfo);
+      _propertiesList.add(propInfo);
     }
   }
 

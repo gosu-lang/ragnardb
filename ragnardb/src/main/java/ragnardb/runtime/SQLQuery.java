@@ -19,6 +19,8 @@ public class SQLQuery<T> implements Iterable<T> {
   private SQLConstraint _whereExpr;
   private SQLConstraint _joinExpr; // Includes On expressions as well!
   private SQLConstraint _orderByExpr;
+  private SQLConstraint _limitExpr;
+  private SQLConstraint _offsetExpr;
   private PropertyReference _pick;
 
   private void addJoin(SQLConstraint cons){
@@ -103,6 +105,20 @@ public class SQLQuery<T> implements Iterable<T> {
     return newQuery;
   }
 
+  public SQLQuery<T> limit(int i){
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery._limitExpr = SQLConstraint.limit(i);
+    return newQuery;
+  }
+
+  public SQLQuery<T> offset(int i){
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery._offsetExpr = SQLConstraint.offset(i);
+    return newQuery;
+  }
+
+
+
   public <U> SQLQuery<U> pick( PropertyReference<Object, U> ref)
   {
     SQLQuery<U> sqlQuery = (SQLQuery<U>) cloneMe();
@@ -132,11 +148,13 @@ public class SQLQuery<T> implements Iterable<T> {
 
   public String  getSQLString() {
     String select =  "SELECT " + getSelect();
-    String from = "FROM " + _metadata.getTableForType( _rootType );
+    String from = "FROM " + _metadata.getTableForType(_rootType);
     String join = _joinExpr == null ? "" : _joinExpr.getSQL( _metadata);
     String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
     String orderBy =  _orderByExpr == null ? "" :  _orderByExpr.getSQL(_metadata);
-    return select + " " +  from + " "  + join + " " + " " + where + " " + orderBy;
+    String limit =  _limitExpr == null ? "" :  _limitExpr.getSQL(_metadata);
+    String offset =  _offsetExpr == null ? "" :  _offsetExpr.getSQL(_metadata);
+    return select + " " +  from + " "  + join + " " + " " + where + " " + orderBy + " " + limit + " " + offset;
   }
 
   //--------------------------------------------------------------------------------
@@ -176,6 +194,8 @@ public class SQLQuery<T> implements Iterable<T> {
     child._joinExpr = this._joinExpr;
     child._pick = this._pick;
     child._orderByExpr = this._orderByExpr;
+    child._limitExpr = this._limitExpr;
+    child._offsetExpr = this._offsetExpr;
     return child;
   }
 

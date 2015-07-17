@@ -25,7 +25,7 @@ public class SQLTableType extends TypeBase implements ISQLTableType {
     @Override
     protected ITypeInfo init()
     {
-      return new SQLTableTypeInfo( (ISQLTableType)getTheRef() );
+      return new SQLTableTypeInfo( (ISQLTableType)getTheRef() , _table ,  _enclosingType );
     }
   };
 

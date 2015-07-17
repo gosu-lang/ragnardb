@@ -24,6 +24,7 @@ public class RagnarDB
   public static PreparedStatement prepareStatement( String sql, List vals) throws SQLException
   {
     Connection conn = getConnection();
+//    System.out.println(sql + " @RagnarDB 27"); debugging logging info
     maybeLog(sql, vals);
     PreparedStatement stmt = conn.prepareStatement( sql );
     setVals(vals, stmt);

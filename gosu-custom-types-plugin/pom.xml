@@ -39,63 +39,63 @@
       <artifactId>annotations</artifactId>
       <version>IC-141.1532.4</version>
       <scope>system</scope>
-      <systemPath>${env.IDEA_HOME}/lib/annotations.jar</systemPath>
+      <systemPath>/Applications/IntelliJ IDEA 14 CE.app/Contents//lib/annotations.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
       <artifactId>openapi</artifactId>
       <version>IC-141.1532.4</version>
       <scope>system</scope>
-      <systemPath>${env.IDEA_HOME}/lib/openapi.jar</systemPath>
+      <systemPath>/Applications/IntelliJ IDEA 14 CE.app/Contents//lib/openapi.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
       <artifactId>idea</artifactId>
       <version>IC-141.1532.4</version>
       <scope>system</scope>
-      <systemPath>${env.IDEA_HOME}/lib/idea.jar</systemPath>
+      <systemPath>/Applications/IntelliJ IDEA 14 CE.app/Contents//lib/idea.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
       <artifactId>util</artifactId>
       <version>IC-141.1532.4</version>
       <scope>system</scope>
-      <systemPath>${env.IDEA_HOME}/lib/util.jar</systemPath>
+      <systemPath>/Applications/IntelliJ IDEA 14 CE.app/Contents//lib/util.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
       <artifactId>extensions</artifactId>
       <version>IC-141.1532.4</version>
       <scope>system</scope>
-      <systemPath>${env.IDEA_HOME}/lib/extensions.jar</systemPath>
+      <systemPath>/Applications/IntelliJ IDEA 14 CE.app/Contents//lib/extensions.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
       <artifactId>trove4j</artifactId>
       <version>IC-141.1532.4</version>
       <scope>system</scope>
-      <systemPath>${env.IDEA_HOME}/lib/trove4j.jar</systemPath>
+      <systemPath>/Applications/IntelliJ IDEA 14 CE.app/Contents//lib/trove4j.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
       <artifactId>jgoodies-common-1.2.1</artifactId>
       <version>IC-141.1532.4</version>
       <scope>system</scope>
-      <systemPath>${env.IDEA_HOME}/lib/jgoodies-common-1.2.1.jar</systemPath>
+      <systemPath>/Applications/IntelliJ IDEA 14 CE.app/Contents//lib/jgoodies-common-1.2.1.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
       <artifactId>jdom</artifactId>
       <version>IC-141.1532.4</version>
       <scope>system</scope>
-      <systemPath>${env.IDEA_HOME}/lib/jdom.jar</systemPath>
+      <systemPath>/Applications/IntelliJ IDEA 14 CE.app/Contents//lib/jdom.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
       <artifactId>picocontainer</artifactId>
       <version>IC-141.1532.4</version>
       <scope>system</scope>
-      <systemPath>${env.IDEA_HOME}/lib/picocontainer.jar</systemPath>
+      <systemPath>/Applications/IntelliJ IDEA 14 CE.app/Contents//lib/picocontainer.jar</systemPath>
     </dependency>
   </dependencies>
 </project>
