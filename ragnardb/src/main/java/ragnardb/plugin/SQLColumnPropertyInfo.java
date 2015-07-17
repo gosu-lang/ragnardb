@@ -6,12 +6,15 @@ import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.ITypeInfo;
 import gw.lang.reflect.PropertyInfoBase;
+import ragnardb.runtime.IHasListenableProperties;
+import ragnardb.runtime.IListenerAction;
 import ragnardb.runtime.SQLRecord;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SQLColumnPropertyInfo extends PropertyInfoBase implements IPropertyInfo
+public class SQLColumnPropertyInfo extends PropertyInfoBase implements IPropertyInfo, IHasListenableProperties
 {
   private String _columnName;
   private String _propName;
@@ -36,7 +39,9 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
       @Override
       public void setValue( Object obj, Object val ) {
         //TODO look for listeners here
-        ((ISQLTableType) getOwnersType()).fireListener(SQLColumnPropertyInfo.this);
+        fireListeners(obj);
+
+//        ((ISQLTableType) getOwnersType()).fireListener(SQLColumnPropertyInfo.this);
         ((SQLRecord) obj).setRawValue(_columnName, val);
       }
     };
@@ -94,4 +99,24 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
   public int getTextLength() {
     return _length;
   }
+
+  private List<IListenerAction> _actions = new ArrayList<>();
+
+  @Override
+  public void addListener(IListenerAction action) {
+    _actions.add(action);
+  }
+
+  @Override
+  public void fireListeners(Object ctx) {
+    for(IListenerAction action : _actions) {
+      action.action(ctx);
+    }
+  }
+
+  @Override
+  public void clearListeners() {
+    _actions.clear();
+  }
+
 }

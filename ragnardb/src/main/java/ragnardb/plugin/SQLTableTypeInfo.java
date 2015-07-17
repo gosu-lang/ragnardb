@@ -161,7 +161,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     methodList.add(generateSelectMethod());
 //    methodList.add(generateGetNameMethod());
     methodList.add(generateDeleteAllMethod());
-    methodList.add(generateAddListenerMethod());
+//    methodList.add(generateAddListenerMethod());
 
     List<? extends IMethodInfo> domainMethods = maybeGetDomainMethods();
     List<? extends IPropertyInfo> domainProperties = maybeGetDomainProperties();
@@ -250,23 +250,23 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
   }
 
-  private IMethodInfo generateAddListenerMethod() {
-    ParameterInfoBuilder propRef = new ParameterInfoBuilder().withName( "propRef" ).withType( IPropertyReference.class );
-    IType listenerType = TypeSystem.get( IListenerAction.class ).getParameterizedType( getOwnersType() );
-    ParameterInfoBuilder listenerAction = new ParameterInfoBuilder().withName( "action" ).withType( listenerType );
-
-    return new MethodInfoBuilder()
-        .withName("addListener")
-        .withDescription("Add property listener")
-        .withParameters(propRef, listenerAction)
-        .withReturnType(JavaTypes.pVOID())
-        .withStatic(true)
-        .withCallHandler(( ctx, args ) -> {
-          getOwnersType().addListener(((IPropertyReference) args[0]).getPropertyInfo(), (IListenerAction) args[1]);
-          return null;
-        })
-        .build(this);
-  }
+//  private IMethodInfo generateAddListenerMethod() {
+//    ParameterInfoBuilder propRef = new ParameterInfoBuilder().withName( "propRef" ).withType( IPropertyReference.class );
+//    IType listenerType = TypeSystem.get( IListenerAction.class ).getParameterizedType( getOwnersType() );
+//    ParameterInfoBuilder listenerAction = new ParameterInfoBuilder().withName( "action" ).withType( listenerType );
+//
+//    return new MethodInfoBuilder()
+//        .withName("addListener")
+//        .withDescription("Add property listener")
+//        .withParameters(propRef, listenerAction)
+//        .withReturnType(JavaTypes.pVOID())
+//        .withStatic(true)
+//        .withCallHandler(( ctx, args ) -> {
+//          getOwnersType().addListener(((IPropertyReference) args[0]).getPropertyInfo(), (IListenerAction) args[1]);
+//          return null;
+//        })
+//        .build(this);
+//  }
 
   private IMethodInfo generateDeleteAllMethod() {
     return new MethodInfoBuilder()

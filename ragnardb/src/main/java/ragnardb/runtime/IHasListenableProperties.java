@@ -6,8 +6,10 @@ import java.util.Map;
 
 public interface IHasListenableProperties {
 
-  void addListener(IPropertyInfo prop, IListenerAction action);
+  void addListener(IListenerAction action);
 
-  void fireListener(IPropertyInfo prop);
+  void fireListeners(Object ctx);
+
+  void clearListeners();
 
 }

@@ -7,7 +7,7 @@ import ragnardb.runtime.IHasListenableProperties;
 
 import java.util.List;
 
-public interface ISQLTableType extends IType, IFileBasedType, IHasListenableProperties {
+public interface ISQLTableType extends IType, IFileBasedType {
 
   CreateTable getTable();
 

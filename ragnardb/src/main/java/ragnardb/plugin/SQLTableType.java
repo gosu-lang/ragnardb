@@ -111,19 +111,19 @@ public class SQLTableType extends TypeBase implements ISQLTableType {
     return _enclosingType.getSourceFiles();
   }
 
-  private Map<IPropertyInfo, IListenerAction> _propertyListeners = new HashMap<>();
-
-  @Override
-  public void addListener( IPropertyInfo prop, IListenerAction action ) {
-    _propertyListeners.put(prop, action);
-  }
-
-  @Override
-  public void fireListener(IPropertyInfo prop) {
-    IListenerAction listener = _propertyListeners.get(prop); //TODO expand to support multiple properties
-    if(listener != null) {
-      listener.action(this); //TODO unchecked call... do we care?
-    }
-  }
+//  private Map<IPropertyInfo, IListenerAction> _propertyListeners = new HashMap<>();
+//
+//  @Override
+//  public void addListener( IPropertyInfo prop, IListenerAction action ) {
+//    _propertyListeners.put(prop, action);
+//  }
+//
+//  @Override
+//  public void fireListener(IPropertyInfo prop) {
+//    IListenerAction listener = _propertyListeners.get(prop); //TODO expand to support multiple properties
+//    if(listener != null) {
+//      listener.action(this); //TODO unchecked call... do we care?
+//    }
+//  }
 
 }
