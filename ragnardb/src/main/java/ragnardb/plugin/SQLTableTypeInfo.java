@@ -56,13 +56,11 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
     for( Constraint c : _table.getConstraints()) {
       if (c.getType() == Constraint.constraintType.FOREIGN) {
-        //For now, not supporting multiple references in one constraint
         String keyName = c.getColumnNames().get(0);
         ColumnDefinition referer = _table.getColumnDefinitionByName(keyName);
 
         CreateTable foreignTable = null;
         for (CreateTable possibleForiegnTable : _system.getTables()) {
-          System.out.println(possibleForiegnTable.getTableName());
           if (possibleForiegnTable.getTableName().equals(c.getReferentialName())) {
             foreignTable = possibleForiegnTable;
           }
@@ -90,18 +88,15 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         for( Constraint cons : foreignTable.getConstraints()){
 
           if(cons.getType() == Constraint.constraintType.FOREIGN){
-            //System.out.println(_table.getTableName());
-            //System.out.println("nnnn"+cons.getReferentialName());
-            if(cons.getReferentialName().equals( _table.getTableName())){
+            if(cons.getReferentialName().equals( _table.getTableName())) {
 
               String localKey = cons.getReferentialColumnNames().get(0);
               ColumnDefinition referee = _table.getColumnDefinitionByName(localKey);
 
-              //String foreignName = cons.getColumnNames().get(0);
               String foreignName = cons.getColumnNames().get(0);
               ColumnDefinition referer = foreignTable.getColumnDefinitionByName(foreignName);
 
-              SQLReferencePropertyInfo refProp =  new SQLReferencePropertyInfo(referee.getColumnName(), referer.getPropertyName(),
+              SQLReferencePropertyInfo refProp = new SQLReferencePropertyInfo(referee.getColumnName(), referer.getPropertyName(),
                 foreignTable.getTypeName(),
                 _system,
                 JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()),
@@ -109,9 +104,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
               _propertiesMap.put(refProp.getName(), refProp);
               _propertiesList.add(refProp);
-
-              System.out.println(refProp.getName());
-
             }
           }
         }
@@ -199,7 +191,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private IMethodInfo generateFindByMethod(IPropertyInfo prop) {
     final String propertyName = prop.getName();
     return new MethodInfoBuilder()
-        .withName( "findBy" + propertyName )
+        .withName("findBy" + propertyName)
         .withDescription("Find single match based on the value of the " + propertyName + " column.")
         .withParameters(new ParameterInfoBuilder()
           .withName(propertyName)
@@ -207,9 +199,9 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
           .withDescription("Performs strict matching on this argument"))
         .withReturnType(this.getOwnersType())
         .withStatic(true)
-        .withCallHandler(( ctx, args ) -> {
+        .withCallHandler((ctx, args) -> {
           SQLQuery query = new SQLQuery(_md, getOwnersType());
-          SQLConstraint constraint = SQLConstraint.isComparator(prop, args[0],"=");
+          SQLConstraint constraint = SQLConstraint.isComparator(prop, args[0], "=");
           query = query.where(constraint);
           return query.iterator().hasNext() ? query.iterator().next() : null;
         })
@@ -222,12 +214,12 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withName("findAllBy" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1))
         .withDescription("Find all matches based on the value of the " + propertyName + " column.")
         .withParameters(new ParameterInfoBuilder()
-            .withName(propertyName)
-            .withType(prop.getFeatureType())
-            .withDescription("Performs strict matching on this argument"))
+          .withName(propertyName)
+          .withType(prop.getFeatureType())
+          .withDescription("Performs strict matching on this argument"))
         .withReturnType(JavaTypes.ITERABLE().getParameterizedType(this.getOwnersType()))
         .withStatic(true)
-        .withCallHandler(( ctx, args ) -> {
+        .withCallHandler((ctx, args) -> {
           SQLQuery query = new SQLQuery(_md, getOwnersType());
           SQLConstraint constraint = SQLConstraint.isComparator(prop, args[0], "=");
           query = query.where(constraint);
@@ -242,7 +234,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withDescription("Creates a new table entry")
         .withParameters()
         .withReturnType(this.getOwnersType())
-        .withCallHandler(( ctx, args ) -> ((SQLRecord) ctx).create())
+        .withCallHandler((ctx, args) -> ((SQLRecord) ctx).create())
         .build(this);
   }
 
@@ -253,7 +245,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withParameters(new ParameterInfoBuilder().withName("condition").withType(TypeSystem.get(SQLConstraint.class)))
         .withReturnType(JavaTypes.ITERABLE().getParameterizedType(this.getOwnersType()))
         .withStatic(true)
-        .withCallHandler(( ctx, args ) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()).where((SQLConstraint) args[0]))
+        .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()).where((SQLConstraint) args[0]))
         .build(this);
   }
 
@@ -282,15 +274,15 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
   private IMethodInfo generateDeleteAllMethod() {
     return new MethodInfoBuilder()
-        .withName( "deleteAll" )
-        .withDescription( "Deletes all records in table" )
-        .withParameters( new ParameterInfoBuilder().withName( "confirm" ).withType( JavaTypes.pBOOLEAN() ) )
-        .withStatic( true )
-        .withCallHandler( ( ctx, args ) -> {
-          getOwnersType().deleteAll( (Boolean)args[0] );
+        .withName("deleteAll")
+        .withDescription("Deletes all records in table")
+        .withParameters(new ParameterInfoBuilder().withName("confirm").withType(JavaTypes.pBOOLEAN()))
+        .withStatic(true)
+        .withCallHandler((ctx, args) -> {
+          getOwnersType().deleteAll((Boolean) args[0]);
           return null;
-        } )
-        .build( this );
+        })
+        .build(this);
   }
 
   public ISQLTableType getOwnersType() {
@@ -352,7 +344,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
       return _domainLogic.getTypeInfo().getDeclaredProperties()
           .stream()
           .filter(IAttributedFeatureInfo::isPublic)
-          .collect( Collectors.toList() );
+          .collect(Collectors.toList());
     }
     else
     {
