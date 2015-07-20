@@ -1,8 +1,8 @@
 package ragnardb.runtime;
 
 @FunctionalInterface
-public interface IListenerAction<T> {
+public interface IListenerAction<R, T> {
 
-  void action(T type); //TODO rename to execute()? fire()? go()?
+  T execute(R type);
 
 }

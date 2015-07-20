@@ -1,12 +1,9 @@
 package ragnardb.runtime;
 
-import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
 import gw.util.GosuExceptionUtil;
 import ragnardb.RagnarDB;
 import ragnardb.api.ISQLResult;
-import ragnardb.plugin.ISQLQueryResultType;
-import ragnardb.plugin.ISQLTableType;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,14 +18,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class SQLRecord implements ISQLResult//, IHasListenableProperties
+public class SQLRecord implements ISQLResult
 {
   private ValMap _values = new ValMap();
   private String _tableName;
   private boolean _persisted;
   private String _idColumn;
-
-//  private static Map<IPropertyInfo, IListenerAction> _propertyListeners = new HashMap<>();
 
   public SQLRecord( String tableName, String idColumn ) {
     _tableName = tableName;
@@ -239,15 +234,6 @@ public class SQLRecord implements ISQLResult//, IHasListenableProperties
     }
     return true;
   }
-
-//  private static void addPropListener(IPropertyInfo prop, IListenerAction action) {
-//    _propertyListeners.put(prop, action);
-//  }
-//
-//  @Override
-//  public static void addListener( IPropertyInfo prop, IListenerAction action ) {
-//    addPropListener(prop, action);
-//  }
 
   static class ValMap extends HashMap<String, Object>
   {

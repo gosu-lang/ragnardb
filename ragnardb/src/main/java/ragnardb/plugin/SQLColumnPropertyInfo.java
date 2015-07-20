@@ -4,10 +4,10 @@ import gw.lang.reflect.IAnnotationInfo;
 import gw.lang.reflect.IPropertyAccessor;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
-import gw.lang.reflect.ITypeInfo;
 import gw.lang.reflect.PropertyInfoBase;
 import ragnardb.runtime.IHasListenableProperties;
 import ragnardb.runtime.IListenerAction;
+import ragnardb.runtime.IPropertyIntermediateAccessor;
 import ragnardb.runtime.SQLRecord;
 
 import java.util.ArrayList;
@@ -29,20 +29,30 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
     _columnName = columnName;
     _propName = propName;
     _propType = propertyType;
-    _accessor = new IPropertyAccessor()
-    {
+    _accessor = new IPropertyIntermediateAccessor() {
+
+      private Object _intermediateValue = null;
+
       @Override
       public Object getValue( Object obj ) {
-        return ((SQLRecord) obj).getRawValue(_columnName);
+        return _intermediateValue != null ? _intermediateValue : ((SQLRecord) obj).getRawValue(_columnName);
+      }
+
+      /**
+       * Allows multiple mutations of a property without a db commit; prevents recursive loops
+       * @param val
+       */
+      @Override
+      public void setIntermediateValue( Object val ) {
+        _intermediateValue = val;
       }
 
       @Override
       public void setValue( Object obj, Object val ) {
-        //TODO look for listeners here
+        _intermediateValue = val;
         fireListeners(obj);
-
-//        ((ISQLTableType) getOwnersType()).fireListener(SQLColumnPropertyInfo.this);
-        ((SQLRecord) obj).setRawValue(_columnName, val);
+        ((SQLRecord) obj).setRawValue(_columnName, _intermediateValue);
+        _intermediateValue = null;
       }
     };
     _offset = offset;
@@ -110,7 +120,7 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
   @Override
   public void fireListeners(Object ctx) {
     for(IListenerAction action : _actions) {
-      action.action(ctx);
+      ((IPropertyIntermediateAccessor) _accessor).setIntermediateValue(action.execute(ctx));
     }
   }
 
