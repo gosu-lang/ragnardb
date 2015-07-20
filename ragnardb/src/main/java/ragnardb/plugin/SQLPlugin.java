@@ -109,7 +109,7 @@ public class SQLPlugin extends TypeLoaderBase {
   @Override
   public IType getType(final String fullyQualifiedName) {
     if(_ddlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //hence, a ddltype
-      return ((SqlDdlType) getOrCreateDdlType(fullyQualifiedName)).getTypeRef();
+      return ((SQLDdlType) getOrCreateDdlType(fullyQualifiedName)).getTypeRef();
     }
 
     if(_sqlSourcesByPackage.get().keySet().contains(fullyQualifiedName)) { //a query type
@@ -147,7 +147,7 @@ public class SQLPlugin extends TypeLoaderBase {
       return ddlType;
     }
     IFile sqlFile = _ddlSourcesByPackage.get().get(fullyQualifiedName);
-    ddlType = new SqlDdlType(sqlFile, this);
+    ddlType = new SQLDdlType(sqlFile, this);
     _fqnToDdlType.put(fullyQualifiedName, ddlType);
     return ddlType;
   }

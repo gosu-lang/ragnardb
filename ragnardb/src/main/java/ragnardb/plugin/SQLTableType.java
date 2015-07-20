@@ -1,23 +1,19 @@
 package ragnardb.plugin;
 
 import gw.fs.IFile;
-import gw.lang.reflect.IType;
-import gw.lang.reflect.ITypeInfo;
-import gw.lang.reflect.ITypeLoader;
-import gw.lang.reflect.Modifier;
-import gw.lang.reflect.TypeBase;
-import gw.lang.reflect.TypeSystem;
+import gw.lang.reflect.*;
 import gw.util.GosuClassUtil;
 import gw.util.GosuExceptionUtil;
 import gw.util.concurrent.LockingLazyVar;
 import ragnardb.RagnarDB;
 import ragnardb.parser.ast.CreateTable;
+import ragnardb.runtime.IListenerAction;
 import ragnardb.runtime.SQLRecord;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class SQLTableType extends TypeBase implements ISQLTableType {
 
@@ -66,7 +62,7 @@ public class SQLTableType extends TypeBase implements ISQLTableType {
 
   @Override
   public IType getSupertype() {
-    return TypeSystem.get( SQLRecord.class );
+    return TypeSystem.get(SQLRecord.class);
   }
 
   @Override
@@ -114,4 +110,20 @@ public class SQLTableType extends TypeBase implements ISQLTableType {
   public IFile[] getSourceFiles() {
     return _enclosingType.getSourceFiles();
   }
+
+//  private Map<IPropertyInfo, IListenerAction> _propertyListeners = new HashMap<>();
+//
+//  @Override
+//  public void addListener( IPropertyInfo prop, IListenerAction action ) {
+//    _propertyListeners.put(prop, action);
+//  }
+//
+//  @Override
+//  public void fireListener(IPropertyInfo prop) {
+//    IListenerAction listener = _propertyListeners.get(prop); //TODO expand to support multiple properties
+//    if(listener != null) {
+//      listener.action(this); //TODO unchecked call... do we care?
+//    }
+//  }
+
 }

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SqlDdlType extends SQLTypeBase implements ISQLDdlType {
+public class SQLDdlType extends SQLTypeBase implements ISQLDdlType {
 
   LockingLazyVar<List<ISQLTableType>> _innerClasses = new LockingLazyVar<List<ISQLTableType>>() {
     @Override
@@ -25,7 +25,7 @@ public class SqlDdlType extends SQLTypeBase implements ISQLDdlType {
     }
   };
 
-  public SqlDdlType(IFile file, SQLPlugin plugin) {
+  public SQLDdlType( IFile file, SQLPlugin plugin ) {
     super(file, plugin);
   }
 

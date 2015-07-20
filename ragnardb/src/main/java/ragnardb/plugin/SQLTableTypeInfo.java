@@ -1,7 +1,16 @@
 package ragnardb.plugin;
 
-import gw.lang.reflect.*;
-import gw.lang.reflect.features.PropertyReference;
+import gw.lang.reflect.ConstructorInfoBuilder;
+import gw.lang.reflect.IAttributedFeatureInfo;
+import gw.lang.reflect.IConstructorHandler;
+import gw.lang.reflect.IConstructorInfo;
+import gw.lang.reflect.IMethodInfo;
+import gw.lang.reflect.IPropertyInfo;
+import gw.lang.reflect.IType;
+import gw.lang.reflect.MethodInfoBuilder;
+import gw.lang.reflect.MethodList;
+import gw.lang.reflect.ParameterInfoBuilder;
+import gw.lang.reflect.TypeSystem;
 import gw.lang.reflect.gs.IGosuClass;
 import gw.lang.reflect.java.JavaTypes;
 import ragnardb.parser.ast.Constraint;
@@ -111,10 +120,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
     // Adding Foreign Key References TO this table (The reverse query) TODO
 
-
-
-
-
     _domainLogic = maybeGetDomainLogic();
     createMethodInfos();
     createConstructorInfos();
@@ -122,18 +127,18 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
   @Override
   public int getOffset() {
-    return ((ISQLTableType) getOwnersType()).getTable().getOffset();
+    return getOwnersType().getTable().getOffset();
   }
 
   @Override
   public int getTextLength() {
-    return ((ISQLTableType) getOwnersType()).getTable().getTypeName().length();
+    return getOwnersType().getTable().getTypeName().length();
   }
 
   private void createConstructorInfos() {
     List<IConstructorInfo> constructorInfos = new ArrayList<>();
 
-    final String tableName = ((ISQLTableType) getOwnersType()).getTable().getTableName();
+    final String tableName = getOwnersType().getTable().getTableName();
     final String idColumn = "id";
 
     final IConstructorInfo domainCtor = _domainLogic == null ? null : _domainLogic.getTypeInfo().getConstructor( JavaTypes.STRING(), JavaTypes.STRING() );
@@ -152,9 +157,9 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
       .withDescription( "Creates a new Table object" )
       .withParameters()
-      .withConstructorHandler( _constructor ).build( this );
+      .withConstructorHandler( _constructor ).build(this);
 
-    constructorInfos.add( constructorMethod );
+    constructorInfos.add(constructorMethod);
 
     _constructorList = constructorInfos;
   }
@@ -172,7 +177,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     methodList.add(generateCreateMethod());
     methodList.add(generateWhereMethod());
     methodList.add(generateSelectMethod());
-    methodList.add(generateGetNameMethod());
+    methodList.add(generateDeleteAllMethod());
 
     List<? extends IMethodInfo> domainMethods = maybeGetDomainMethods();
     List<? extends IPropertyInfo> domainProperties = maybeGetDomainProperties();
@@ -261,17 +266,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
   }
 
-  private IMethodInfo generateGetNameMethod() {
-    return new MethodInfoBuilder()
-        .withName("getName")
-        .withDescription("Returns Table Name")
-        .withParameters()
-        .withReturnType(JavaTypes.STRING())
-        .withStatic(true)
-        .withCallHandler((ctx, args) -> _classTableName)
-        .build(this);
-  }
-
   private IMethodInfo generateDeleteAllMethod() {
     return new MethodInfoBuilder()
         .withName("deleteAll")
@@ -290,7 +284,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   }
 
   private IGosuClass maybeGetDomainLogic() {
-    ISQLTableType tableType = (ISQLTableType) getOwnersType();
+    ISQLTableType tableType = getOwnersType();
     ISQLDdlType ddlType = (ISQLDdlType) tableType.getEnclosingType();
     final String singularizedDdlType = new NounHandler(ddlType.getRelativeName()).getSingular();
     final String domainLogicPackageSuffix = "Ext.";

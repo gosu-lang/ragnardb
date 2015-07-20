@@ -4,8 +4,6 @@ import gw.lang.reflect.IType;
 import gw.util.GosuExceptionUtil;
 import ragnardb.RagnarDB;
 import ragnardb.api.ISQLResult;
-import ragnardb.plugin.ISQLQueryResultType;
-import ragnardb.plugin.ISQLTableType;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -129,7 +127,7 @@ public class SQLRecord implements ISQLResult
     {
       e.printStackTrace();
     }
-
+    _persisted = true;
     return true;
   }
 
