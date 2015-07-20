@@ -27,7 +27,7 @@ public class SQLReverseReferencePropertyInfo extends PropertyInfoBase implements
   private final int _offset;
   private final int _length;
 
-  protected SQLReverseReferencePropertyInfo(String refColumnName, String idColumnName, String foreignTableName, ISQLTableType table,  ISQLDdlType system, String propName, IType propertyType, ITypeInfo container, int offset, int length)
+  protected SQLReverseReferencePropertyInfo(String refColumnName, String idColumnName, String foreignTableName, ISQLDdlType system, String propName, IType propertyType, ITypeInfo container, int offset, int length)
   {
     super( container );
     _propName = propName;

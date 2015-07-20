@@ -35,10 +35,10 @@ public class SQLReferencePropertyInfo extends PropertyInfoBase implements IPrope
   private final int _offset;
   private final int _length;
 
-  protected SQLReferencePropertyInfo(String refColumnName, String idColumnName, String foreignTableName, ISQLDdlType system,  String propName,  IType propertyType, ITypeInfo container, int offset, int length)
+  protected SQLReferencePropertyInfo(String refColumnName, String idColumnName, String foreignTableName, ISQLDdlType system,  IType propertyType, ITypeInfo container, int offset, int length)
   {
     super( container );
-    _propName = propName;
+    _propName = foreignTableName;
     _propType = propertyType;
     _refColumnName = refColumnName;
     _idColumnName = idColumnName;

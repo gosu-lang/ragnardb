@@ -37,6 +37,8 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   }
 
   private void resolveProperties( ISQLTableType type ) {
+
+
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
 
@@ -53,15 +55,15 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     //Adding Foreign Key References that this table does
 
     for( Constraint c : _table.getConstraints()) {
-      if (c.getType() == Constraint.constraintType.FOREIGN){
+      if (c.getType() == Constraint.constraintType.FOREIGN) {
         //For now, not supporting multiple references in one constraint
         String keyName = c.getColumnNames().get(0);
         ColumnDefinition referer = _table.getColumnDefinitionByName(keyName);
 
         CreateTable foreignTable = null;
-        for(CreateTable possibleForiegnTable : _system.getTables()){
+        for (CreateTable possibleForiegnTable : _system.getTables()) {
           System.out.println(possibleForiegnTable.getTableName());
-          if(possibleForiegnTable.getTableName().equals(c.getReferentialName())){
+          if (possibleForiegnTable.getTableName().equals(c.getReferentialName())) {
             foreignTable = possibleForiegnTable;
           }
         }
@@ -70,10 +72,9 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         ColumnDefinition referee = foreignTable.getColumnDefinitionByName(foreignName);
 
 
-        SQLReferencePropertyInfo refProp =  new SQLReferencePropertyInfo(referer.getColumnName(), referee.getPropertyName(),
+        SQLReferencePropertyInfo refProp = new SQLReferencePropertyInfo(referer.getColumnName(), referee.getPropertyName(),
           foreignTable.getTypeName(),
           _system,
-          foreignTable.getTypeName(),
           JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()),
           this, referer.getOffset(), referer.getLength());
 
@@ -82,11 +83,43 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
 
       }
+    }
 
+      for(CreateTable foreignTable : _system.getTables()){
 
+        for( Constraint cons : foreignTable.getConstraints()){
+
+          if(cons.getType() == Constraint.constraintType.FOREIGN){
+            //System.out.println(_table.getTableName());
+            //System.out.println("nnnn"+cons.getReferentialName());
+            if(cons.getReferentialName().equals( _table.getTableName())){
+
+              String localKey = cons.getReferentialColumnNames().get(0);
+              ColumnDefinition referee = _table.getColumnDefinitionByName(localKey);
+
+              //String foreignName = cons.getColumnNames().get(0);
+              String foreignName = cons.getColumnNames().get(0);
+              ColumnDefinition referer = foreignTable.getColumnDefinitionByName(foreignName);
+
+              SQLReferencePropertyInfo refProp =  new SQLReferencePropertyInfo(referee.getColumnName(), referer.getPropertyName(),
+                foreignTable.getTypeName(),
+                _system,
+                JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()),
+                this, referer.getOffset(), referer.getLength());
+
+              _propertiesMap.put(refProp.getName(), refProp);
+              _propertiesList.add(refProp);
+
+              System.out.println(refProp.getName());
+
+            }
+          }
+        }
     }
 
     // Adding Foreign Key References TO this table (The reverse query) TODO
+
+
 
 
 
