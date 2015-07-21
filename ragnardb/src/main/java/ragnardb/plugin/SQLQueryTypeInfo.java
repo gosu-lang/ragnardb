@@ -30,6 +30,7 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
       .withName("SqlSource")
       .withDescription("Returns the source of this query.")
       .withWritable(false)
+      .withStatic()
       .withType(JavaTypes.STRING())
       .withAccessor(new IPropertyAccessor() {
         @Override
