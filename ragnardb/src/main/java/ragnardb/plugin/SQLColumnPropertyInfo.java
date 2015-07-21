@@ -12,7 +12,9 @@ import ragnardb.runtime.SQLRecord;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SQLColumnPropertyInfo extends PropertyInfoBase implements IPropertyInfo, IHasListenableProperties
 {
@@ -110,22 +112,46 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
     return _length;
   }
 
-  private List<IListenerAction> _actions = new ArrayList<>();
+  //unbound actions will have a null key
+  private Map<Object, List<IListenerAction>> _actions = new HashMap<>();
 
   @Override
-  public void addListener(IListenerAction action) {
-    _actions.add(action);
+  public void addListener(Object ctx, IListenerAction action) {
+    List<IListenerAction> toBeAdded = new ArrayList<>();
+    List<IListenerAction> existingActions = _actions.get(ctx);
+    if(existingActions != null) {
+      toBeAdded.addAll(existingActions);
+    }
+    toBeAdded.add(action);
+    _actions.put(ctx, toBeAdded);
   }
 
   @Override
   public void fireListeners(Object ctx) {
-    for(IListenerAction action : _actions) {
-      ((IPropertyIntermediateAccessor) _accessor).setIntermediateValue(action.execute(ctx));
+    List<IListenerAction> unboundListeners = _actions.get(null);
+    List<IListenerAction> boundListeners = _actions.get(ctx);
+
+    //fire unbound listeners first
+    if(unboundListeners !=null && !unboundListeners.isEmpty()) {
+      for (IListenerAction action : unboundListeners) {
+        ((IPropertyIntermediateAccessor) _accessor).setIntermediateValue(action.execute(ctx));
+      }
+    }
+    //fire bound listeners
+    if(boundListeners != null && !boundListeners.isEmpty()) {
+      for (IListenerAction action : boundListeners) {
+        ((IPropertyIntermediateAccessor) _accessor).setIntermediateValue(action.execute(ctx));
+      }
     }
   }
 
   @Override
-  public void clearListeners() {
+  public void clearListeners(Object ctx) {
+    _actions.put(ctx, Collections.emptyList());
+  }
+
+  @Override
+  public void clearAllListeners() {
     _actions.clear();
   }
 

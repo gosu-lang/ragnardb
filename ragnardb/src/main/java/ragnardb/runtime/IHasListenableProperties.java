@@ -6,10 +6,12 @@ import java.util.Map;
 
 public interface IHasListenableProperties {
 
-  void addListener(IListenerAction action);
+  void addListener(Object ctx, IListenerAction action);
 
   void fireListeners(Object ctx);
 
-  void clearListeners();
+  void clearListeners(Object ctx);
+
+  void clearAllListeners();
 
 }
