@@ -3,9 +3,11 @@ package ragnardb.runtime;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.features.PropertyReference;
 import gw.util.GosuExceptionUtil;
+import ragnardb.RagnarDB;
 import ragnardb.parser.ast.SQL;
 import ragnardb.plugin.SQLColumnPropertyInfo;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -117,7 +119,13 @@ public class SQLQuery<T> implements Iterable<T> {
     return newQuery;
   }
 
-
+  public boolean delete() throws SQLException
+  {
+    String from = "DELETE FROM " + _metadata.getTableForType(_rootType);
+    String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
+    PreparedStatement delete = RagnarDB.prepareStatement( from + " " + where, getArgs() );
+    return delete.execute();
+  }
 
   public <U> SQLQuery<U> pick( PropertyReference<Object, U> ref)
   {
@@ -125,8 +133,6 @@ public class SQLQuery<T> implements Iterable<T> {
     sqlQuery._pick = ref;
     return sqlQuery;
   }
-
-
 
   public Iterator<T> iterator()
   {

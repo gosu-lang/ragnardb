@@ -5,11 +5,13 @@ import gw.lang.reflect.IAttributedFeatureInfo;
 import gw.lang.reflect.IConstructorHandler;
 import gw.lang.reflect.IConstructorInfo;
 import gw.lang.reflect.IMethodInfo;
+import gw.lang.reflect.IPropertyAccessor;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.MethodInfoBuilder;
 import gw.lang.reflect.MethodList;
 import gw.lang.reflect.ParameterInfoBuilder;
+import gw.lang.reflect.PropertyInfoBuilder;
 import gw.lang.reflect.TypeSystem;
 import gw.lang.reflect.gs.IGosuClass;
 import gw.lang.reflect.java.JavaTypes;
@@ -118,6 +120,10 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         }
     }
 
+    IPropertyInfo allProp = generateAllProperty();
+    _propertiesList.add( allProp );
+    _propertiesMap.put( allProp.getName(), allProp );
+
     // Adding Foreign Key References TO this table (The reverse query) TODO
 
     _domainLogic = maybeGetDomainLogic();
@@ -177,7 +183,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     methodList.add(generateCreateMethod());
     methodList.add(generateWhereMethod());
     methodList.add(generateSelectMethod());
-    methodList.add(generateDeleteAllMethod());
 
     List<? extends IMethodInfo> domainMethods = maybeGetDomainMethods();
     List<? extends IPropertyInfo> domainProperties = maybeGetDomainProperties();
@@ -254,6 +259,31 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .build(this);
   }
 
+  private IPropertyInfo generateAllProperty()
+  {
+    return new PropertyInfoBuilder()
+      .withName( "All" )
+      .withDescription( "Returns All " + getOwnersType() + "s" )
+      .withType( TypeSystem.get( SQLQuery.class ).getParameterizedType( this.getOwnersType() ) )
+      .withStatic( true )
+      .withWritable( false )
+      .withAccessor( new IPropertyAccessor()
+      {
+        @Override
+        public Object getValue( Object ctx )
+        {
+          return new SQLQuery<SQLRecord>(_md, getOwnersType());
+        }
+
+        @Override
+        public void setValue( Object ctx, Object value )
+        {
+          //ignore
+        }
+      } )
+      .build( this );
+  }
+
   private IMethodInfo generateSelectMethod() {
     return new MethodInfoBuilder()
         .withName("select")
@@ -264,19 +294,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withCallHandler((ctx, args) -> new SQLQuery<SQLRecord>(_md, this.getOwnersType()))
         .build(this);
 
-  }
-
-  private IMethodInfo generateDeleteAllMethod() {
-    return new MethodInfoBuilder()
-        .withName("deleteAll")
-        .withDescription("Deletes all records in table")
-        .withParameters(new ParameterInfoBuilder().withName("confirm").withType(JavaTypes.pBOOLEAN()))
-        .withStatic(true)
-        .withCallHandler((ctx, args) -> {
-          getOwnersType().deleteAll((Boolean) args[0]);
-          return null;
-        })
-        .build(this);
   }
 
   public ISQLTableType getOwnersType() {
