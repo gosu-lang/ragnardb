@@ -8,6 +8,7 @@ import ragnardb.parser.ast.*;
 import ragnardb.runtime.*;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -80,26 +81,31 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
         try {
           String rawSQL = owner.getSqlSource();
           String[] places = rawSQL.split("\n");
-          for (int i = 0; i < coalescedVars.size(); i++) {
-            for (JavaVar var : variables) {
-              if (var.equals(coalescedVars.get(i))) {
-                Object rep = args[i];
-                String replacement;
-                if (rep instanceof java.lang.String || rep instanceof java.lang.Character) {
-                  replacement = "'" + rep.toString() + "'";
-                } else if (rep instanceof java.lang.Boolean) {
-                  if ((Boolean) rep) {
-                    replacement = "1";
+          for (int j = 0; j < places.length; j++) {
+            int additionalBuffer = 0;
+            for (int i = 0; i < coalescedVars.size(); i++) {
+              for (JavaVar var : variables) {
+                if (var.equals(coalescedVars.get(i)) && (var.getLine()-1)== j) {
+                  String currentLine = places[j];
+                  Object rep = args[i];
+                  String replacement;
+                  if (rep instanceof java.lang.String || rep instanceof java.lang.Character) {
+                    replacement = "'" + rep.toString() + "'";
+                  } else if (rep instanceof java.lang.Boolean) {
+                    if ((Boolean) rep) {
+                      replacement = "1";
+                    } else {
+                      replacement = "0";
+                    }
                   } else {
-                    replacement = "0";
+                    replacement = rep.toString();
                   }
-                } else {
-                  replacement = rep.toString();
+                  String finalLine = currentLine.substring(0, var.getCol() - (j==0?1:2) + additionalBuffer)
+                    + replacement + currentLine.substring(var.getCol() - 1 + var.getSkiplen() + additionalBuffer);
+                  places[j] = finalLine;
+                  additionalBuffer += replacement.length();
+                  additionalBuffer -= var.getSkiplen();
                 }
-                String currentLine = places[var.getLine() - 1];
-                String finalLine = currentLine.substring(0, var.getCol() - 1)
-                  + replacement + currentLine.substring(var.getCol() - 1 + var.getSkiplen());
-                places[var.getLine() - 1] = finalLine;
               }
             }
           }
@@ -223,26 +229,31 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
         try {
           String rawSQL = type.getSqlSource();
           String[] places = rawSQL.split("\n");
-          for (int i = 0; i < coalescedVars.size(); i++) {
-            for (JavaVar var : variables) {
-              if (var.equals(coalescedVars.get(i))) {
-                Object rep = args[i];
-                String replacement;
-                if (rep instanceof java.lang.String || rep instanceof java.lang.Character) {
-                  replacement = "'" + rep.toString() + "'";
-                } else if (rep instanceof java.lang.Boolean) {
-                  if ((Boolean) rep) {
-                    replacement = "1";
+          for (int j = 0; j < places.length; j++) {
+            int additionalBuffer = 0;
+            for (int i = 0; i < coalescedVars.size(); i++) {
+              for (JavaVar var : variables) {
+                if (var.equals(coalescedVars.get(i)) && (var.getLine()-1)== j) {
+                  String currentLine = places[j];
+                  Object rep = args[i];
+                  String replacement;
+                  if (rep instanceof java.lang.String || rep instanceof java.lang.Character) {
+                    replacement = "'" + rep.toString() + "'";
+                  } else if (rep instanceof java.lang.Boolean) {
+                    if ((Boolean) rep) {
+                      replacement = "1";
+                    } else {
+                      replacement = "0";
+                    }
                   } else {
-                    replacement = "0";
+                    replacement = rep.toString();
                   }
-                } else {
-                  replacement = rep.toString();
+                  String finalLine = currentLine.substring(0, var.getCol() - (j==0?1:2) + additionalBuffer)
+                    + replacement + currentLine.substring(var.getCol() - 1 + var.getSkiplen() + additionalBuffer);
+                  places[j] = finalLine;
+                  additionalBuffer += replacement.length();
+                  additionalBuffer -= var.getSkiplen();
                 }
-                String currentLine = places[var.getLine() - 1];
-                String finalLine = currentLine.substring(0, var.getCol() - 1)
-                  + replacement + currentLine.substring(var.getCol() - 1 + var.getSkiplen());
-                places[var.getLine() - 1] = finalLine;
               }
             }
           }
