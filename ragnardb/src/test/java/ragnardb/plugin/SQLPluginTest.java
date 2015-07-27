@@ -120,6 +120,7 @@ public class SQLPluginTest {
   }
 
   @Test
+  @Ignore
   public void getTypeInfo() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
     assertNotNull(result);
