@@ -303,33 +303,44 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
     }
   }
 
+  // Note, generate as Fields instead of get/set methods because the Ferrite Gosu plugin
+  // doesn't know how to make properties from them for some reason
   private void generateInstanceProperty( StringBuilder sb, int i, IPropertyInfo pi )
   {
-    if( pi.isReadable() )
-    {
-      sb.append( "  @PropertyGetInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
-        appendLocationInfo( sb, pi )
-        .append( ")\n" )
-        .append( "  " );
-      generateModifiers( sb, pi );
-      sb.append( pi.getFeatureType().getName() );
-      sb.append( " " );
-      sb.append( "get" ).append( pi.getDisplayName() );
-      sb.append( "() {throw new RuntimeException();}\n" );
-    }
-    if( pi.isWritable( pi.getOwnersType() ) )
-    {
-      sb.append( "  @PropertySetInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
-        appendLocationInfo( sb, pi )
-        .append( ")\n" )
-        .append( "  " );
-      generateModifiers( sb, pi );
-      sb.append( pi.getFeatureType().getName() );
-      sb.append( " " );
-      sb.append( "set" ).append( pi.getDisplayName() );
-      sb.append( "( " ).append( pi.getFeatureType().getName() ).append( " value ) {}\n" );
-    }
+    sb.append( "  @PropertyFieldInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
+      appendLocationInfo( sb, pi )
+      .append( ")\n" )
+      .append( "  " );
+    generateFieldModifiers( sb, pi );
+    sb.append( pi.getFeatureType().getName() ).append( " " ).append( pi.getDisplayName() ).append( ";\n" );
   }
+//  private void generateInstanceProperty( StringBuilder sb, int i, IPropertyInfo pi )
+//  {
+//    if( pi.isReadable() )
+//    {
+//      sb.append( "  @PropertyGetInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
+//        appendLocationInfo( sb, pi )
+//        .append( ")\n" )
+//        .append( "  " );
+//      generateModifiers( sb, pi );
+//      sb.append( pi.getFeatureType().getName() );
+//      sb.append( " " );
+//      sb.append( "get" ).append( pi.getDisplayName() );
+//      sb.append( "() {throw new RuntimeException();}\n" );
+//    }
+//    if( pi.isWritable( pi.getOwnersType() ) )
+//    {
+//      sb.append( "  @PropertySetInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
+//        appendLocationInfo( sb, pi )
+//        .append( ")\n" )
+//        .append( "  " );
+//      generateModifiers( sb, pi );
+//      sb.append( pi.getFeatureType().getName() );
+//      sb.append( " " );
+//      sb.append( "set" ).append( pi.getDisplayName() );
+//      sb.append( "( " ).append( pi.getFeatureType().getName() ).append( " value ) {}\n" );
+//    }
+//  }
 
   private void generatePropertyAsField( StringBuilder sb, int i, IPropertyInfo pi )
   {
