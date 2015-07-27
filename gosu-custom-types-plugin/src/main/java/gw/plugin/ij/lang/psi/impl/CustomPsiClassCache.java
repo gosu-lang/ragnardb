@@ -170,9 +170,9 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
       }
     }
     sb.append( " {\n" );
+    generateProperties( type, sb );
     generateConstructors( type, sb );
     generateMethods( type, sb );
-    generateProperties( type, sb );
     generateInnerClasses( type, sb );
     sb.append( "}\n\n" );
 
