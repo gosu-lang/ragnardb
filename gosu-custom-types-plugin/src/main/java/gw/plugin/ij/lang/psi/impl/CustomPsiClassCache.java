@@ -5,6 +5,8 @@
 package gw.plugin.ij.lang.psi.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,8 +21,10 @@ import gw.lang.reflect.AbstractTypeSystemListener;
 import gw.lang.reflect.IAttributedFeatureInfo;
 import gw.lang.reflect.IConstructorInfo;
 import gw.lang.reflect.IDefaultTypeLoader;
+import gw.lang.reflect.IFeatureInfo;
 import gw.lang.reflect.IFileBasedType;
 import gw.lang.reflect.IHasParameterInfos;
+import gw.lang.reflect.ILocationInfo;
 import gw.lang.reflect.IMethodInfo;
 import gw.lang.reflect.IParameterInfo;
 import gw.lang.reflect.IPropertyInfo;
@@ -123,6 +127,11 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
   {
     StringBuilder sb = new StringBuilder()
       .append( "package " ).append( type.getNamespace() ).append( "\n\n" );
+    ITypeInfo ti = safeGetTypeInfo( type );
+    sb.append( "  @ClassInfoId(" ).append( 0 ).append( ", \"" )
+      .append( type.getName() ).append( "\", " );
+      appendLocationInfo( sb, ti )
+      .append( ")\n" );
     generateClass( type, sb );
     return sb.toString();
   }
@@ -173,7 +182,10 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
       for( IType innerClass : ((IHasInnerClass)type).getInnerClasses() )
       {
         ITypeInfo ti = safeGetTypeInfo( innerClass );
-        sb.append( "  @InnerClassInfoId(" ).append( i++ ).append( ", \"" ).append( type.getName() ).append( "\", " ).append( ti.getOffset() ).append( ", " ).append( ti.getTextLength() ).append( ")\n" );
+        sb.append( "  @InnerClassInfoId(" ).append( i++ ).append( ", \"" )
+          .append( type.getName() ).append( "\", " );
+          appendLocationInfo( sb, ti )
+          .append( ")\n" );
         generateClass( innerClass, sb );
       }
     }
@@ -196,7 +208,9 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
     {
       for( IConstructorInfo ci : constructors )
       {
-        sb.append( "  @ConstructorInfoId(" ).append( i++ ).append( ", \"" ).append( ci.getName() ).append( "\", " ).append( ci.getOffset() ).append( ", " ).append( ci.getTextLength() ).append( ")\n" )
+        sb.append( "  @ConstructorInfoId(" ).append( i++ ).append( ", \"" ).append( ci.getName() ).append( "\", " );
+          appendLocationInfo( sb, ci )
+          .append( ")\n" )
           .append( "  " );
         generateModifiers( sb, ci );
         sb.append( " " );
@@ -243,7 +257,9 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
           i++;
           continue;
         }
-        sb.append( "  @MethodInfoId(" ).append( i++ ).append( ", \"" ).append( mi.getName() ).append( "\", " ).append( mi.getOffset() ).append( ", " ).append( mi.getTextLength() ).append( ")\n" )
+        sb.append( "  @MethodInfoId(" ).append( i++ ).append( ", \"" ).append( mi.getName() ).append( "\", " );
+          appendLocationInfo( sb, mi )
+          .append( ")\n" )
           .append( "  " );
         generateModifiers( sb, mi );
         generateReturnType( sb, mi );
@@ -291,7 +307,9 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
   {
     if( pi.isReadable() )
     {
-      sb.append( "  @PropertyGetInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " ).append( pi.getOffset() ).append( ", " ).append( pi.getTextLength() ).append( ")\n" )
+      sb.append( "  @PropertyGetInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
+        appendLocationInfo( sb, pi )
+        .append( ")\n" )
         .append( "  " );
       generateModifiers( sb, pi );
       sb.append( pi.getFeatureType().getName() );
@@ -301,7 +319,9 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
     }
     if( pi.isWritable( pi.getOwnersType() ) )
     {
-      sb.append( "  @PropertySetInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " ).append( pi.getOffset() ).append( ", " ).append( pi.getTextLength() ).append( ")\n" )
+      sb.append( "  @PropertySetInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
+        appendLocationInfo( sb, pi )
+        .append( ")\n" )
         .append( "  " );
       generateModifiers( sb, pi );
       sb.append( pi.getFeatureType().getName() );
@@ -315,11 +335,34 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
   {
     if( pi.isReadable() )
     {
-      sb.append( "  @PropertyFieldInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " ).append( pi.getOffset() ).append( ", " ).append( pi.getTextLength() ).append( ")\n" )
+      sb.append( "  @PropertyFieldInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
+        appendLocationInfo( sb, pi )
+        .append( ")\n" )
         .append( "  " );
       generateFieldModifiers( sb, pi );
       sb.append( pi.getFeatureType().getName() ).append( " " ).append( pi.getDisplayName() ).append( ";\n" );
     }
+  }
+
+  private StringBuilder appendLocationInfo( StringBuilder sb, IFeatureInfo pi )
+  {
+    ILocationInfo loc = pi.getLocationInfo();
+    int offset = loc.getOffset();
+    if( offset < 0 && loc.getLine() > 0 )
+    {
+      IType type = pi.getOwnersType();
+      VirtualFile virtualFile = FileUtil.getTypeResourceFiles( type ).get( 0 );
+      Document doc = FileDocumentManager.getInstance().getDocument( virtualFile );
+      offset = doc.getLineStartOffset( loc.getLine()  - 1 );
+      if( loc.getColumn() > 0 )
+      {
+        offset += loc.getColumn() - 1;
+      }
+    }
+    return sb.append( offset ).append( ", " )
+    .append( loc.getTextLength() ).append( ", " )
+    .append( loc.getLine() ).append( ", " )
+    .append( loc.getColumn() );
   }
 
   private void generateMethodImplStub( StringBuilder sb, IMethodInfo mi )

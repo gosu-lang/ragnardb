@@ -1,12 +1,9 @@
 package ragnardb.runtime;
 
-import com.sun.tools.javac.util.StringUtils;
 import gw.lang.reflect.IFeatureInfo;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.features.PropertyReference;
-import ragnardb.parser.ast.Constraint;
-import ragnardb.parser.ast.SQL;
 import ragnardb.plugin.ISQLTableType;
 
 import java.util.*;

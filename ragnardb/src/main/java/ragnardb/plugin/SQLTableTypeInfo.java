@@ -4,10 +4,13 @@ import gw.lang.reflect.ConstructorInfoBuilder;
 import gw.lang.reflect.IAttributedFeatureInfo;
 import gw.lang.reflect.IConstructorHandler;
 import gw.lang.reflect.IConstructorInfo;
+import gw.lang.reflect.IFileBasedType;
+import gw.lang.reflect.ILocationInfo;
 import gw.lang.reflect.IMethodInfo;
 import gw.lang.reflect.IPropertyAccessor;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
+import gw.lang.reflect.LocationInfo;
 import gw.lang.reflect.MethodInfoBuilder;
 import gw.lang.reflect.MethodList;
 import gw.lang.reflect.ParameterInfoBuilder;
@@ -23,6 +26,7 @@ import ragnardb.runtime.SQLQuery;
 import ragnardb.runtime.SQLRecord;
 import ragnardb.utils.NounHandler;
 
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,6 +41,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private String _classTableName;
   private IGosuClass _domainLogic;
   private IConstructorHandler _constructor;
+  private final ILocationInfo _location;
 
   public SQLTableTypeInfo(ISQLTableType type, CreateTable table,  ISQLDdlType system) {
     super(type);
@@ -45,6 +50,14 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     _table = table;
     resolveProperties(type);
     _classTableName = type.getName();
+    try
+    {
+      _location = new LocationInfo( getOwnersType().getTable().getOffset(), getOwnersType().getTable().getTypeName().length(), -1, -1, type.getSourceFiles()[0].toURI().toURL() );
+    }
+    catch( MalformedURLException e )
+    {
+      throw new RuntimeException( e );
+    }
   }
 
   private void resolveProperties( ISQLTableType type ) {
@@ -129,16 +142,6 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     _domainLogic = maybeGetDomainLogic();
     createMethodInfos();
     createConstructorInfos();
-  }
-
-  @Override
-  public int getOffset() {
-    return getOwnersType().getTable().getOffset();
-  }
-
-  @Override
-  public int getTextLength() {
-    return getOwnersType().getTable().getTypeName().length();
   }
 
   private void createConstructorInfos() {

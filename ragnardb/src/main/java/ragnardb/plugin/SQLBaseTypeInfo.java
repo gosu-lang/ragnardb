@@ -2,9 +2,7 @@ package ragnardb.plugin;
 
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
-import ragnardb.runtime.*;
 
-import java.io.IOException;
 import java.sql.Types;
 import java.util.*;
 
@@ -14,8 +12,14 @@ public abstract class SQLBaseTypeInfo extends BaseTypeInfo {
   protected MethodList _methodList;
   protected List<IConstructorInfo> _constructorList;
 
-  public SQLBaseTypeInfo(IType type) {
+  public SQLBaseTypeInfo(IFileBasedType type) {
     super(type);
+  }
+
+  @Override
+  public IFileBasedType getOwnersType()
+  {
+    return (IFileBasedType)super.getOwnersType();
   }
 
   /**

@@ -1,15 +1,18 @@
 package ragnardb.plugin;
 
 import gw.lang.reflect.IAnnotationInfo;
+import gw.lang.reflect.ILocationInfo;
 import gw.lang.reflect.IPropertyAccessor;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
+import gw.lang.reflect.LocationInfo;
 import gw.lang.reflect.PropertyInfoBase;
 import ragnardb.runtime.IHasListenableProperties;
 import ragnardb.runtime.IListenerAction;
 import ragnardb.runtime.IPropertyIntermediateAccessor;
 import ragnardb.runtime.SQLRecord;
 
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,8 +25,7 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
   private String _propName;
   private IType _propType;
   private IPropertyAccessor _accessor;
-  private final int _offset;
-  private final int _length;
+  private final ILocationInfo _location;
 
   protected SQLColumnPropertyInfo(String columnName, String propName, IType propertyType, SQLBaseTypeInfo container, int offset, int length)
   {
@@ -57,8 +59,14 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
         _intermediateValue = null;
       }
     };
-    _offset = offset;
-    _length = length;
+    try
+    {
+      _location = new LocationInfo( offset, length, -1, -1, container.getOwnersType().getSourceFiles()[0].toURI().toURL() );
+    }
+    catch( MalformedURLException e )
+    {
+      throw new RuntimeException( e );
+    }
   }
 
   public String getColumnName()
@@ -103,13 +111,9 @@ public class SQLColumnPropertyInfo extends PropertyInfoBase implements IProperty
   }
 
   @Override
-  public int getOffset() {
-    return _offset;
-  }
-
-  @Override
-  public int getTextLength() {
-    return _length;
+  public ILocationInfo getLocationInfo()
+  {
+    return _location;
   }
 
   //unbound actions will have a null key

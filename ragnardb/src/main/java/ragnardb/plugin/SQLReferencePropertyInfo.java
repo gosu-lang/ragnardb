@@ -1,7 +1,5 @@
 package ragnardb.plugin;
 import gw.lang.reflect.*;
-import gw.lang.reflect.features.PropertyReference;
-import ragnardb.parser.ast.SQL;
 import ragnardb.runtime.*;
 
 import java.util.*;
@@ -16,7 +14,6 @@ import ragnardb.runtime.SQLRecord;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.SynchronousQueue;
 
 /**
  * Created by pjennings on 7/14/2015.
@@ -32,8 +29,7 @@ public class SQLReferencePropertyInfo extends PropertyInfoBase implements IPrope
   private String _propName;
   private IType _propType;
   private IPropertyAccessor _accessor;
-  private final int _offset;
-  private final int _length;
+  private final ILocationInfo _location;
 
   protected SQLReferencePropertyInfo(String refColumnName, String idColumnName, String foreignTableName, ISQLDdlType system,  IType propertyType, ITypeInfo container, int offset, int length)
   {
@@ -73,8 +69,7 @@ public class SQLReferencePropertyInfo extends PropertyInfoBase implements IPrope
       }
 
     };
-    _offset = offset;
-    _length = length;
+    _location = new LocationInfo( offset, length, -1, -1, null );
   }
 
 
@@ -115,12 +110,8 @@ public class SQLReferencePropertyInfo extends PropertyInfoBase implements IPrope
   }
 
   @Override
-  public int getOffset() {
-    return _offset;
-  }
-
-  @Override
-  public int getTextLength() {
-    return _length;
+  public ILocationInfo getLocationInfo()
+  {
+    return _location;
   }
 }
