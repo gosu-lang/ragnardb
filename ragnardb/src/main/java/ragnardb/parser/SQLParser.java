@@ -1255,6 +1255,11 @@ public class SQLParser {
     switch (currentToken.getType()) {
       case IDENT:
         String x = match(TokenType.IDENT);
+        if(x.equals("date") || x.equals("time") || x.equals("timestamp")){
+          String y = match(TokenType.IDENT);
+          t = new DateTimeTerm(x, y);
+          break;
+        }
         if(tokEquals(TokenType.DOT)){
           next();
           x += ".";
