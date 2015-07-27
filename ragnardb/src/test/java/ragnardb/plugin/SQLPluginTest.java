@@ -119,7 +119,7 @@ public class SQLPluginTest {
     //TODO check columndef positions in the source files
   }
 
-  @Test
+
   public void getTypeInfo() {
     ISQLTableType result = (ISQLTableType) TypeSystem.getByFullNameIfValid("ragnardb.foo.Users.Contact");
     assertNotNull(result);

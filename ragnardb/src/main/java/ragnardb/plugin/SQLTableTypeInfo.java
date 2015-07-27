@@ -96,10 +96,10 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
       for(CreateTable foreignTable : _system.getTables()){
 
-        for( Constraint cons : foreignTable.getConstraints()){
+        for( Constraint cons : foreignTable.getConstraints()) {
 
-          if(cons.getType() == Constraint.constraintType.FOREIGN){
-            if(cons.getReferentialName().equals( _table.getTableName())) {
+          if (cons.getType() == Constraint.constraintType.FOREIGN) {
+            if (cons.getReferentialName().equals(_table.getTableName())) {
 
               String localKey = cons.getReferentialColumnNames().get(0);
               ColumnDefinition referee = _table.getColumnDefinitionByName(localKey);
@@ -107,14 +107,20 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
               String foreignName = cons.getColumnNames().get(0);
               ColumnDefinition referer = foreignTable.getColumnDefinitionByName(foreignName);
 
-              SQLReferencePropertyInfo refProp = new SQLReferencePropertyInfo(referee.getColumnName(), referer.getPropertyName(),
-                foreignTable.getTypeName(),
-                _system,
-                JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()),
-                this, referer.getOffset(), referer.getLength());
 
-              _propertiesMap.put(refProp.getName(), refProp);
-              _propertiesList.add(refProp);
+              if (referee != null && referer != null) {
+                SQLReferencePropertyInfo refProp = new SQLReferencePropertyInfo(referee.getColumnName(), referer.getPropertyName(),
+                  foreignTable.getTypeName(),
+                  _system,
+                  JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()),
+                  this, referer.getOffset(), referer.getLength());
+
+                _propertiesMap.put(refProp.getName(), refProp);
+                _propertiesList.add(refProp);
+              }
+              else{
+                System.err.println("Error: Foreign Key Declaration does not match with table columns");
+              }
             }
           }
         }

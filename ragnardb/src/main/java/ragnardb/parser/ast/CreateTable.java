@@ -52,7 +52,7 @@ public class CreateTable {
 
   public ColumnDefinition getColumnDefinitionByName(String name){
     for(ColumnDefinition col : this.getColumnDefinitions()){
-      if(col.getColumnName().equals(name)){
+      if(col.getColumnName().toLowerCase().equals(name.toLowerCase())){
         return col;
       }
     }
