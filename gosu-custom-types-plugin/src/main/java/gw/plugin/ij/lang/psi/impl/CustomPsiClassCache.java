@@ -21,6 +21,8 @@ import gw.lang.reflect.AbstractTypeSystemListener;
 import gw.lang.reflect.IAttributedFeatureInfo;
 import gw.lang.reflect.IConstructorInfo;
 import gw.lang.reflect.IDefaultTypeLoader;
+import gw.lang.reflect.IEnumData;
+import gw.lang.reflect.IEnumType;
 import gw.lang.reflect.IFeatureInfo;
 import gw.lang.reflect.IFileBasedType;
 import gw.lang.reflect.IHasParameterInfos;
@@ -44,8 +46,10 @@ import gw.plugin.ij.util.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -146,7 +150,7 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
     {
       sb.append( "static " );
     }
-    sb.append( "class " ).append( type.getRelativeName() ).append( " " ) ;
+    sb.append( type.isEnum() ? "enum " : "class " ).append( type.getRelativeName() ).append( " " ) ;
     IType supertype = type.getSupertype();
     if( supertype != null && supertype != JavaTypes.OBJECT() )
     {
@@ -279,15 +283,19 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
     List<? extends IPropertyInfo> properties;
     if( ti instanceof IRelativeTypeInfo )
     {
-      properties = ((IRelativeTypeInfo)ti).getProperties( type );
+      properties = new ArrayList<>( ((IRelativeTypeInfo)ti).getProperties( type ) );
     }
     else
     {
-      properties = ti.getProperties();
+      properties = new ArrayList<>( ti.getProperties() );
     }
     int i = 0;
     if( properties != null )
     {
+      if( type.isEnum() )
+      {
+        generateEnumConstProperties( type, sb, properties, i );
+      }
       for( IPropertyInfo pi : properties )
       {
         if( pi.isStatic() )
@@ -301,6 +309,24 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
         i++;
       }
     }
+  }
+
+  private void generateEnumConstProperties( IType type, StringBuilder sb, List<? extends IPropertyInfo> properties, int i )
+  {
+    for( Iterator<? extends IPropertyInfo> iter = properties.iterator(); iter.hasNext(); )
+    {
+      IPropertyInfo pi = iter.next();
+      if( type instanceof IEnumType && ((IEnumData)type).getEnumValue( pi.getName() ) != null )
+      {
+        sb.append( "  @PropertyEnumInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
+          appendLocationInfo( sb, pi )
+          .append( ")\n" )
+          .append( "  " );
+        sb.append( pi.getDisplayName() ).append( ",\n" );
+        iter.remove();
+      }
+    }
+    sb.append( ";\n" );
   }
 
   // Note, generate as Fields instead of get/set methods because the Ferrite Gosu plugin
