@@ -2,7 +2,9 @@ package ragnardb.plugin;
 
 import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
+import gw.util.GosuExceptionUtil;
 import ragnardb.RagnarDB;
+import ragnardb.parser.ast.Expression;
 import ragnardb.runtime.SQLConstraint;
 import ragnardb.runtime.SQLRecord;
 
@@ -89,43 +91,43 @@ public class SQLDdlTypeInfo extends SQLBaseTypeInfo {
       .withDescription("Runs enclosed code in a transaction")
       .withParameters(new ParameterInfoBuilder().withName("condition")
         .withType(TypeSystem.get(Runnable.class)))
-        .withReturnType(JavaTypes.VOID())
-        .withStatic(true)
-        .withCallHandler((ctx, args) -> {
-          Connection con = null;
-          Savepoint save1 = null;
+      .withReturnType(JavaTypes.VOID())
+      .withStatic(true)
+      .withCallHandler((ctx, args) -> {
+        Connection con = null;
+        Savepoint save1 = null;
+        try {
+          con = RagnarDB.getConnection();
+          con.setAutoCommit(false);
+
+          save1 = con.setSavepoint();
+          Runnable exec = (Runnable) args[0];
+
+          exec.run();
+          con.commit();
+
+        } catch (Exception e) {
           try {
-            con = RagnarDB.getConnection();
-            con.setAutoCommit(false);
-
-            save1 = con.setSavepoint();
-            Runnable exec = (Runnable) args[0];
-
-            exec.run();
-            con.commit();
-
-          } catch (Exception e) {
-            try {
-              con.rollback(save1);
-              System.out.println("Rolling Back");
-            } catch (Exception ee) {
-              System.err.println("Error in SQLRollback");
-              ee.printStackTrace();
-            }
-            e.printStackTrace();
-          } finally {
-            try {
-              con.setAutoCommit(true);
-            } catch (Exception e) {
-              System.err.println("Error in SQLAutoCommit change");
-              e.printStackTrace();
-            }
+            con.rollback(save1);
+            System.out.println("Rolling Back");
+          } catch (Exception ee) {
+            System.err.println("Error in SQLRollback");
+            throw GosuExceptionUtil.forceThrow(ee);
           }
+          throw GosuExceptionUtil.forceThrow(e);
+        } finally {
+          try {
+            con.setAutoCommit(true);
+          } catch (Exception e) {
+            System.err.println("Error in SQLAutoCommit change");
+            throw GosuExceptionUtil.forceThrow(e);
+          }
+        }
 
-          return null;
+        return null;
 
-        })
-          .build(this));
+      })
+      .build(this));
         }
 
   }
