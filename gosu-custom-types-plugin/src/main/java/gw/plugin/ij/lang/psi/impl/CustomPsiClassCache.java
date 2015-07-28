@@ -39,6 +39,8 @@ import gw.lang.reflect.Modifier;
 import gw.lang.reflect.RefreshRequest;
 import gw.lang.reflect.TypeSystem;
 import gw.lang.reflect.gs.GosuClassTypeLoader;
+import gw.lang.reflect.gs.IGosuClass;
+import gw.lang.reflect.java.IJavaType;
 import gw.lang.reflect.java.JavaTypes;
 import gw.lang.reflect.module.IModule;
 import gw.plugin.ij.custom.JavaFacadePsiClass;
@@ -261,7 +263,7 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
           i++;
           continue;
         }
-        sb.append( "  @MethodInfoId(" ).append( i++ ).append( ", \"" ).append( mi.getName() ).append( "\", " );
+        sb.append( "  @MethodInfoId(" ).append( i++ ).append( ", \"" ).append( maybeQualifyWithType( mi ) ).append( mi.getName() ).append( "\", " );
           appendLocationInfo( sb, mi )
           .append( ")\n" )
           .append( "  " );
@@ -333,13 +335,24 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
   // doesn't know how to make properties from them for some reason
   private void generateInstanceProperty( StringBuilder sb, int i, IPropertyInfo pi )
   {
-    sb.append( "  @PropertyFieldInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
+    sb.append( "  @PropertyFieldInfoId(" ).append( i ).append( ", \"" ).append( maybeQualifyWithType( pi ) ).append( pi.getName() ).append( "\", " );
       appendLocationInfo( sb, pi )
       .append( ")\n" )
       .append( "  " );
     generateFieldModifiers( sb, pi );
     sb.append( pi.getFeatureType().getName() ).append( " " ).append( pi.getDisplayName() ).append( ";\n" );
   }
+
+  private String maybeQualifyWithType( IFeatureInfo fi )
+  {
+    IType ownersType = fi.getOwnersType();
+    if( ownersType instanceof IGosuClass || ownersType instanceof IJavaType )
+    {
+      return TypeSystem.getPureGenericType( ownersType ).getName() + "#";
+    }
+    return "";
+  }
+
 //  private void generateInstanceProperty( StringBuilder sb, int i, IPropertyInfo pi )
 //  {
 //    if( pi.isReadable() )
@@ -372,7 +385,7 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
   {
     if( pi.isReadable() )
     {
-      sb.append( "  @PropertyFieldInfoId(" ).append( i ).append( ", \"" ).append( pi.getName() ).append( "\", " );
+      sb.append( "  @PropertyFieldInfoId(" ).append( i ).append( ", \"" ).append( maybeQualifyWithType( pi ) ).append( pi.getName() ).append( "\", " );
         appendLocationInfo( sb, pi )
         .append( ")\n" )
         .append( "  " );
