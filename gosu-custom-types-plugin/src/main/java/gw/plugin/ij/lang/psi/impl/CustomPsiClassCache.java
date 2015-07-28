@@ -130,7 +130,7 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
   private String generateSource( IType type )
   {
     StringBuilder sb = new StringBuilder()
-      .append( "package " ).append( type.getNamespace() ).append( "\n\n" );
+      .append( "package " ).append( type.getNamespace() ).append( ";\n\n" );
     ITypeInfo ti = safeGetTypeInfo( type );
     sb.append( "  @ClassInfoId(" ).append( 0 ).append( ", \"" )
       .append( type.getName() ).append( "\", " );
