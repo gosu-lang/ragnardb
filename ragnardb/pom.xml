@@ -61,6 +61,7 @@
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
             </manifest>
             <manifestEntries>
+              <Gosu-Typeloaders>ragnardb.plugin.SQLPlugin</Gosu-Typeloaders>
               <Contains-Sources>gs, gsx, gst</Contains-Sources>
             </manifestEntries>
           </archive>
