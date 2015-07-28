@@ -2,24 +2,25 @@ package gw.plugin.ij.extensions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import gw.lang.reflect.IDefaultTypeLoader;
+import com.intellij.util.Processor;
 import gw.lang.reflect.INamespaceType;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.TypeSystem;
-import gw.lang.reflect.gs.IGosuClass;
 import gw.lang.reflect.gs.TypeName;
 import gw.lang.reflect.java.IJavaType;
 import gw.plugin.ij.lang.psi.impl.CustomPsiClassCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -52,32 +53,6 @@ public class GosuTypeFinder extends PsiElementFinder
       TypeSystem.popGlobalModule();
     }
   }
-
-//  @Nullable
-//  @Override
-//  public PsiPackage findPackage( @NotNull String qualifiedName )
-//  {
-//    TypeSystem.pushGlobalModule();
-//    try
-//    {
-//      INamespaceType namespace = TypeSystem.getNamespace( qualifiedName );
-//      if( namespace != null )
-//      {
-//        PsiPackage pkg = JavaPsiFacadeUtil.findPackage( (Project)namespace.getModule().getExecutionEnvironment().getProject().getNativeProject(), qualifiedName );
-//        if( pkg == null )
-//        {
-//          PsiManager manager = PsiManagerImpl.getInstance( (Project)namespace.getModule().getExecutionEnvironment().getProject().getNativeProject() );
-//          pkg = new PsiPackageImpl( manager, qualifiedName );
-//        }
-//        return pkg;
-//      }
-//      return null;
-//    }
-//    finally
-//    {
-//      TypeSystem.popGlobalModule();
-//    }
-//  }
 
   @NotNull
   @Override
@@ -121,6 +96,42 @@ public class GosuTypeFinder extends PsiElementFinder
     return super.getClasses( className, psiPackage, scope );
   }
 
+  @NotNull
+  @Override
+  public PsiPackage[] getSubPackages( @NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope )
+  {
+    TypeSystem.pushGlobalModule();
+    try
+    {
+      String parentPackage = psiPackage.getQualifiedName();
+      INamespaceType namespace = TypeSystem.getNamespace( parentPackage );
+      if( namespace != null )
+      {
+        PsiManager manager = PsiManagerImpl.getInstance( (Project)namespace.getModule().getExecutionEnvironment().getProject().getNativeProject() );
+        List<PsiPackage> children = new ArrayList<>();
+        for( TypeName child: namespace.getChildren( null ) )
+        {
+          if( child.kind == TypeName.Kind.NAMESPACE )
+          {
+            children.add( new NonDirectoryPackage( manager, parentPackage + '.' + child.name ) );
+          }
+        }
+        return children.toArray( new PsiPackage[children.size()] );
+      }
+    }
+    finally
+    {
+      TypeSystem.popGlobalModule();
+    }
+    return super.getSubPackages( psiPackage, scope );
+  }
+
+  @Override
+  public boolean processPackageDirectories( @NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiDirectory> consumer )
+  {
+    return super.processPackageDirectories( psiPackage, scope, consumer );
+  }
+
   @Nullable
   @Override
   public PsiPackage findPackage( @NotNull String qualifiedName )
@@ -142,7 +153,7 @@ public class GosuTypeFinder extends PsiElementFinder
         // be resolved by the DefaultTypeloader
 
         PsiManager manager = PsiManagerImpl.getInstance( (Project)namespace.getModule().getExecutionEnvironment().getProject().getNativeProject() );
-        return new PsiPackageImpl( manager, namespace.getName() );
+        return new NonDirectoryPackage( manager, namespace.getName() );
       }
     }
     finally

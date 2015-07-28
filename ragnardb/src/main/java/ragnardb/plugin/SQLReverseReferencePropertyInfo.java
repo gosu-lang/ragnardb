@@ -14,8 +14,6 @@ import java.util.List;
  * Created by pjennings on 7/14/2015.
  */
 
-
-
 public class SQLReverseReferencePropertyInfo extends PropertyInfoBase implements IPropertyInfo
 {
   private String _tableName;
@@ -24,8 +22,7 @@ public class SQLReverseReferencePropertyInfo extends PropertyInfoBase implements
   private String _propName;
   private IType _propType;
   private IPropertyAccessor _accessor;
-  private final int _offset;
-  private final int _length;
+  private final ILocationInfo _location;
 
   protected SQLReverseReferencePropertyInfo(String refColumnName, String idColumnName, String foreignTableName, ISQLDdlType system, String propName, IType propertyType, ITypeInfo container, int offset, int length)
   {
@@ -65,8 +62,7 @@ public class SQLReverseReferencePropertyInfo extends PropertyInfoBase implements
       }
 
     };
-    _offset = offset;
-    _length = length;
+    _location = new LocationInfo( offset, length, -1, -1, null );
   }
 
 
@@ -107,12 +103,8 @@ public class SQLReverseReferencePropertyInfo extends PropertyInfoBase implements
   }
 
   @Override
-  public int getOffset() {
-    return _offset;
-  }
-
-  @Override
-  public int getTextLength() {
-    return _length;
+  public ILocationInfo getLocationInfo()
+  {
+    return _location;
   }
 }
