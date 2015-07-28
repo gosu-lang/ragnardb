@@ -7,7 +7,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import ragnardb.RagnarDB;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Savepoint;
+import java.util.ArrayList;
 
 public class RuntimeBootstrapTest
 {
@@ -117,6 +121,38 @@ public class RuntimeBootstrapTest
     thing.delete();
 
     Assert.assertEquals( 0, RagnarDB.count( "CONTACTS" ) );
+  }
+
+  @Test
+  public void basicManualTransactions() throws SQLException
+  {
+
+    clearContacts();
+    RagnarDB.establishConnection();
+    Connection con = RagnarDB.getConnection();
+    con.setAutoCommit(false);
+
+    Savepoint save1 = con.setSavepoint();
+
+
+    Assert.assertEquals(0, RagnarDB.count("CONTACTS"));
+
+    SQLRecord thing = new SQLRecord( "CONTACTS", "id" );
+    thing.setRawValue( "first_name", "Carson" );
+    thing.setRawValue("last_name", "Gross");
+    thing.setRawValue("age", 39);
+    thing.create();
+
+
+
+    con.rollback(save1);
+
+
+
+    Assert.assertEquals(0, RagnarDB.count("CONTACTS"));
+
+    RagnarDB.releaseConnection();
+
   }
 
 }

@@ -1,13 +1,15 @@
 package ragnardb.plugin;
 
-import gw.lang.reflect.IPropertyAccessor;
-import gw.lang.reflect.IPropertyInfo;
-import gw.lang.reflect.MethodList;
-import gw.lang.reflect.PropertyInfoBuilder;
-import gw.lang.reflect.TypeSystem;
+import gw.lang.reflect.*;
 import gw.lang.reflect.java.JavaTypes;
+import ragnardb.RagnarDB;
+import ragnardb.runtime.SQLConstraint;
+import ragnardb.runtime.SQLRecord;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,14 +74,58 @@ public class SQLDdlTypeInfo extends SQLBaseTypeInfo {
         }
       } )
       .build( this );
-    _propertiesMap.put( tables.getName(), tables );
+    _propertiesMap.put(tables.getName(), tables);
     _propertiesList.add(tables);
 
-    _propertiesMap.put( tables.getName(), tables );
+    _propertiesMap.put(tables.getName(), tables);
     _propertiesList.add(tables);
 
     _methodList = new MethodList();
     _constructorList = Collections.emptyList();
-  }
 
-}
+
+    _methodList.add(new MethodInfoBuilder()
+      .withName("transaction")
+      .withDescription("Runs enclosed code in a transaction")
+      .withParameters(new ParameterInfoBuilder().withName("condition")
+        .withType(TypeSystem.get(Runnable.class)))
+        .withReturnType(JavaTypes.VOID())
+        .withStatic(true)
+        .withCallHandler((ctx, args) -> {
+          Connection con = null;
+          Savepoint save1 = null;
+          try {
+            con = RagnarDB.getConnection();
+            con.setAutoCommit(false);
+
+            save1 = con.setSavepoint();
+            Runnable exec = (Runnable) args[0];
+
+            exec.run();
+            con.commit();
+
+          } catch (Exception e) {
+            try {
+              con.rollback(save1);
+              System.out.println("Rolling Back");
+            } catch (Exception ee) {
+              System.err.println("Error in SQLRollback");
+              ee.printStackTrace();
+            }
+            e.printStackTrace();
+          } finally {
+            try {
+              con.setAutoCommit(true);
+            } catch (Exception e) {
+              System.err.println("Error in SQLAutoCommit change");
+              e.printStackTrace();
+            }
+          }
+
+          return null;
+
+        })
+          .build(this));
+        }
+
+  }

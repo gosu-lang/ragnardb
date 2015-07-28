@@ -6,6 +6,8 @@ import java.util.List;
 
 public class RagnarDB
 {
+  private static ThreadLocal<Connection> _THREAD_CONNECTION = new ThreadLocal<>();
+
   private static String g_DBURL = "";
 
   public static void setDBUrl(String url) {
@@ -18,7 +20,24 @@ public class RagnarDB
 
   public static Connection getConnection() throws SQLException
   {
-    return DriverManager.getConnection(g_DBURL);
+    Connection c = _THREAD_CONNECTION.get();
+    if(c != null) {
+      return c;
+    } else {
+      return DriverManager.getConnection(g_DBURL);
+    }
+  }
+
+  public static void establishConnection() throws SQLException {
+    _THREAD_CONNECTION.set(getConnection());
+  }
+
+  public static void releaseConnection() throws SQLException {
+    Connection c = _THREAD_CONNECTION.get();
+    if(c != null) {
+      c.close();
+    }
+    _THREAD_CONNECTION.remove();
   }
 
   public static PreparedStatement prepareStatement( String sql, List vals) throws SQLException
