@@ -439,7 +439,7 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
 
   private void generateModifiers( StringBuilder sb, IAttributedFeatureInfo fi )
   {
-    if( fi.isStatic() )
+    if( fi.isStatic() && !(fi instanceof IConstructorInfo) )
     {
       sb.append( "static " );
     }
