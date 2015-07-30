@@ -61,15 +61,15 @@ public class SQLParser {
       } else {
         s = currentToken.toString();
       }
-      next();
     } else {
       String name = currentType.getName();
       if (currentType == TokenType.IDENT) {
         name = currentToken.getText();
       }
       error(currentToken, "Expecting '" + expectedType.getName() + "' but found '" + name + "'.");
-      return name;
+      s = name;
     }
+    next();
     return s;
   }
 

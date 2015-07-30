@@ -47,7 +47,7 @@ public class SQLParserTest {
     s = new StringReader("CREATE HELLO contacts");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    parseWithErrors(parser, Arrays.asList("[1, 8] - ERROR: Expecting 'table' but found 'hello'.", "[1, 14] - ERROR: Expected to find '(' to start the column definition list"));
+    parseWithErrors(parser, Arrays.asList("[1, 8] - ERROR: Expecting 'table' but found 'hello'.", "[1, 21] - ERROR: Expected to find '(' to start the column definition list"));
 
     s = new StringReader("CREATE TABLE contacts 1 2 3 CREATE TABLE contacts( name varchar(255))");
     tokenizer = new SQLTokenizer(s);
@@ -125,9 +125,9 @@ public class SQLParserTest {
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     DDL ddl = (DDL) parser.parse();
-    assertEquals(Arrays.asList("[1, 8] - ERROR: Expecting 'table' but found 'tempo'.", "[1, 14] - ERROR: Expected to find '(' to start the column definition list"), parser.getErrors());
+    assertEquals(Arrays.asList("[1, 8] - ERROR: Expecting 'table' but found 'tempo'.", "[1, 14] - ERROR: Expecting 'identifier' but found 'table'.", "[1, 20] - ERROR: Expected to find '(' to start the column definition list"), parser.getErrors());
     CreateTable table = ddl.getList().get(0);
-    assertEquals("tempo", table.getTableName());
+    assertEquals("ERROR", table.getTableName());
     ColumnDefinition columnDefinition = table.getColumnDefinitions().get(0);
     assertEquals("name", columnDefinition.getColumnName());
     assertEquals(255, columnDefinition.getStartInt());
@@ -135,7 +135,7 @@ public class SQLParserTest {
     s = new StringReader("CREATE TEMP contacts");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    parseWithErrors(parser, Arrays.asList("[1, 13] - ERROR: Expecting 'table' but found 'contacts'.", "[1, 20] - ERROR: Expected to find '(' to start the column definition list"));
+    parseWithErrors(parser, Arrays.asList("[1, 13] - ERROR: Expecting 'table' but found 'contacts'.", "[1, 20] - ERROR: Expecting 'identifier' but found 'End of file'."));
   }
 
   @Test
@@ -153,12 +153,12 @@ public class SQLParserTest {
     s = new StringReader("CREATE TEMPORARY TABLE IF EXISTS database.contacts(name varchar(255))");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    parseWithErrors(parser, Collections.singletonList("[1, 27] - ERROR: Expecting 'not' but found 'exists'."));
+    parseWithErrors(parser, Arrays.asList("[1, 27] - ERROR: Expecting 'not' but found 'exists'.", "[1, 34] - ERROR: Expecting 'exists' but found 'database'.", "[1, 42] - ERROR: Expecting 'identifier' but found '.'."));
 
     s = new StringReader("CreAte tABLE if NoT database.contacts(name varchar(255))");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    parseWithErrors(parser, Collections.singletonList("[1, 21] - ERROR: Expecting 'exists' but found 'database'."));
+    parseWithErrors(parser, Arrays.asList("[1, 21] - ERROR: Expecting 'exists' but found 'database'.", "[1, 29] - ERROR: Expecting 'identifier' but found '.'."));
   }
 
   @Test
