@@ -47,7 +47,7 @@ public class SQLParserTest {
     s = new StringReader("CREATE HELLO contacts");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    parseWithErrors(parser, Arrays.asList("[1, 8] - ERROR: Expecting 'TABLE' but found 'hello'.", "[1, 14] - ERROR: Expected to find '(' to start the column definition list"));
+    parseWithErrors(parser, Arrays.asList("[1, 8] - ERROR: Expecting 'table' but found 'hello'.", "[1, 14] - ERROR: Expected to find '(' to start the column definition list"));
 
     s = new StringReader("CREATE TABLE contacts 1 2 3 CREATE TABLE contacts( name varchar(255))");
     tokenizer = new SQLTokenizer(s);
@@ -125,7 +125,7 @@ public class SQLParserTest {
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     DDL ddl = (DDL) parser.parse();
-    assertEquals(Arrays.asList("[1, 8] - ERROR: Expecting 'TABLE' but found 'tempo'.", "[1, 14] - ERROR: Expected to find '(' to start the column definition list"), parser.getErrors());
+    assertEquals(Arrays.asList("[1, 8] - ERROR: Expecting 'table' but found 'tempo'.", "[1, 14] - ERROR: Expected to find '(' to start the column definition list"), parser.getErrors());
     CreateTable table = ddl.getList().get(0);
     assertEquals("tempo", table.getTableName());
     ColumnDefinition columnDefinition = table.getColumnDefinitions().get(0);
@@ -135,7 +135,7 @@ public class SQLParserTest {
     s = new StringReader("CREATE TEMP contacts");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    parseWithErrors(parser, Arrays.asList("[1, 13] - ERROR: Expecting 'TABLE' but found 'contacts'.", "[1, 20] - ERROR: Expected to find '(' to start the column definition list"));
+    parseWithErrors(parser, Arrays.asList("[1, 13] - ERROR: Expecting 'table' but found 'contacts'.", "[1, 20] - ERROR: Expected to find '(' to start the column definition list"));
   }
 
   @Test

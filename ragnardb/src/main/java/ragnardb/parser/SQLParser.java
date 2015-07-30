@@ -261,11 +261,7 @@ public class SQLParser {
       currentToken.getType() == TokenType.TEMPORARY) {
       next();
     }
-    if (tokEquals(TokenType.IDENT)){
-      specialError("'TABLE'");
-    } else {
-      match(TokenType.TABLE);
-    }
+    match(TokenType.TABLE);
     if (currentToken.getType() == TokenType.IF) {
       next();
       match(TokenType.NOT);
@@ -996,12 +992,6 @@ public class SQLParser {
       parseCondition();
     }
 
-    if (tokEquals(TokenType.IDENT)) {
-      specialError("Constraint or 'AUTO_INCREMENT'");
-      do {
-        next();
-      } while (!tokEquals(TokenType.COMMA) && !tokEquals(TokenType.RPAREN));
-    }
     return column;
   }
 
