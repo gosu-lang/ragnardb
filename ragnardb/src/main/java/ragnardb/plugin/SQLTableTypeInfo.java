@@ -89,19 +89,20 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
             foreignTable = possibleForiegnTable;
           }
         }
+        if (foreignTable != null) {
+          String foreignName = c.getReferentialColumnNames().get(0);
+          ColumnDefinition referee = foreignTable.getColumnDefinitionByName(foreignName);
 
-        String foreignName = c.getReferentialColumnNames().get(0);
-        ColumnDefinition referee = foreignTable.getColumnDefinitionByName(foreignName);
 
+          SQLReferencePropertyInfo refProp = new SQLReferencePropertyInfo(referer.getColumnName(), referee.getPropertyName(),
+                  foreignTable.getTypeName(),
+                  _system,
+                  JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()),
+                  this, referer.getOffset(), referer.getLength());
 
-        SQLReferencePropertyInfo refProp = new SQLReferencePropertyInfo(referer.getColumnName(), referee.getPropertyName(),
-          foreignTable.getTypeName(),
-          _system,
-          JavaTypes.getGosuType(SQLQuery.class).getParameterizedType(this.getOwnersType()),
-          this, referer.getOffset(), referer.getLength());
-
-        _propertiesMap.put(refProp.getName(), refProp);
-        _propertiesList.add(refProp);
+          _propertiesMap.put(refProp.getName(), refProp);
+          _propertiesList.add(refProp);
+        }
 
 
       }

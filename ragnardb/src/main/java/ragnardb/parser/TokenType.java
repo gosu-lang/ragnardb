@@ -9,7 +9,7 @@ public enum TokenType {
   BEFORE("before"), BEGIN("begin"), BETWEEN("between"), BY("by"), CASCADE("cascade"), CASE("case"), CAST("cast"),
   CHECK("check"), COLLATE("collate"), COLUMN("column"), COMMIT("commit"), CONFLICT("conflict"),
   CONSTRAINT("constraint"), CREATE("create"), CROSS("cross"), CURRENT_DATE("current_date"),
-  CURRENT_TIME("current_time"), CURRENT_TIMESTAMP("current_timestamp"), DATABASE("database"), DEFAULT("default"),
+  CURRENT_TIME("current_time"), CURRENT_TIMESTAMP("current_timestamp"), DEFAULT("default"),
   DEFERRABLE("deferrable"), DEFERRED("deferred"), DELETE("delete"), DESC("desc"), DETACH("detach"),
   DISTINCT("distinct"), DROP("drop"), EACH("each"), ELSE("else"), END("end"), ESCAPE("escape"), EXCEPT("except"),
   EXCLUSIVE("exclusive"), EXISTS("exists"), EXPLAIN("explain"), FAIL("fail"), FOR("for"), FOREIGN("foreign"),

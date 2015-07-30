@@ -1,22 +1,23 @@
 package ragnardb.parser;
 
-import com.sun.org.apache.bcel.internal.generic.Select;
 import ragnardb.parser.ast.*;
 import ragnardb.plugin.ColumnDefinition;
-import ragnardb.utils.NounHandler;
 
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 public class SQLParser {
 
+  private static final int MAX_ERRORS = 25;
   private SQLTokenizer _tokenizer;
   private Token currentToken;
   private HashMap<String, String> variables;
   private ArrayList<JavaVar> _vars;
+  private int errPosition;
+  private int errCount;
+  private List<String> errors;
 
   public SQLParser(SQLTokenizer tokenizer) {
     _tokenizer = tokenizer;
@@ -91,12 +92,8 @@ public class SQLParser {
     return false;
   }
 
-  private boolean isNum() {
-    return (currentToken.getType() == TokenType.LONG || currentToken.getType() == TokenType.INTERNALDOUBLE);
-  }
-
   private ArrayList<String> list(TokenType item) {
-    ArrayList<String> items = new ArrayList<String>();
+    ArrayList<String> items = new ArrayList<>();
     String _item = match(item);
     items.add(_item);
     while (tokEquals(TokenType.COMMA)) {
@@ -114,10 +111,45 @@ public class SQLParser {
     } else {
       fileName = fileName + "- ";
     }
-    throw new SQLParseError(fileName + "["+ token.getLine() + ", " + token.getCol() + "] - ERROR: " + message);
+    int pos = token.getOffset();
+    if (pos > errPosition && errCount < MAX_ERRORS) {
+      String output = fileName + "[" + token.getLine() + ", " + token.getCol() + "] - ERROR: " + message;
+      errors.add(output);
+      System.err.println(output);
+    }
+    errCount++;
+    errPosition = pos + 4;
+  }
+
+  private boolean isAValidStartSymbol() {
+    return (tokEquals(TokenType.CREATE) ||
+            tokEquals(TokenType.ALTER) ||
+            tokEquals(TokenType.DROP) ||
+            tokEquals(TokenType.UPDATE) ||
+            tokEquals(TokenType.INSERT) ||
+            tokEquals(TokenType.DELETE) ||
+            tokEquals(TokenType.WITH) ||
+            tokEquals(TokenType.SELECT) ||
+            tokEquals(TokenType.EOF));
   }
 
   public SQL parse() {
+    errors = new ArrayList<>();
+    errCount = 0;
+    errPosition = -1;
+
+    if (isAValidStartSymbol()) {
+      return parseInternal();
+    }
+    error(currentToken, "Expecting a SQL statement (ex CREATE.., ALTER.., DROP..., ...)");
+    // sync
+    do {
+      next();
+    } while (!isAValidStartSymbol());
+    return parseInternal();
+  }
+
+  private SQL parseInternal() {
     if(tokEquals(TokenType.CREATE) || tokEquals(TokenType.EOF)) {
       DDL statements = new DDL();
       while (true) {
@@ -151,7 +183,7 @@ public class SQLParser {
       DeleteStatement _delete = parseDelete();
       _delete.setVars(_vars);
       return _delete;
-    } else {
+    } else { //if(tokEquals(TokenType.WITH) || tokEquals(TokenType.SELECT)){
       SelectStatement _select = parseSelect();
       _select.setVariables(_vars);
       return _select;
@@ -174,9 +206,6 @@ public class SQLParser {
         cte = parseCommonTableExpression();
         _ss.addCommonTableExpression(cte);
       }
-    }
-    if(_ss == null){
-      _ss = new SelectStatement();
     }
     parseSelectSub(_ss);
     while (matchIn(TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT)) {
@@ -219,6 +248,14 @@ public class SQLParser {
     int line = currentToken.getLine();
     int col = currentToken.getCol();
     int offset = currentToken.getOffset();
+
+    // sync
+    if (!tokEquals(TokenType.CREATE)) {
+      error(currentToken, "Expected to find 'CREATE'");
+      do {
+        next();
+      } while (!tokEquals(TokenType.CREATE) && !tokEquals(TokenType.EOF));
+    }
     match(TokenType.CREATE);
     if (currentToken.getType() == TokenType.TEMP ||
       currentToken.getType() == TokenType.TEMPORARY) {
@@ -230,13 +267,21 @@ public class SQLParser {
       match(TokenType.NOT);
       match(TokenType.EXISTS);
     }
-    CreateTable table = new CreateTable(currentToken.getText());
-    table.setLoc(line, col, offset, currentToken.getCasedText().length());
+    String name = currentToken.getText() == null ? "ERROR"  : currentToken.getText();
+    CreateTable table = new CreateTable(name);
+    table.setLoc(line, col, offset, name.length());
     match(TokenType.IDENT);
 
     if (currentToken.getType() == TokenType.DOT) {
       next();
       match(TokenType.IDENT);
+    }
+    // sync
+    if(!tokEquals(TokenType.LPAREN)) {
+      error( currentToken, "Expected to find '(' to start the column definition list");
+      do {
+        next();
+      } while(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.EOF));
     }
     if (tokEquals(TokenType.LPAREN)) {
       next();
@@ -946,7 +991,6 @@ public class SQLParser {
 
   private Constraint parseConstraint() {
     Constraint _constraint = new Constraint();
-    String s = "";
     if (tokEquals(TokenType.CONSTRAINT)) {
       next();
       if (tokEquals(TokenType.IF)) {
@@ -1064,7 +1108,7 @@ public class SQLParser {
     return Constraint.referentialAction.RESTRICT;
   }
 
-  public Expression parseExpr() {
+  private Expression parseExpr() {
     Expression expression;
     AndCondition condition = parseAndCondition();
     expression = new Expression(condition);
@@ -1364,7 +1408,7 @@ public class SQLParser {
   }
 
   private Term parseLimitedTerm(boolean isNegative) {
-    Term t = null;
+    Term t;
     if(tokEquals(TokenType.LONG)){
       t = new AlgebraicTerm(currentToken.getLongNumber());
       next();
@@ -1426,5 +1470,9 @@ public class SQLParser {
       }
       match(TokenType.END);
     }
+  }
+
+  public List<String> getErrors() {
+    return errors;
   }
 }

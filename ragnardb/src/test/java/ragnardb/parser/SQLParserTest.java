@@ -1,12 +1,17 @@
 package ragnardb.parser;
 
 import org.junit.Test;
+import ragnardb.parser.ast.CreateTable;
+import ragnardb.parser.ast.DDL;
+import ragnardb.plugin.ColumnDefinition;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -15,14 +20,9 @@ public class SQLParserTest {
 
   @Test
   public void basicCreateTable() {
-    StringReader s = new StringReader("CREATE TABLE contacts");
+    StringReader s = new StringReader("CREATE TABLE contacts( name varchar(255))");
     SQLTokenizer tokenizer = new SQLTokenizer(s);
     SQLParser parser = new SQLParser(tokenizer);
-    parseWithNoErrors(parser);
-
-    s = new StringReader("CREATE TABLE contacts( name varchar(255))");
-    tokenizer = new SQLTokenizer(s);
-    parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
     s = new StringReader("CREATE TEMP TABLE IF NOT EXISTS somedatabase.contacts( name varchar(255)) WITHOUT ROWID");
@@ -35,25 +35,51 @@ public class SQLParserTest {
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
+  }
+
+  @Test
+  public void erroneusCreateTable() {
+    StringReader s = new StringReader("CREATE TABLE contacts");
+    SQLTokenizer tokenizer = new SQLTokenizer(s);
+    SQLParser parser = new SQLParser(tokenizer);
+    parseWithErrors(parser, Collections.singletonList("[1, 21] - ERROR: Expected to find '(' to start the column definition list"));
 
     s = new StringReader("CREATE HELLO contacts");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    try {
-      parser.parse();
-      fail();
-    } catch (SQLParseError e) {
-      assertEquals("[1, 8] - ERROR: Expecting 'table' but found 'hello'.", e.getMessage());
-    }
+    parseWithErrors(parser, Arrays.asList("[1, 8] - ERROR: Expecting 'table' but found 'hello'.", "[1, 14] - ERROR: Expected to find '(' to start the column definition list"));
+
+    s = new StringReader("CREATE TABLE contacts 1 2 3 CREATE TABLE contacts( name varchar(255))");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    DDL ddl = (DDL) parser.parse();
+    assertEquals(Collections.singletonList("[1, 23] - ERROR: Expected to find '(' to start the column definition list"), parser.getErrors());
+    CreateTable table = ddl.getList().get(0);
+    assertEquals("contacts", table.getTableName());
+    ColumnDefinition columnDefinition = table.getColumnDefinitions().get(0);
+    assertEquals("name", columnDefinition.getColumnName());
+    assertEquals(255, columnDefinition.getStartInt());
+
+    s = new StringReader("HELLO CREATE TABLE contacts( name varchar(255))");
+    tokenizer = new SQLTokenizer(s);
+    parser = new SQLParser(tokenizer);
+    ddl = (DDL) parser.parse();
+    assertEquals(Collections.singletonList("[1, 1] - ERROR: Expecting a SQL statement (ex CREATE.., ALTER.., DROP..., ...)"), parser.getErrors());
+    table = ddl.getList().get(0);
+    assertEquals("contacts", table.getTableName());
+    columnDefinition = table.getColumnDefinitions().get(0);
+    assertEquals("name", columnDefinition.getColumnName());
+    assertEquals(255, columnDefinition.getStartInt());
   }
 
   private void parseWithNoErrors(SQLParser parser) {
-    try {
-      parser.parse();
-    } catch (SQLParseError e) {
-      e.printStackTrace();
-      fail();
-    }
+    parser.parse();
+    assertEquals(0, parser.getErrors().size());
+  }
+
+  private void parseWithErrors(SQLParser parser, List<String> errList) {
+    parser.parse();
+    assertEquals(errList, parser.getErrors());
   }
 
   private void parseWithNoErrorsComputer(SQLParser parser, String statement) {
@@ -85,94 +111,69 @@ public class SQLParserTest {
 
   @Test
   public void createTemporary() {
-    StringReader s = new StringReader("CREATE TEMP TABLE contacts");
+    StringReader s = new StringReader("CREATE TEMP TABLE contacts(name varchar(255))");
     SQLTokenizer tokenizer = new SQLTokenizer(s);
     SQLParser parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
-    s = new StringReader("CREATE TEMPORARY TABLE contacts");
+    s = new StringReader("CREATE TEMPORARY TABLE contacts(name varchar(255))");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
-    s = new StringReader("CREATE TEMPO TABLE contacts");
+    s = new StringReader("CREATE TEMPO TABLE contacts(name varchar(255))");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    try {
-      parser.parse();
-
-      fail();
-    } catch (SQLParseError e) {
-      assertEquals("[1, 8] - ERROR: Expecting 'table' but found 'tempo'.", e.getMessage());
-    }
+    DDL ddl = (DDL) parser.parse();
+    assertEquals(Arrays.asList("[1, 8] - ERROR: Expecting 'table' but found 'tempo'.", "[1, 14] - ERROR: Expected to find '(' to start the column definition list"), parser.getErrors());
+    CreateTable table = ddl.getList().get(0);
+    assertEquals("tempo", table.getTableName());
+    ColumnDefinition columnDefinition = table.getColumnDefinitions().get(0);
+    assertEquals("name", columnDefinition.getColumnName());
+    assertEquals(255, columnDefinition.getStartInt());
 
     s = new StringReader("CREATE TEMP contacts");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    try {
-      parser.parse();
-      fail();
-    } catch (SQLParseError e) {
-      assertEquals("[1, 13] - ERROR: Expecting 'table' but found 'contacts'.", e.getMessage());
-    }
+    parseWithErrors(parser, Arrays.asList("[1, 13] - ERROR: Expecting 'table' but found 'contacts'.", "[1, 20] - ERROR: Expected to find '(' to start the column definition list"));
   }
 
   @Test
   public void createIfNotExists() {
-    StringReader s = new StringReader("CREATE TABLE contacts IF NOT EXISTS databae.contacts");
+    StringReader s = new StringReader("CREATE TABLE contacts IF NOT EXISTS database.contacts(name varchar(255))");
     SQLTokenizer tokenizer = new SQLTokenizer(s);
     SQLParser parser = new SQLParser(tokenizer);
-    try {
-      parser.parse();
-      fail();
-    } catch (SQLParseError e) {
-      assertEquals("[1, 23] - ERROR: Expecting 'SEMI' or 'EOF but found if", e.getMessage());
-    }
+    parseWithErrors(parser, Collections.singletonList("[1, 23] - ERROR: Expected to find '(' to start the column definition list"));
 
-    s = new StringReader("CREATE TABLE IF NOT EXISTS databae.contacts");
+    s = new StringReader("CREATE TABLE IF NOT EXISTS database.contacts(name varchar(255))");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
-    s = new StringReader("CREATE TEMPORARY TABLE IF EXISTS databae.contacts");
+    s = new StringReader("CREATE TEMPORARY TABLE IF EXISTS database.contacts(name varchar(255))");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    try {
-      parser.parse();
-      fail();
-    } catch (SQLParseError e) {
-      assertEquals("[1, 27] - ERROR: Expecting 'not' but found 'exists'.", e.getMessage());
-    }
+    parseWithErrors(parser, Collections.singletonList("[1, 27] - ERROR: Expecting 'not' but found 'exists'."));
 
-    s = new StringReader("CreAte tABLE if NoT databae.contacts");
+    s = new StringReader("CreAte tABLE if NoT database.contacts(name varchar(255))");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    try {
-      parser.parse();
-      fail();
-    } catch (SQLParseError e) {
-      assertEquals("[1, 21] - ERROR: Expecting 'exists' but found 'databae'.", e.getMessage());
-    }
+    parseWithErrors(parser, Collections.singletonList("[1, 21] - ERROR: Expecting 'exists' but found 'database'."));
   }
 
   @Test
-  public void createWIITHOUTROWID() {
-    StringReader s = new StringReader("CREATE TEMP TABLE databae.contacts WITHOUT ROWID");
+  public void createWithoutRowID() {
+    StringReader s = new StringReader("CREATE TEMP TABLE database.contacts (name varchar(255)) WITHOUT ROWID");
     SQLTokenizer tokenizer = new SQLTokenizer(s);
     SQLParser parser = new SQLParser(tokenizer);
     parseWithNoErrors(parser);
 
-    s = new StringReader("CREATE TABLE IF NOT EXISTS contacts WO ROWID");
+    s = new StringReader("CREATE TABLE IF NOT EXISTS contacts (name varchar(255)) WO ROWID");
     tokenizer = new SQLTokenizer(s);
     parser = new SQLParser(tokenizer);
-    try {
-      parser.parse();
-      fail();
-    } catch (SQLParseError e) {
-      assertEquals("[1, 37] - ERROR: Expecting 'SEMI' or 'EOF but found identifier", e.getMessage());
-
-    }
+    parseWithErrors(parser, Arrays.asList("[1, 57] - ERROR: Expecting 'SEMI' or 'EOF but found identifier", "[1, 64] - ERROR: Expecting 'create' but found 'End of file'."));
   }
+
   @Test
   public void complexColumns() {
     StringReader s = new StringReader("CREATE TABLE contacts(ID int DEFAULT 555555  IDENTITY (5,6) PRIMARY KEY)");
