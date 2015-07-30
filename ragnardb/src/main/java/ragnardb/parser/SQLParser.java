@@ -35,7 +35,7 @@ public class SQLParser {
   }
 
   private void specialError(String s) {
-    error(currentToken, "Expecting " + s + " but found '" + currentToken.getText() + ".");
+    error(currentToken, "Expecting " + s + " but found '" + currentToken.getText() + "'.");
   }
 
   private void pass(TokenType passType) {
@@ -261,13 +261,17 @@ public class SQLParser {
       currentToken.getType() == TokenType.TEMPORARY) {
       next();
     }
-    match(TokenType.TABLE);
+    if (tokEquals(TokenType.IDENT)){
+      specialError("'TABLE'");
+    } else {
+      match(TokenType.TABLE);
+    }
     if (currentToken.getType() == TokenType.IF) {
       next();
       match(TokenType.NOT);
       match(TokenType.EXISTS);
     }
-    String name = currentToken.getText() == null ? "ERROR"  : currentToken.getText();
+    String name = currentToken.getText();
     CreateTable table = new CreateTable(name);
     table.setLoc(line, col, offset, name.length());
     match(TokenType.IDENT);
@@ -604,7 +608,12 @@ public class SQLParser {
       error(currentToken, "Expecting IDENT (datatype) but found '" + currentToken.getType() + "'.");
     }
 
-    datatype = ColumnDefinition.lookUp.get(currentToken.getText());
+    Integer type = ColumnDefinition.lookUp.get(currentToken.getText());
+    if(type == null) {
+      datatype = Types.INTEGER;
+    } else {
+      datatype = type;
+    }
     ColumnDefinition column = new ColumnDefinition(name,datatype);
     next();
 
@@ -986,6 +995,13 @@ public class SQLParser {
       next();
       parseCondition();
     }
+
+    if (tokEquals(TokenType.IDENT)) {
+      specialError("Constraint or 'AUTO_INCREMENT'");
+      do {
+        next();
+      } while (!tokEquals(TokenType.COMMA) && !tokEquals(TokenType.RPAREN));
+    }
     return column;
   }
 
@@ -1043,8 +1059,15 @@ public class SQLParser {
       next();
       match(TokenType.KEY);
       match(TokenType.LPAREN);
-      ArrayList<String> fKs = list(TokenType.IDENT);
-      _constraint.setColumnNames(fKs);
+      if(tokEquals(TokenType.IDENT)) {
+        ArrayList<String> fKs = list(TokenType.IDENT);
+        _constraint.setColumnNames(fKs);
+      } else {
+        error(currentToken, "Expecting a list of columns to be referenced, but did not find said list, instead found '" +
+        currentToken.getText() + "'.");
+        ArrayList<String> fKs = new ArrayList<>();
+        _constraint.setColumnNames(fKs);
+      }
       match(TokenType.RPAREN);
       match(TokenType.REFERENCES);
       if(tokEquals(TokenType.IDENT)){
@@ -1072,6 +1095,8 @@ public class SQLParser {
           error(currentToken, "Expecting DELETE or UPDATE but found '" + currentToken.getText() + ".");
         }
       }
+    } else {
+      specialError("Column Definition or Constraint Definition");
     }
     return _constraint;
   }

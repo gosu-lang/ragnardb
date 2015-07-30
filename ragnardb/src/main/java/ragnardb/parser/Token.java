@@ -19,6 +19,7 @@ public class Token
     _line = line;
     _col = col;
     _offset = offset;
+    _text = "ERROR";
   }
 
   public String getText() {
