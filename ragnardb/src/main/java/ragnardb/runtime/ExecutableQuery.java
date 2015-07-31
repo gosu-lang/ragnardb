@@ -8,10 +8,7 @@ import ragnardb.plugin.ISQLQueryResultType;
 import ragnardb.plugin.ISQLTableType;
 
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by klu on 7/8/2015.
@@ -20,17 +17,19 @@ public class ExecutableQuery<T> extends SQLQuery<T>{
   private String statement;
   private IType returnType;
   private ISQLTableType returnTable;
+  private List<Object> vals;
 
-  public ExecutableQuery(ITypeToSQLMetadata md, IType rootType, String s, IType ret, ISQLTableType rT){
+  public ExecutableQuery(ITypeToSQLMetadata md, IType rootType, String s, IType ret, ISQLTableType rT, List<Object> objs){
     super(md, rootType);
     statement = s;
     returnType = ret;
     returnTable = rT;
+    vals = objs;
 //    System.out.println(statement + " @ExecutableQuery 27"); debugging logging info
   }
 
   public ExecutableQuery<T> setup(){
-    ExecutableQuery<T> query = new ExecutableQuery<T>(_metadata, _rootType, this.statement, returnType, returnTable);
+    ExecutableQuery<T> query = new ExecutableQuery<T>(_metadata, _rootType, this.statement, returnType, returnTable, vals);
 //    System.out.println(query.statement + " @ExecutableQuery 32");
     return query;
   }
@@ -43,9 +42,9 @@ public class ExecutableQuery<T> extends SQLQuery<T>{
       List<T> results = new LinkedList<>();
       Iterable<SQLRecord> records;
       if(!(returnType instanceof ISQLQueryResultType || returnType instanceof ISQLTableType)){
-        records = SQLRecord.executeStatement(statement, returnTable);
+        records = SQLRecord.executeStatement(statement, vals, returnTable);
       } else {
-        records = SQLRecord.executeStatement(statement, _rootType);
+        records = SQLRecord.executeStatement(statement, vals, _rootType);
       }
 //      System.out.println(this.statement + " @ExecutableQuery 49");
       if(returnType instanceof ISQLTableType){

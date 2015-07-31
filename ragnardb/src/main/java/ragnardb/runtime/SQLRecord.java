@@ -174,10 +174,10 @@ public class SQLRecord implements ISQLResult
     return new SQLRecordResultSetIterator<T>(resultSet, impl);
   }
 
-  static Iterable<SQLRecord> executeStatement(String sql, IType impl) throws SQLException
+  static Iterable<SQLRecord> executeStatement(String sql, List vals, IType impl) throws SQLException
   {
 //    System.out.println(sql + " @SQLRecord 210"); debugging logging info
-   PreparedStatement preparedStatement = RagnarDB.prepareStatement(sql, Collections.emptyList());
+   PreparedStatement preparedStatement = RagnarDB.prepareStatement(sql, vals);
     ResultSet resultSet = preparedStatement.executeQuery();
 //    System.out.println(sql + " @SQLRecord 213");
     List<SQLRecord> results = new LinkedList<>();
