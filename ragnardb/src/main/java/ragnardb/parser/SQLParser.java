@@ -150,7 +150,7 @@ public class SQLParser {
   }
 
   private SQL parseInternal() {
-    if(tokEquals(TokenType.CREATE) || tokEquals(TokenType.EOF)) {
+    if(tokEquals(TokenType.CREATE)) {
       DDL statements = new DDL();
       while (true) {
         if (tokEquals(TokenType.EOF)) {
@@ -183,10 +183,12 @@ public class SQLParser {
       DeleteStatement _delete = parseDelete();
       _delete.setVars(_vars);
       return _delete;
-    } else { //if(tokEquals(TokenType.WITH) || tokEquals(TokenType.SELECT)){
+    } else if(tokEquals(TokenType.WITH) || tokEquals(TokenType.SELECT) || tokEquals(TokenType.VALUES)){
       SelectStatement _select = parseSelect();
       _select.setVariables(_vars);
       return _select;
+    } else {
+      return new EmptyType();
     }
   }
 
@@ -322,6 +324,13 @@ public class SQLParser {
     } else {
       error(currentToken, "Expecting INSERT or REPLACE but found '" + currentToken.getType() + "'.");
     }
+    // sync
+    if(!tokEquals(TokenType.INTO)) {
+      error( currentToken, "Expected to find 'INTO'");
+      do {
+        next();
+      } while(!tokEquals(TokenType.INTO) && !tokEquals(TokenType.EOF));
+    }
     match(TokenType.INTO);
     String name = match(TokenType.IDENT);
     if(tokEquals(TokenType.DOT)){
@@ -330,6 +339,15 @@ public class SQLParser {
       name += match(TokenType.IDENT);
     }
     _insert = new InsertStatement(name);
+    // sync
+    if(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.VALUES) && !tokEquals(TokenType.DEFAULT)
+      && !tokEquals(TokenType.SELECT) && !tokEquals(TokenType.WITH)) { //continuation of previous line
+      error( currentToken, "Expected to find '(' to start the column definition list");
+      do {
+        next();
+      } while(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.VALUES) && !tokEquals(TokenType.DEFAULT)
+        && !tokEquals(TokenType.SELECT) && !tokEquals(TokenType.WITH) && !tokEquals(TokenType.EOF)); //continuation of previous line
+    }
     if(tokEquals(TokenType.LPAREN)){
       next();
       ArrayList<String> cols = list(TokenType.IDENT);
@@ -418,6 +436,13 @@ public class SQLParser {
       next();
       match(TokenType.INDEXED);
     }
+    // sync
+    if(!tokEquals(TokenType.SET)) {
+      error( currentToken, "Expected to find 'SET' to begin update");
+      do {
+        next();
+      } while(!tokEquals(TokenType.SET) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF));
+    }
     match(TokenType.SET);
     String colName = match(TokenType.IDENT);
     _statement.addColumn(colName);
@@ -501,6 +526,15 @@ public class SQLParser {
     if(tokEquals(TokenType.DOT)){
       next();
       match(TokenType.IDENT);
+    }
+    // sync
+    if(!tokEquals(TokenType.ADD) && !tokEquals(TokenType.ALTER) && !tokEquals(TokenType.DROP)
+      && !tokEquals(TokenType.SET) && !tokEquals(TokenType.RENAME)) { //continuation of previous line
+      error(currentToken, "Expected to find 'INTO'");
+      do {
+        next();
+      } while(!tokEquals(TokenType.INTO) && !tokEquals(TokenType.ALTER) && !tokEquals(TokenType.DROP) && !tokEquals(TokenType.SET)
+        && !tokEquals(TokenType.RENAME) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF)); //continuation of previous line
     }
     if(tokEquals(TokenType.ADD)){
       next();
@@ -695,6 +729,13 @@ public class SQLParser {
   }
 
   private void parseSelectSub2(SelectStatement current){
+    // sync
+    if(!tokEquals(TokenType.FROM) && !tokEquals(TokenType.SEMI)) {
+      error( currentToken, "Expected to find 'FROM' to determine table of selection.");
+      do {
+        next();
+      } while(!tokEquals(TokenType.FROM) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF));
+    }
     if (tokEquals(TokenType.FROM)) {
       current.addToken(currentToken);
       next();
@@ -811,6 +852,13 @@ public class SQLParser {
 
   private TableOrSubquery parseTableOrSubquery(){
     TableOrSubquery _table = null;
+    // sync
+    if(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.IDENT)) {
+      error( currentToken, "Expected to find '(' to start the subquery, or a database/table name");
+      do {
+        next();
+      } while(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.IDENT) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF));
+    }
     if(tokEquals(TokenType.LPAREN)){
       if(matchIn(TokenType.WITH, TokenType.RECURSIVE, TokenType.SELECT, TokenType.VALUES)){
         SelectStatement s = parseSelect();
