@@ -71,6 +71,16 @@ public class RagnarDB
       Object obj = vals.get(i);
       if(obj instanceof String) {
         stmt.setString(i + 1, (String) obj);
+      } else if(obj instanceof Boolean){
+        stmt.setBoolean(i + 1, (Boolean) obj);
+      } else if(obj instanceof Integer){
+        stmt.setInt(i + 1, (Integer) obj);
+      } else if(obj instanceof Double){
+        stmt.setDouble(i + 1, (Double) obj);
+      } else if(obj instanceof Long){
+        stmt.setLong(i + 1, (Long) obj);
+      } else if(obj instanceof Date){
+        stmt.setDate(i + 1, (Date) obj);
       } else {
         stmt.setObject( i + 1, obj );
       }
@@ -83,13 +93,6 @@ public class RagnarDB
     return stmt.execute();
   }
 
-  public static ResultSet execQuery(String sqlSrc) throws SQLException
-  {
-    Connection conn = getConnection();
-    Statement statement = conn.createStatement();
-    maybeLog(sqlSrc, Collections.emptyList());
-    return statement.executeQuery(sqlSrc);
-  }
   public static int count( String tableName ) throws SQLException
   {
     Connection conn = getConnection();

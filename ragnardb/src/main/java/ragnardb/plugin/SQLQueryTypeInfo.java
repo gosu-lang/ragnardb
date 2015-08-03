@@ -78,6 +78,7 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
         ISQLQueryType owner = (ISQLQueryType) getOwnersType();
         Statement statement = (Statement) owner.getParseTree();
         ArrayList<JavaVar> variables = statement.getVariables();
+        List<Object> vars = new ArrayList<>();
         try {
           String rawSQL = owner.getSqlSource();
           String[] places = rawSQL.split("\n");
@@ -88,18 +89,8 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
                 if (var.equals(coalescedVars.get(i)) && (var.getLine()-1)== j) {
                   String currentLine = places[j];
                   Object rep = args[i];
-                  String replacement;
-                  if (rep instanceof java.lang.String || rep instanceof java.lang.Character) {
-                    replacement = "'" + rep.toString() + "'";
-                  } else if (rep instanceof java.lang.Boolean) {
-                    if ((Boolean) rep) {
-                      replacement = "1";
-                    } else {
-                      replacement = "0";
-                    }
-                  } else {
-                    replacement = rep.toString();
-                  }
+                  String replacement = "?";
+                  vars.add(rep);
                   String finalLine = currentLine.substring(0, var.getCol() - (j==0?1:2) + additionalBuffer)
                     + replacement + currentLine.substring(var.getCol() - 1 + var.getSkiplen() + additionalBuffer);
                   places[j] = finalLine;
@@ -119,7 +110,7 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
           } else {
             _md = new SQLQueryResultMetadata(owner.getTable(statement.getTables().get(0)));
           }
-          ExecutableQuery query = new ExecutableQuery(_md, returnType, finalSQL, returnType, table);
+          ExecutableQuery query = new ExecutableQuery(_md, returnType, finalSQL, returnType, table, vars);
           query = query.setup();
           return query;
         } catch (Exception e) {
@@ -226,6 +217,7 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
       .withStatic(true)
       .withCallHandler((ctx, args) -> {
         ArrayList<JavaVar> variables = statement.getVariables();
+        List<Object> vars = new ArrayList<>();
         try {
           String rawSQL = type.getSqlSource();
           String[] places = rawSQL.split("\n");
@@ -236,18 +228,8 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
                 if (var.equals(coalescedVars.get(i)) && (var.getLine()-1)== j) {
                   String currentLine = places[j];
                   Object rep = args[i];
-                  String replacement;
-                  if (rep instanceof java.lang.String || rep instanceof java.lang.Character) {
-                    replacement = "'" + rep.toString() + "'";
-                  } else if (rep instanceof java.lang.Boolean) {
-                    if ((Boolean) rep) {
-                      replacement = "1";
-                    } else {
-                      replacement = "0";
-                    }
-                  } else {
-                    replacement = rep.toString();
-                  }
+                  String replacement = "?";
+                  vars.add(rep);
                   String finalLine = currentLine.substring(0, var.getCol() - (j==0?1:2) + additionalBuffer)
                     + replacement + currentLine.substring(var.getCol() - 1 + var.getSkiplen() + additionalBuffer);
                   places[j] = finalLine;
@@ -259,7 +241,7 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
           }
           String finalSQL = String.join("\n", places);
           finalSQL = finalSQL.replace(";", "");
-          PreparedStatement p = RagnarDB.prepareStatement(finalSQL, Collections.emptyList());
+          PreparedStatement p = RagnarDB.prepareStatement(finalSQL, vars);
           return p.executeUpdate();
         } catch (Exception e) {
           e.printStackTrace();

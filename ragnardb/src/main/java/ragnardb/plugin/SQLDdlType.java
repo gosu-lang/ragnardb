@@ -6,6 +6,7 @@ import gw.lang.reflect.TypeSystem;
 import gw.util.concurrent.LockingLazyVar;
 import ragnardb.parser.ast.CreateTable;
 import ragnardb.parser.ast.DDL;
+import ragnardb.parser.ast.EmptyType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,9 @@ public class SQLDdlType extends SQLTypeBase implements ISQLDdlType {
 
   @Override
   protected SQLBaseTypeInfo initTypeInfo() {
+    if(getParseTree() instanceof EmptyType){
+      return new SQLEmptyTypeInfo((ISQLDdlType) getTypeRef());
+    }
     return new SQLDdlTypeInfo((ISQLDdlType) getTypeRef());
   }
 

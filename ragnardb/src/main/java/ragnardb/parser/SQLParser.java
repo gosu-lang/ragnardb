@@ -35,7 +35,7 @@ public class SQLParser {
   }
 
   private void specialError(String s) {
-    error(currentToken, "Expecting " + s + " but found '" + currentToken.getText() + ".");
+    error(currentToken, "Expecting " + s + " but found '" + currentToken.getText() + "'.");
   }
 
   private void pass(TokenType passType) {
@@ -61,15 +61,15 @@ public class SQLParser {
       } else {
         s = currentToken.toString();
       }
-      next();
     } else {
       String name = currentType.getName();
       if (currentType == TokenType.IDENT) {
         name = currentToken.getText();
       }
       error(currentToken, "Expecting '" + expectedType.getName() + "' but found '" + name + "'.");
-      return name;
+      s = name;
     }
+    next();
     return s;
   }
 
@@ -150,7 +150,7 @@ public class SQLParser {
   }
 
   private SQL parseInternal() {
-    if(tokEquals(TokenType.CREATE) || tokEquals(TokenType.EOF)) {
+    if(tokEquals(TokenType.CREATE)) {
       DDL statements = new DDL();
       while (true) {
         if (tokEquals(TokenType.EOF)) {
@@ -183,10 +183,15 @@ public class SQLParser {
       DeleteStatement _delete = parseDelete();
       _delete.setVars(_vars);
       return _delete;
-    } else { //if(tokEquals(TokenType.WITH) || tokEquals(TokenType.SELECT)){
+    } else if(tokEquals(TokenType.WITH) || tokEquals(TokenType.SELECT) || tokEquals(TokenType.VALUES)){
       SelectStatement _select = parseSelect();
       _select.setVariables(_vars);
+      if(_select.getResultColumns().size() == 0 || _select.getJoinClauses().size() == 0){
+        return new EmptyType();
+      }
       return _select;
+    } else {
+      return new EmptyType();
     }
   }
 
@@ -267,7 +272,7 @@ public class SQLParser {
       match(TokenType.NOT);
       match(TokenType.EXISTS);
     }
-    String name = currentToken.getText() == null ? "ERROR"  : currentToken.getText();
+    String name = currentToken.getText();
     CreateTable table = new CreateTable(name);
     table.setLoc(line, col, offset, name.length());
     match(TokenType.IDENT);
@@ -322,6 +327,13 @@ public class SQLParser {
     } else {
       error(currentToken, "Expecting INSERT or REPLACE but found '" + currentToken.getType() + "'.");
     }
+    // sync
+    if(!tokEquals(TokenType.INTO)) {
+      error( currentToken, "Expected to find 'INTO'");
+      do {
+        next();
+      } while(!tokEquals(TokenType.INTO) && !tokEquals(TokenType.EOF));
+    }
     match(TokenType.INTO);
     String name = match(TokenType.IDENT);
     if(tokEquals(TokenType.DOT)){
@@ -330,6 +342,15 @@ public class SQLParser {
       name += match(TokenType.IDENT);
     }
     _insert = new InsertStatement(name);
+    // sync
+    if(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.VALUES) && !tokEquals(TokenType.DEFAULT)
+      && !tokEquals(TokenType.SELECT) && !tokEquals(TokenType.WITH)) { //continuation of previous line
+      error( currentToken, "Expected to find '(' to start the column definition list");
+      do {
+        next();
+      } while(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.VALUES) && !tokEquals(TokenType.DEFAULT)
+        && !tokEquals(TokenType.SELECT) && !tokEquals(TokenType.WITH) && !tokEquals(TokenType.EOF)); //continuation of previous line
+    }
     if(tokEquals(TokenType.LPAREN)){
       next();
       ArrayList<String> cols = list(TokenType.IDENT);
@@ -418,6 +439,13 @@ public class SQLParser {
       next();
       match(TokenType.INDEXED);
     }
+    // sync
+    if(!tokEquals(TokenType.SET)) {
+      error( currentToken, "Expected to find 'SET' to begin update");
+      do {
+        next();
+      } while(!tokEquals(TokenType.SET) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF));
+    }
     match(TokenType.SET);
     String colName = match(TokenType.IDENT);
     _statement.addColumn(colName);
@@ -501,6 +529,15 @@ public class SQLParser {
     if(tokEquals(TokenType.DOT)){
       next();
       match(TokenType.IDENT);
+    }
+    // sync
+    if(!tokEquals(TokenType.ADD) && !tokEquals(TokenType.ALTER) && !tokEquals(TokenType.DROP)
+      && !tokEquals(TokenType.SET) && !tokEquals(TokenType.RENAME)) { //continuation of previous line
+      error(currentToken, "Expected to find 'INTO'");
+      do {
+        next();
+      } while(!tokEquals(TokenType.INTO) && !tokEquals(TokenType.ALTER) && !tokEquals(TokenType.DROP) && !tokEquals(TokenType.SET)
+        && !tokEquals(TokenType.RENAME) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF)); //continuation of previous line
     }
     if(tokEquals(TokenType.ADD)){
       next();
@@ -604,7 +641,12 @@ public class SQLParser {
       error(currentToken, "Expecting IDENT (datatype) but found '" + currentToken.getType() + "'.");
     }
 
-    datatype = ColumnDefinition.lookUp.get(currentToken.getText());
+    Integer type = ColumnDefinition.lookUp.get(currentToken.getText());
+    if(type == null) {
+      datatype = Types.INTEGER;
+    } else {
+      datatype = type;
+    }
     ColumnDefinition column = new ColumnDefinition(name,datatype);
     next();
 
@@ -690,6 +732,13 @@ public class SQLParser {
   }
 
   private void parseSelectSub2(SelectStatement current){
+    // sync
+    if(!tokEquals(TokenType.FROM) && !tokEquals(TokenType.SEMI)) {
+      error( currentToken, "Expected to find 'FROM' to determine table of selection.");
+      do {
+        next();
+      } while(!tokEquals(TokenType.FROM) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF));
+    }
     if (tokEquals(TokenType.FROM)) {
       current.addToken(currentToken);
       next();
@@ -781,7 +830,7 @@ public class SQLParser {
         }
       } else if(tokEquals(TokenType.FROM)){
         _rc = new ResultColumn(tempname);
-        parseSelectSub2(current);
+        return _rc;
       } else {
         _rc = new ResultColumn(tempname);
       }
@@ -806,6 +855,13 @@ public class SQLParser {
 
   private TableOrSubquery parseTableOrSubquery(){
     TableOrSubquery _table = null;
+    // sync
+    if(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.IDENT)) {
+      error( currentToken, "Expected to find '(' to start the subquery, or a database/table name");
+      do {
+        next();
+      } while(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.IDENT) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF));
+    }
     if(tokEquals(TokenType.LPAREN)){
       if(matchIn(TokenType.WITH, TokenType.RECURSIVE, TokenType.SELECT, TokenType.VALUES)){
         SelectStatement s = parseSelect();
@@ -986,6 +1042,7 @@ public class SQLParser {
       next();
       parseCondition();
     }
+
     return column;
   }
 
@@ -1043,8 +1100,15 @@ public class SQLParser {
       next();
       match(TokenType.KEY);
       match(TokenType.LPAREN);
-      ArrayList<String> fKs = list(TokenType.IDENT);
-      _constraint.setColumnNames(fKs);
+      if(tokEquals(TokenType.IDENT)) {
+        ArrayList<String> fKs = list(TokenType.IDENT);
+        _constraint.setColumnNames(fKs);
+      } else {
+        error(currentToken, "Expecting a list of columns to be referenced, but did not find said list, instead found '" +
+        currentToken.getText() + "'.");
+        ArrayList<String> fKs = new ArrayList<>();
+        _constraint.setColumnNames(fKs);
+      }
       match(TokenType.RPAREN);
       match(TokenType.REFERENCES);
       if(tokEquals(TokenType.IDENT)){
@@ -1072,6 +1136,8 @@ public class SQLParser {
           error(currentToken, "Expecting DELETE or UPDATE but found '" + currentToken.getText() + ".");
         }
       }
+    } else {
+      specialError("Column Definition or Constraint Definition");
     }
     return _constraint;
   }

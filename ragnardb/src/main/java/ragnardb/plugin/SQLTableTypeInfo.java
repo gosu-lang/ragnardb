@@ -79,7 +79,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     //Adding Foreign Key References that this table does
 
     for( Constraint c : _table.getConstraints()) {
-      if (c.getType() == Constraint.constraintType.FOREIGN) {
+      if (c.getType() == Constraint.constraintType.FOREIGN && c.getColumnNames().size() >= 1 && c.getReferentialColumnNames().size() >= 1) {
         String keyName = c.getColumnNames().get(0);
         ColumnDefinition referer = _table.getColumnDefinitionByName(keyName);
 
@@ -112,7 +112,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
 
         for( Constraint cons : foreignTable.getConstraints()) {
 
-          if (cons.getType() == Constraint.constraintType.FOREIGN) {
+          if (cons.getType() == Constraint.constraintType.FOREIGN && cons.getColumnNames().size() >= 1 && cons.getReferentialColumnNames().size() >= 1) {
             if (cons.getReferentialName().equals(_table.getTableName())) {
 
               String localKey = cons.getReferentialColumnNames().get(0);

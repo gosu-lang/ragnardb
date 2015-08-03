@@ -2,6 +2,7 @@ package ragnardb.plugin;
 
 import gw.fs.IFile;
 import gw.lang.reflect.IType;
+import ragnardb.parser.ast.EmptyType;
 import ragnardb.parser.ast.SelectStatement;
 import ragnardb.parser.ast.Statement;
 
@@ -47,6 +48,9 @@ public class SQLQueryType extends SQLTypeBase implements ISQLQueryType {
 
   @Override
   protected SQLBaseTypeInfo initTypeInfo() {
+    if(getParseTree() instanceof EmptyType){
+      return new SQLEmptyTypeInfo((ISQLQueryType) getTypeRef());
+    }
     return new SQLQueryTypeInfo((ISQLQueryType) getTypeRef());
   }
 }
