@@ -94,6 +94,8 @@ public class SelectStatement extends Statement {
 
   public ArrayList<ResultColumn> getResultColumns(){return results;}
 
+  public ArrayList<JoinClause> getJoinClauses(){return tables;}
+
   public ArrayList<CommonTableExpression> getCommonTableExpressions(){return recursiveTables;}
 
   public ArrayList<Expression> getExpressionsOfClause(String clause){

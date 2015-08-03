@@ -186,6 +186,9 @@ public class SQLParser {
     } else if(tokEquals(TokenType.WITH) || tokEquals(TokenType.SELECT) || tokEquals(TokenType.VALUES)){
       SelectStatement _select = parseSelect();
       _select.setVariables(_vars);
+      if(_select.getResultColumns().size() == 0 || _select.getJoinClauses().size() == 0){
+        return new EmptyType();
+      }
       return _select;
     } else {
       return new EmptyType();
@@ -827,7 +830,7 @@ public class SQLParser {
         }
       } else if(tokEquals(TokenType.FROM)){
         _rc = new ResultColumn(tempname);
-        parseSelectSub2(current);
+        return _rc;
       } else {
         _rc = new ResultColumn(tempname);
       }
