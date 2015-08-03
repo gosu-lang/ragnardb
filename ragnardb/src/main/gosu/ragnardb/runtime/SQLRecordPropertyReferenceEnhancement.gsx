@@ -49,6 +49,13 @@ enhancement SQLRecordPropertyReferenceEnhancement : IPropertyReference<SQLRecord
       return SQLConstraint.direction("desc" , this.PropertyInfo)
     }
 
+    function isNull( ) : SQLConstraint {
+      return SQLConstraint.isNull(this.PropertyInfo)
+    }
+
+    function isNotNull( ) : SQLConstraint {
+      return SQLConstraint.isNotNull(this.PropertyInfo)
+    }
 
 
 
