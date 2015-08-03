@@ -61,6 +61,14 @@ public abstract class SQLConstraint
     return new RawConstraint(sql,args);
   }
 
+  public static SQLConstraint isNull(IPropertyInfo p) {
+  return new RawConstraint(" " + p.getName() + " IS NULL",new ArrayList<>());
+}
+
+  public static SQLConstraint isNotNull(IPropertyInfo p) {
+    return new RawConstraint(" " + p.getName() + " IS NOT NULL",new ArrayList<>());
+  }
+
 
 
   abstract String getSQL( ITypeToSQLMetadata metadata );

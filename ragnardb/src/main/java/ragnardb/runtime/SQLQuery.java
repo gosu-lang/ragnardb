@@ -119,6 +119,8 @@ public class SQLQuery<T> implements Iterable<T> {
     return newQuery;
   }
 
+
+
   public boolean delete() throws SQLException
   {
     String from = "DELETE FROM " + _metadata.getTableForType(_rootType);
