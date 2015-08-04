@@ -10,6 +10,12 @@ import java.util.List;
 
 public class SQLParser {
 
+  /**
+   * This is the parser for RagnarDB. This is an LL(1) parser using the grammar referred to in SQL.g. All valid
+   * sentences in this parser are valid for use in the database; however, not necessarily all possible statements
+   * according to the H2 grammar are valid in this parser. For conflicts, please see SQL.g for explanation.
+   */
+
   private static final int MAX_ERRORS = 25;
   private SQLTokenizer _tokenizer;
   private Token currentToken;
@@ -38,12 +44,30 @@ public class SQLParser {
     error(currentToken, "Expecting " + s + " but found '" + currentToken.getText() + "'.");
   }
 
+  /**
+   * Passes a single token
+   * <p>
+   *   Given a stack of tokens A, B, C, etc, calling pass with A sets the stack to
+   *   B, C, etc back to the caller. Importantly, calling pass with any token but A does nothing.
+   * </p>
+   * @param passType
+   */
   private void pass(TokenType passType) {
     if (passType == currentToken.getType()) {
       next();
     }
   }
 
+  /**
+   * Passes multiple tokens in a row
+   * <p>
+   *   Given a stack of tokens A, B, C, D, etc, calling pass with A, B and C
+   *   will cause the parser to eat through A, B, C, returning to the caller with
+   *   the stack now at D, etc. Importantly, if the first token is wrong, this method
+   *   does nothing. If any token parameter is wrong, this method errors.
+   * </p>
+   * @param passTypes The Tokens to eat
+   */
   private void pass(TokenType... passTypes) {
     if(passTypes[0] == currentToken.getType()){
       for(TokenType t: passTypes){
@@ -52,6 +76,16 @@ public class SQLParser {
     }
   }
 
+  /**
+   * Matches a single token
+   * <p>
+   *   If the current token is not the same as expected, an error will be reported. However, the current token
+   *   will always advance regardless. The return of this method should not be used with any expectedType other than IDENT,
+   *   which denotes a name. The return of this method is used to gather names.
+   * </p>
+   * @param expectedType the expected token type
+   * @return the string text of this token, if valid
+   */
   private String match(TokenType expectedType) {
     TokenType currentType = currentToken.getType();
     String s;
@@ -73,6 +107,9 @@ public class SQLParser {
     return s;
   }
 
+  /**
+   * Matches any number
+   */
   private void matchNum() {
     TokenType currentType = currentToken.getType();
     if (currentType == TokenType.LONG || currentType == TokenType.INTERNALDOUBLE) {
@@ -83,6 +120,14 @@ public class SQLParser {
     }
   }
 
+  /**
+   * Matches a token to the list
+   * <p>
+   *   As long as the current token matches one of the tokens in list, true will be returned.
+   * </p>
+   * @param list The tokens against which you would like to match
+   * @return true if the current token matches one, false otherwise.
+   */
   private boolean matchIn(TokenType...list){
     for(TokenType t: list){
       if(currentToken.getType() == t){
@@ -92,6 +137,17 @@ public class SQLParser {
     return false;
   }
 
+  /**
+   * Matches lists of tokens
+   * <p>
+   *   Given a stack of tokens of form A ',' A ',' A ',' A B C etc, calling list with A will move the stack to B C etc
+   *   back to the caller. Note that calling this method with the wrong initial token will error. If B is also ',' this
+   *   method will error (ie, you cannot have a comma delimited list with different tokens and attempt to use this method).
+   *   The return type of this method is based on match, and is used for getting lists of names
+   * </p>
+   * @param item the type of the list
+   * @return names
+   */
   private ArrayList<String> list(TokenType item) {
     ArrayList<String> items = new ArrayList<>();
     String _item = match(item);
@@ -122,14 +178,14 @@ public class SQLParser {
   }
 
   private boolean isAValidStartSymbol() {
-    return (tokEquals(TokenType.CREATE) ||
-            tokEquals(TokenType.ALTER) ||
-            tokEquals(TokenType.DROP) ||
-            tokEquals(TokenType.UPDATE) ||
-            tokEquals(TokenType.INSERT) ||
-            tokEquals(TokenType.DELETE) ||
-            tokEquals(TokenType.WITH) ||
-            tokEquals(TokenType.SELECT) ||
+    return (tokEquals(TokenType.CREATE)  ||
+            tokEquals(TokenType.ALTER)   ||
+            tokEquals(TokenType.DROP)    ||
+            tokEquals(TokenType.UPDATE)  ||
+            tokEquals(TokenType.INSERT)  ||
+            tokEquals(TokenType.DELETE)  ||
+            tokEquals(TokenType.WITH)    ||
+            tokEquals(TokenType.SELECT)  ||
             tokEquals(TokenType.EOF));
   }
 
@@ -175,7 +231,7 @@ public class SQLParser {
       UpdateStatement _update = parseUpdate();
       _update.setVars(_vars);
       return _update;
-    } else if(tokEquals(TokenType.INSERT) || tokEquals(TokenType.REPLACE)){
+    } else if(tokEquals(TokenType.INSERT)){
       InsertStatement _insert = parseInsert();
       _insert.setVars(_vars);
       return _insert;
@@ -183,7 +239,7 @@ public class SQLParser {
       DeleteStatement _delete = parseDelete();
       _delete.setVars(_vars);
       return _delete;
-    } else if(tokEquals(TokenType.WITH) || tokEquals(TokenType.SELECT) || tokEquals(TokenType.VALUES)){
+    } else if(tokEquals(TokenType.SELECT)){
       SelectStatement _select = parseSelect();
       _select.setVariables(_vars);
       if(_select.getResultColumns().size() == 0 || _select.getJoinClauses().size() == 0){
@@ -191,69 +247,157 @@ public class SQLParser {
       }
       if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
         error(currentToken, "Garbage tokens at the end of the statement");
-      } do {
-        next();
-      } while(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI));
+      }
+      return _select;
+    } else if(tokEquals(TokenType.WITH)){
+      SelectStatement _select = parseRecursiveQuery();
+      _select.setVariables(_vars);
+      if(_select.getResultColumns().size() == 0 || _select.getJoinClauses().size() == 0){
+        return new EmptyType();
+      }
+      if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
+        error(currentToken, "Garbage tokens at the end of the statement");
+      }
       return _select;
     } else {
       return new EmptyType();
     }
   }
 
-  private SelectStatement parseSelect() {
-    SelectStatement _ss = new SelectStatement();
-    if (tokEquals(TokenType.WITH)) {
-      _ss.addToken(currentToken);
+  private SelectStatement parseRecursiveQuery(){
+    SelectStatement _ss;
+
+    match(TokenType.WITH);
+    match(TokenType.RECURSIVE);
+    match(TokenType.IDENT);
+    match(TokenType.LPAREN);
+    list(TokenType.IDENT);
+    match(TokenType.RPAREN);
+    match(TokenType.AS);
+
+    match(TokenType.LPAREN);
+    parseSimpleSelect();
+    match(TokenType.UNION);
+    match(TokenType.ALL);
+    parseSimpleSelect();
+    match(TokenType.RPAREN);
+
+    _ss = parseSimpleSelect();
+    if(tokEquals(TokenType.ORDER)){
       next();
-      if (tokEquals(TokenType.RECURSIVE)) {
-        _ss.addToken(currentToken);
-        next();
-      }
-      CommonTableExpression cte = parseCommonTableExpression();
-      _ss.addCommonTableExpression(cte);
-      while (tokEquals(TokenType.COMMA)) {
-        next();
-        cte = parseCommonTableExpression();
-        _ss.addCommonTableExpression(cte);
-      }
-    }
-    parseSelectSub(_ss);
-    while (matchIn(TokenType.UNION, TokenType.INTERSECT, TokenType.EXCEPT)) {
-      if (tokEquals(TokenType.UNION)) {
-        _ss.addToken(currentToken);
-        next();
-        if (tokEquals(TokenType.ALL)) {
-          _ss.addToken(currentToken);
-          next();
-        }
-      } else {
-        _ss.addToken(currentToken);
-        next();
-      }
-      parseSelectSub(_ss);
-    }
-    if (tokEquals(TokenType.ORDER)) {
-      _ss.addToken(currentToken);
-      next();
-      _ss.addToken(currentToken);
       match(TokenType.BY);
       parseOrderingTerm(_ss);
-      while (tokEquals(TokenType.COMMA)) {
+      while(tokEquals(TokenType.COMMA)) {
+        parseOrderingTerm(_ss);
+      }
+    }
+    if(tokEquals(TokenType.LIMIT)){
+      next();
+      parseExpr();
+      if(tokEquals(TokenType.OFFSET)){
+        next();
+        parseExpr();
+      }
+    }
+
+    return _ss;
+  }
+
+  private SelectStatement parseSelect() {
+    SelectStatement _ss;
+
+    _ss = parseSimpleSelect();
+
+    while(matchIn(TokenType.UNION, TokenType.MINUS, TokenType.EXCEPT, TokenType.INTERSECT)){
+      if(tokEquals(TokenType.UNION)){
+        next();
+        pass(TokenType.ALL);
+      } else {
+        next();
+      }
+      parseSimpleSelect();
+    }
+
+    if(tokEquals(TokenType.ORDER)){
+      next();
+      match(TokenType.BY);
+      parseOrderingTerm(_ss);
+      while(tokEquals(TokenType.COMMA)){
         next();
         parseOrderingTerm(_ss);
       }
     }
-    if (tokEquals(TokenType.LIMIT)) {
-      _ss.addToken(currentToken);
+
+    if(tokEquals(TokenType.LIMIT)){
       next();
-      match(TokenType.LONG);
-      if(tokEquals(TokenType.OFFSET) || tokEquals(TokenType.COMMA)){
+      parseExpr();
+      if(tokEquals(TokenType.OFFSET)){
         next();
-        match(TokenType.LONG);
+        parseExpr();
       }
     }
+
     return _ss;
   }
+
+  private SelectStatement parseSimpleSelect(){
+    SelectStatement _ss = new SelectStatement();
+    match(TokenType.SELECT);
+    if(tokEquals(TokenType.TOP)){
+      next();
+      parseTerm();
+    }
+
+    if(matchIn(TokenType.DISTINCT, TokenType.ALL)){
+      next();
+    }
+
+    if(tokEquals(TokenType.LPAREN)){
+      next();
+      parseResultColumn();
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        parseResultColumn();
+      }
+      match(TokenType.RPAREN);
+    } else {
+      parseResultColumn();
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        parseResultColumn();
+      }
+    }
+
+    if(tokEquals(TokenType.AS)){
+      next();
+      match(TokenType.IDENT);
+    }
+
+    match(TokenType.FROM);
+    parseTableOrSubquery();
+
+    if(tokEquals(TokenType.WHERE)){
+      next();
+      parseExpr();
+    }
+    if(tokEquals(TokenType.GROUP)){
+      next();
+      match(TokenType.BY);
+      parseExpr();
+      while(tokEquals(TokenType.COMMA)){
+        pass(TokenType.COMMA, TokenType.GROUP, TokenType.BY);
+        parseExpr();
+      }
+    }
+    if(tokEquals(TokenType.HAVING)){
+      next();
+      parseExpr();
+    }
+
+    //TODO: fix
+    return _ss;
+  }
+
   private CreateTable parseCreateTable() {
     int line = currentToken.getLine();
     int col = currentToken.getCol();
@@ -272,20 +416,20 @@ public class SQLParser {
       next();
     }
     match(TokenType.TABLE);
+
     if (currentToken.getType() == TokenType.IF) {
-      next();
-      match(TokenType.NOT);
-      match(TokenType.EXISTS);
+      pass(TokenType.IF, TokenType.NOT, TokenType.EXISTS);
     }
+
     String name = currentToken.getText();
     CreateTable table = new CreateTable(name);
     table.setLoc(line, col, offset, name.length());
     match(TokenType.IDENT);
-
     if (currentToken.getType() == TokenType.DOT) {
       next();
-      match(TokenType.IDENT);
+      table.setName(match(TokenType.IDENT));
     }
+
     // sync
     if(!tokEquals(TokenType.LPAREN)) {
       error( currentToken, "Expected to find '(' to start the column definition list");
@@ -293,6 +437,7 @@ public class SQLParser {
         next();
       } while(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.EOF));
     }
+
     if (tokEquals(TokenType.LPAREN)) {
       next();
 
@@ -316,161 +461,130 @@ public class SQLParser {
       next();
       match(TokenType.ROWID);
     }
+
+    match(TokenType.LPAREN);
+    if(matchIn(TokenType.CONSTRAINT, TokenType.CHECK, TokenType.UNIQUE, TokenType.FOREIGN, TokenType.PRIMARY)){
+      table.append(parseConstraint());
+    } else if(tokEquals(TokenType.IDENT)){
+      table.append(parseColumnDef());
+    } else {
+      error(currentToken, "Expecting constraint or column definition");
+      next();
+    }
+    while(tokEquals(TokenType.COMMA)){
+      next();
+      if(matchIn(TokenType.CONSTRAINT, TokenType.CHECK, TokenType.UNIQUE, TokenType.FOREIGN, TokenType.PRIMARY)){
+        table.append(parseConstraint());
+      } else if(tokEquals(TokenType.IDENT)){
+        table.append(parseColumnDef());
+      } else {
+        error(currentToken, "Expecting constraint or column definition");
+      }
+    }
+
     return table;
   }
 
   private InsertStatement parseInsert(){
-    InsertStatement _insert;
-    if(tokEquals(TokenType.REPLACE)){
-      next();
-    } else if(tokEquals(TokenType.INSERT)){
-      next();
-      if(tokEquals(TokenType.OR)){
-        next();
-        matchIn(TokenType.REPLACE, TokenType.ROLLBACK, TokenType.ABORT, TokenType.FAIL, TokenType.IGNORE);
-      }
-    } else {
-      error(currentToken, "Expecting INSERT or REPLACE but found '" + currentToken.getType() + "'.");
-    }
-    // sync
-    if(!tokEquals(TokenType.INTO)) {
-      error( currentToken, "Expected to find 'INTO'");
-      do {
-        next();
-      } while(!tokEquals(TokenType.INTO) && !tokEquals(TokenType.EOF));
-    }
+    InsertStatement _insert = null;
+
+    match(TokenType.INSERT);
     match(TokenType.INTO);
     String name = match(TokenType.IDENT);
     if(tokEquals(TokenType.DOT)){
-      next();
       name += ".";
+      next();
       name += match(TokenType.IDENT);
     }
-    _insert = new InsertStatement(name);
-    // sync
-    if(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.VALUES) && !tokEquals(TokenType.DEFAULT)
-      && !tokEquals(TokenType.SELECT) && !tokEquals(TokenType.WITH)) { //continuation of previous line
-      error( currentToken, "Expected to find '(' to start the column definition list");
-      do {
+
+    switch(currentToken.getType()){
+      case SET:
         next();
-      } while(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.VALUES) && !tokEquals(TokenType.DEFAULT)
-        && !tokEquals(TokenType.SELECT) && !tokEquals(TokenType.WITH) && !tokEquals(TokenType.EOF)); //continuation of previous line
-    }
-    if(tokEquals(TokenType.LPAREN)){
-      next();
-      ArrayList<String> cols = list(TokenType.IDENT);
-      match(TokenType.RPAREN);
-      for(String col: cols){
-        _insert.addColumn(col);
-      }
-    }
-    if(tokEquals(TokenType.DEFAULT)){
-      next();
-      match(TokenType.VALUES);
-      _insert.setDefault(_insert.getColumns().size());
-    } else if(tokEquals(TokenType.VALUES)){
-      next();
-      match(TokenType.LPAREN);
-      if(tokEquals(TokenType.DEFAULT)){
-        next();
-        _insert.addExpression(new Default());
-      } else {
-        Expression e = parseExpr();
-        _insert.addExpression(e);
-      }
-      while(tokEquals(TokenType.COMMA)){
-        next();
-        if(tokEquals(TokenType.DEFAULT)){
-          next();
-          _insert.addExpression(new Default());
-        } else {
-          Expression e = parseExpr();
-          _insert.addExpression(e);
-        }
-      }
-      match(TokenType.RPAREN);
-      while(tokEquals(TokenType.COMMA)){
-        next();
-        match(TokenType.LPAREN);
-        if(tokEquals(TokenType.DEFAULT)){
-          next();
-          _insert.addExpression(new Default());
-        } else {
-          Expression e = parseExpr();
-          _insert.addExpression(e);
-        }
+        match(TokenType.IDENT);
+        match(TokenType.EQ);
+        parseExpr();
         while(tokEquals(TokenType.COMMA)){
           next();
-          if(tokEquals(TokenType.DEFAULT)){
-            next();
-            _insert.addExpression(new Default());
-          } else {
-            Expression e = parseExpr();
-            _insert.addExpression(e);
-          }
+          match(TokenType.IDENT);
+          match(TokenType.EQ);
+          parseExpr();
         }
+        break;
+      case LPAREN:
+        next();
+        list(TokenType.IDENT);
         match(TokenType.RPAREN);
-      }
-    } else {
-      SelectStatement statement = parseSelect();
-      _insert.setSelect(statement);
+        if(tokEquals(TokenType.VALUES)){
+          parseValuesExpression();
+        } else {
+          pass(TokenType.DIRECT);
+          pass(TokenType.SORTED);
+          parseSelect();
+        }
+        break;
+      case VALUES:
+        parseValuesExpression();
+        break;
+      case DIRECT:
+        next();
+      case SORTED:
+        next();
+      case SELECT:
+        parseSelect();
+        break;
+      default:
+        error(currentToken, "Unexpected token in insert statement");
+        break;
     }
+
     return _insert;
   }
 
   private UpdateStatement parseUpdate(){
-    UpdateStatement _statement;
+    UpdateStatement _statement = null;
+
     match(TokenType.UPDATE);
-    if(tokEquals(TokenType.OR)){
-      next();
-      matchIn(TokenType.ROLLBACK, TokenType.ABORT, TokenType.REPLACE, TokenType.FAIL, TokenType.IGNORE);
-    }
     String name = match(TokenType.IDENT);
     if(tokEquals(TokenType.DOT)){
       name += ".";
       next();
       name += match(TokenType.IDENT);
     }
-    _statement = new UpdateStatement(name);
-    if(tokEquals(TokenType.AS)){
+
+    pass(TokenType.AS);
+    pass(TokenType.IDENT);
+
+    if(tokEquals(TokenType.SET)){
       next();
       match(TokenType.IDENT);
-    }
-    if(tokEquals(TokenType.INDEXED)){
-      next();
-      match(TokenType.BY);
-      match(TokenType.IDENT);
-    } else if(tokEquals(TokenType.NOT)){
-      next();
-      match(TokenType.INDEXED);
-    }
-    // sync
-    if(!tokEquals(TokenType.SET)) {
-      error( currentToken, "Expected to find 'SET' to begin update");
-      do {
-        next();
-      } while(!tokEquals(TokenType.SET) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF));
-    }
-    match(TokenType.SET);
-    String colName = match(TokenType.IDENT);
-    _statement.addColumn(colName);
-    match(TokenType.EQ);
-    parseExpr();
-    while(tokEquals(TokenType.COMMA)){
-      next();
-      colName = match(TokenType.IDENT);
-      _statement.addColumn(colName);
       match(TokenType.EQ);
       parseExpr();
+      while(tokEquals(TokenType.COMMA)){
+        next();
+        match(TokenType.IDENT);
+        match(TokenType.EQ);
+        parseExpr();
+      }
+    } else if(tokEquals(TokenType.LPAREN)){
+      next();
+      list(TokenType.IDENT);
+      match(TokenType.RPAREN);
+      match(TokenType.EQ);
+      match(TokenType.LPAREN);
+      parseSelect();
+      match(TokenType.RPAREN);
     }
+
     if(tokEquals(TokenType.WHERE)){
       next();
       parseExpr();
     }
+
     if(tokEquals(TokenType.LIMIT)){
       next();
       parseExpr();
     }
+
     return _statement;
   }
 
@@ -496,7 +610,8 @@ public class SQLParser {
   }
 
   private DeleteStatement parseDelete(){
-    DeleteStatement _delete;
+    DeleteStatement _delete = null;
+
     match(TokenType.DELETE);
     match(TokenType.FROM);
     String name = match(TokenType.IDENT);
@@ -505,25 +620,17 @@ public class SQLParser {
       next();
       name += match(TokenType.IDENT);
     }
-    _delete = new DeleteStatement(name);
-    if(tokEquals(TokenType.INDEXED)){
-      next();
-      match(TokenType.BY);
-      match(TokenType.IDENT);
-    } else if(tokEquals(TokenType.NOT)) {
-      next();
-      match(TokenType.INDEXED);
-    }
+
     if(tokEquals(TokenType.WHERE)){
       next();
-      Expression e = parseExpr();
-      _delete.setExpr(e);
+      parseExpr();
     }
+
     if(tokEquals(TokenType.LIMIT)){
       next();
-      Term t = parseTerm();
-      _delete.setTerm(t);
+      parseTerm();
     }
+
     return _delete;
   }
 
@@ -535,15 +642,8 @@ public class SQLParser {
       next();
       match(TokenType.IDENT);
     }
-    // sync
-    if(!tokEquals(TokenType.ADD) && !tokEquals(TokenType.ALTER) && !tokEquals(TokenType.DROP)
-      && !tokEquals(TokenType.SET) && !tokEquals(TokenType.RENAME)) { //continuation of previous line
-      error(currentToken, "Expected to find 'INTO'");
-      do {
-        next();
-      } while(!tokEquals(TokenType.INTO) && !tokEquals(TokenType.ALTER) && !tokEquals(TokenType.DROP) && !tokEquals(TokenType.SET)
-        && !tokEquals(TokenType.RENAME) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF)); //continuation of previous line
-    }
+    //fixme: fix error message, add in grammar, test, refactor
+    //match(DROP| RENAME...)
     if(tokEquals(TokenType.ADD)){
       next();
       pass(TokenType.COLUMN);
@@ -647,6 +747,7 @@ public class SQLParser {
     }
 
     Integer type = ColumnDefinition.lookUp.get(currentToken.getText());
+
     if(type == null) {
       datatype = Types.INTEGER;
     } else {
@@ -662,7 +763,7 @@ public class SQLParser {
     if((datatype == Types.NVARCHAR || datatype == Types.NCHAR || datatype == Types.BLOB || datatype == Types.CLOB || datatype == Types.DECIMAL )
             && tokEquals(TokenType.LPAREN)){
       next();
-      column.setStartInt( (int) currentToken.getLongNumber());
+      column.setStartInt((int) currentToken.getLongNumber());
       matchNum();
       if( datatype == Types.DECIMAL){
         if(tokEquals(TokenType.COMMA)){
@@ -674,306 +775,114 @@ public class SQLParser {
       match(TokenType.RPAREN);
     }
     return column;
-
-  }
-
-  private void parseSelectSub(SelectStatement current) {
-    if(tokEquals(TokenType.SELECT)) {
-      current.addToken(currentToken);
-      next();
-      current.setValues(false);
-      if (tokEquals(TokenType.DISTINCT) || tokEquals(TokenType.ALL)) {
-        current.addToken(currentToken);
-        next();
-      }
-      if(tokEquals(TokenType.LPAREN)) {
-        next();
-        ResultColumn rc = parseResultColumn(current);
-        current.addResultColumn(rc);
-        while (tokEquals(TokenType.COMMA)) {
-          next();
-          rc = parseResultColumn(current);
-          current.addResultColumn(rc);
-        }
-        match(TokenType.RPAREN);
-      } else {
-        ResultColumn rc = parseResultColumn(current);
-        current.addResultColumn(rc);
-        while (tokEquals(TokenType.COMMA)) {
-          next();
-          rc = parseResultColumn(current);
-          current.addResultColumn(rc);
-        }
-      }
-      parseSelectSub2(current);
-    } else if(tokEquals(TokenType.VALUES)){
-      current.addToken(currentToken);
-      next();
-      current.setValues(true);
-      match(TokenType.LPAREN);
-      Expression e = parseExpr();
-      current.addExpression(e, "VALUES");
-      while(tokEquals(TokenType.COMMA)){
-        next();
-        e = parseExpr();
-        current.addExpression(e, "VALUES");
-      }
-      match(TokenType.RPAREN);
-      while(tokEquals(TokenType.COMMA)){
-        next();
-        match(TokenType.LPAREN);
-        e = parseExpr();
-        current.addExpression(e, "VALUES");
-        while(tokEquals(TokenType.COMMA)){
-          next();
-          e = parseExpr();
-          current.addExpression(e, "VALUES");
-        }
-        match(TokenType.RPAREN);
-      }
-    } else {
-      error(currentToken, "Expecting 'select' or 'values' but found '" + currentToken.getType() + "'.");
-    }
-  }
-
-  private void parseSelectSub2(SelectStatement current){
-    // sync
-    if(!tokEquals(TokenType.FROM) && !tokEquals(TokenType.SEMI)) {
-      error( currentToken, "Expected to find 'FROM' to determine table of selection.");
-      do {
-        next();
-      } while(!tokEquals(TokenType.FROM) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF));
-    }
-    if (tokEquals(TokenType.FROM)) {
-      current.addToken(currentToken);
-      next();
-      JoinClause jc = parseJoinClause();
-      if(jc != null){
-        current.addTable(jc);
-      }
-    }
-    if (tokEquals(TokenType.WHERE)) {
-      current.addToken(currentToken);
-      next();
-      Expression e = parseExpr();
-      current.addExpression(e, "WHERE");
-    }
-    if (tokEquals(TokenType.GROUP)) {
-      current.addToken(currentToken);
-      next();
-      current.addToken(currentToken);
-      match(TokenType.BY);
-      Expression e = parseExpr();
-      current.addExpression(e, "GROUP BY");
-      while (tokEquals(TokenType.COMMA)) {
-        next();
-        e = parseExpr();
-        current.addExpression(e, "GROUP BY");
-      }
-      if (tokEquals(TokenType.HAVING)) {
-        current.addToken(currentToken);
-        next();
-        e = parseExpr();
-        current.addExpression(e, "HAVING");
-      }
-    }
-  }
-
-  private CommonTableExpression parseCommonTableExpression() {
-    CommonTableExpression _cte;
-    String s = match(TokenType.IDENT);
-    _cte = new CommonTableExpression(s);
-    if(tokEquals(TokenType.LPAREN)){
-      _cte.addToken(currentToken);
-      next();
-      ArrayList<String> sx = list(TokenType.IDENT);
-      for(String ss: sx){
-        _cte.addColumn(ss);
-      }
-      _cte.addToken(currentToken);
-      match(TokenType.RPAREN);
-    }
-    match(TokenType.AS);
-    match(TokenType.LPAREN);
-    _cte.addToken(currentToken);
-    SelectStatement _select = parseSelect();
-    _cte.setSelect(_select);
-    _cte.addToken(currentToken);
-    match(TokenType.RPAREN);
-    return _cte;
   }
 
   private void parseOrderingTerm(SelectStatement current) {
     Expression er = parseExpr();
     current.addExpression(er, "ORDER BY");
-    if(tokEquals(TokenType.COLLATE)){
-      current.addToken(currentToken);
-      next();
-      match(TokenType.IDENT);
-    }
     if(matchIn(TokenType.ASC, TokenType.DESC)){
       current.addToken(currentToken);
       next();
     }
+    if(tokEquals(TokenType.NULLS)){
+      current.addToken(currentToken);
+      next();
+      if(!matchIn(TokenType.FIRST, TokenType.LAST)){
+        error(currentToken, "Expecting 'first' or 'last' but found '" + currentToken.getText() + "'.");
+      }
+      next();
+    }
   }
 
-  private ResultColumn parseResultColumn(SelectStatement current) {
+  private ResultColumn parseResultColumn() {
     ResultColumn _rc = null;
     if(tokEquals(TokenType.TIMES)){
-      next();
       _rc = new ResultColumn("*");
     } else if(tokEquals(TokenType.IDENT)){
-      String tempname = match(TokenType.IDENT);
+      String name = match(TokenType.IDENT);
       if(tokEquals(TokenType.DOT)){
+        name += ".";
         next();
-        if(tokEquals(TokenType.TIMES)){
-          next();
-          _rc = new ResultColumn(tempname+".*");
-        } else if(tokEquals(TokenType.IDENT)){
-          _rc = new ResultColumn(tempname+"."+currentToken.getText());
-          next();
-        } else {
-          error(currentToken, "Expecting tablename.(columnname) but found '" + currentToken.getType() + "'.");
+        if(tokEquals(TokenType.IDENT)){
+          name += match(TokenType.IDENT);
+        } else if(tokEquals(TokenType.DOT)){
+          name += "*";
         }
-      } else if(tokEquals(TokenType.FROM)){
-        _rc = new ResultColumn(tempname);
-        return _rc;
-      } else {
-        _rc = new ResultColumn(tempname);
       }
-    } else if(tokEquals(TokenType.LPAREN)){
-      _rc = new ResultColumn();
-      _rc.addToken(currentToken);
-      next();
-      Expression e = parseExpr();
-      _rc.addExpression(e);
-      _rc.addToken(currentToken);
-      match(TokenType.RPAREN);
+      _rc = new ResultColumn(name);
     } else {
-      Expression e = parseExpr();
-      _rc = new ResultColumn(e);
-      if(tokEquals(TokenType.AS)){
-        next();
-      }
-      match(TokenType.IDENT);
+      error(currentToken, "Expecting a result column (* or columnname) but found '" + currentToken.getText() + "'.");
     }
     return _rc;
   }
 
   private TableOrSubquery parseTableOrSubquery(){
-    TableOrSubquery _table = null;
-    // sync
-    if(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.IDENT)) {
-      error( currentToken, "Expected to find '(' to start the subquery, or a database/table name");
-      do {
-        next();
-      } while(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.IDENT) && !tokEquals(TokenType.SEMI) && !tokEquals(TokenType.EOF));
-    }
-    if(tokEquals(TokenType.LPAREN)){
-      if(matchIn(TokenType.WITH, TokenType.RECURSIVE, TokenType.SELECT, TokenType.VALUES)){
-        SelectStatement s = parseSelect();
-        _table = new TableOrSubquery(s);
-        match(TokenType.RPAREN);
-        if(tokEquals(TokenType.AS)){
-          next();
-          String al = match(TokenType.IDENT);
-          _table.setAlias(al);
-        }
-      } else {
-        JoinClause j = parseJoinClause();
-        _table = new TableOrSubquery(j);
-        match(TokenType.RPAREN);
-      }
-    } else if(tokEquals(TokenType.IDENT)){
-      String name = currentToken.getCasedText();
+    TableOrSubquery _table = parseBasicTableOrSubquery();
+
+    if(tokEquals(TokenType.ON)){
       next();
-      if(tokEquals(TokenType.DOT)){
-        next();
-        name += ".";
-        name += match(TokenType.IDENT);
-      }
-      _table = new TableOrSubquery(name);
-      if(tokEquals(TokenType.AS)){
-        next();
-        String al = match(TokenType.IDENT);
-        _table.setAlias(al);
-      }
-      if(tokEquals(TokenType.INDEXED)){
-        next();
-        match(TokenType.BY);
-        String in = match(TokenType.IDENT);
-        _table.setIndex(in);
-      } else if(tokEquals(TokenType.NOT)){
-        next();
-        match(TokenType.INDEXED);
-      }
-    } else {
-      error(currentToken, "Expecting Table Name or '(' but found '" + currentToken.getType() + "'.");
+      parseExpr();
     }
+
     return _table;
   }
 
-  private JoinClause parseJoinClause(){
-    JoinClause _results;
-    TableOrSubquery t = parseTableOrSubquery();
-    while(t == null || tokEquals(TokenType.EOF)){
+  private void parseValuesExpression(){
+    match(TokenType.VALUES);
+    match(TokenType.LPAREN);
+    parseExpr();
+    while(tokEquals(TokenType.COMMA)){
       next();
-      if(tokEquals(TokenType.EOF)){
-        return null;
-      }
-      t = parseTableOrSubquery();
+      parseExpr();
     }
-    _results = new JoinClause(t);
-    while(matchIn(TokenType.COMMA, TokenType.NATURAL, TokenType.LEFT, TokenType.INNER, TokenType.CROSS)) {
-      String s = "";
-      if (tokEquals(TokenType.COMMA)) {
-        s = ", ";
+    match(TokenType.RPAREN);
+    while(tokEquals(TokenType.COMMA)){
+      next();
+      match(TokenType.LPAREN);
+      parseExpr();
+      while(tokEquals(TokenType.COMMA)){
         next();
-      } else {
-        if (tokEquals(TokenType.NATURAL)) {
-          s = "NATURAL";
-          next();
-        }
-        switch (currentToken.getType()) {
-          case LEFT:
-            next();
-            s += " LEFT";
-            if (tokEquals(TokenType.OUTER)) {
-              s += " OUTER";
-              next();
-            }
-            break;
-          case INNER:
-            s += " INNER";
-            next();
-            break;
-          case CROSS:
-            s += " CROSS";
-            next();
-            break;
-          default:
-            error(currentToken, "Expecting join operation or ',' but found '" + currentToken.getType() + "'.");
-            break;
-        }
-        match(TokenType.JOIN);
-        s += " JOIN";
+        parseExpr();
       }
-      TableOrSubquery ts = parseTableOrSubquery();
-      if(tokEquals(TokenType.ON)){
-        next();
-        Expression e = parseExpr();
-        _results.add(ts, s, e);
-      } else if(tokEquals(TokenType.USING)){
-        next();
-        match(TokenType.LPAREN);
-        ArrayList<String> s2 = list(TokenType.IDENT);
-        match(TokenType.RPAREN);
-        _results.add(ts, s, s2);
-      } else {
-        _results.add(ts, s);
-      }
+      match(TokenType.RPAREN);
     }
-    return _results;
+  }
+
+  private TableOrSubquery parseBasicTableOrSubquery(){
+    TableOrSubquery _table = null;
+
+    if(tokEquals(TokenType.IDENT)){
+      String name = match(TokenType.IDENT);
+      if(tokEquals(TokenType.DOT)){
+        name += ".";
+        next();
+        name += match(TokenType.IDENT);
+      }
+    } else if(tokEquals(TokenType.LPAREN)){
+      next();
+      parseSelect();
+      match(TokenType.RPAREN);
+    } else if(tokEquals(TokenType.VALUES)){
+      parseValuesExpression();
+    } else {
+      error(currentToken, "Expecting table or subquery but found '" + currentToken.getText() + "'.");
+    }
+
+    pass(TokenType.AS);
+    pass(TokenType.IDENT);
+
+    if(matchIn(TokenType.LEFT, TokenType.RIGHT, TokenType.INNER, TokenType.CROSS, TokenType.NATURAL)){
+      if(tokEquals(TokenType.LEFT) || tokEquals(TokenType.RIGHT)){
+        next();
+        match(TokenType.OUTER);
+      } else{
+        next();
+      }
+      match(TokenType.JOIN);
+      parseBasicTableOrSubquery();
+    }
+
+    return _table;
   }
 
   private boolean isComparator() {
@@ -992,23 +901,16 @@ public class SQLParser {
     int offset = currentToken.getOffset();
     int line = currentToken.getLine();
     match(TokenType.IDENT);
+
     ColumnDefinition column = parseTypeName(columnName);
     column.setLoc( line, col, offset, columnName.length() );
-    if (tokEquals(TokenType.DEFAULT)) {
+
+    if(tokEquals(TokenType.DEFAULT)){
       next();
-      if(tokEquals(TokenType.LONG) || tokEquals(TokenType.INTERNALDOUBLE) || tokEquals(TokenType.IDENT)
-        || tokEquals(TokenType.NULL) || tokEquals(TokenType.CURRENT_DATE) || tokEquals(TokenType.CURRENT_TIME)
-        || tokEquals(TokenType.CURRENT_TIMESTAMP)){ //Limited parse expressions
-        next();
-      }
+      parseTerm();
     }
 
-    if(tokEquals(TokenType.CONSTRAINT)){
-      next();
-      match(TokenType.IDENT);
-    }
-    //TODO: Add 'as' clause when select statements work
-    if (tokEquals(TokenType.NOT)) {
+    if (tokEquals(TokenType.NOT)){
       next();
       match(TokenType.NULL);
       column.setNotNull(true);
@@ -1017,7 +919,7 @@ public class SQLParser {
       column.setNull(true);
     }
 
-    if (tokEquals(TokenType.AUTO_INCREMENT) || tokEquals(TokenType.IDENTITY)) {
+    if (tokEquals(TokenType.AUTO_INCREMENT) || tokEquals(TokenType.IDENTITY)){
       if(tokEquals(TokenType.AUTO_INCREMENT)){
         column.setAutoIncrement(true);
       }
@@ -1038,7 +940,7 @@ public class SQLParser {
         match(TokenType.RPAREN);
       }
     }
-    //Implement Selectivity, Comment?
+
     if (tokEquals(TokenType.UNIQUE)) {
       column.setUnique(true);
       next();
@@ -1062,21 +964,21 @@ public class SQLParser {
 
   private Constraint parseConstraint() {
     Constraint _constraint = new Constraint();
-    if (tokEquals(TokenType.CONSTRAINT)) {
+
+    if(tokEquals(TokenType.CONSTRAINT)){
       next();
       if (tokEquals(TokenType.IF)) {
-        next();
-        match(TokenType.NOT);
-        match(TokenType.EXISTS);
+        pass(TokenType.IF, TokenType.NOT, TokenType.EXISTS);
       }
       _constraint.setName(match(TokenType.IDENT));
     }
-    if (tokEquals(TokenType.CHECK)) {
+
+    if(tokEquals(TokenType.CHECK)){
       next();
       _constraint.setType(Constraint.constraintType.CHECK);
       Expression e = parseExpr();
       _constraint.setExpr(e);
-    } else if (tokEquals(TokenType.UNIQUE)) {
+    } else if(tokEquals(TokenType.UNIQUE)){
       String t;
       next();
       match(TokenType.LPAREN);
@@ -1089,47 +991,48 @@ public class SQLParser {
         _constraint.appendColumn(t);
       }
       match(TokenType.RPAREN);
-    } else if (tokEquals(TokenType.PRIMARY)) {
+    } else if(tokEquals(TokenType.PRIMARY)){
       next();
       match(TokenType.KEY);
       if(tokEquals(TokenType.HASH)){
         next();
         _constraint.setType(Constraint.constraintType.PRIMARYHASH);
-      }
-      else{
+      } else{
         _constraint.setType(Constraint.constraintType.PRIMARY);
       }
       match(TokenType.LPAREN);
       String t = match(TokenType.IDENT);
       _constraint.appendColumn(t);
 
-      while (tokEquals(TokenType.COMMA)) {
+      while (tokEquals(TokenType.COMMA)){
         next();
         t = match(TokenType.IDENT);
         _constraint.appendColumn(t);
       }
       match(TokenType.RPAREN);
-    } else if (tokEquals(TokenType.FOREIGN)) {
+    } else if (tokEquals(TokenType.FOREIGN)){
       _constraint.setType(Constraint.constraintType.FOREIGN);
       next();
       match(TokenType.KEY);
       match(TokenType.LPAREN);
+
       if(tokEquals(TokenType.IDENT)) {
         ArrayList<String> fKs = list(TokenType.IDENT);
         _constraint.setColumnNames(fKs);
       } else {
         error(currentToken, "Expecting a list of columns to be referenced, but did not find said list, instead found '" +
-        currentToken.getText() + "'.");
+          currentToken.getText() + "'.");
         ArrayList<String> fKs = new ArrayList<>();
         _constraint.setColumnNames(fKs);
       }
+
       match(TokenType.RPAREN);
       match(TokenType.REFERENCES);
       if(tokEquals(TokenType.IDENT)){
         _constraint.setReferentialName(currentToken.getText());
         next();
       }
-      if (tokEquals(TokenType.LPAREN)) {
+      if (tokEquals(TokenType.LPAREN)){
         next();
         ArrayList<String> refs = list(TokenType.IDENT);
         for(String r: refs){
@@ -1137,20 +1040,24 @@ public class SQLParser {
         }
         match(TokenType.RPAREN);
       }
-      while (tokEquals(TokenType.ON)) {
+
+      while (tokEquals(TokenType.ON)){
         next();
-        if (tokEquals(TokenType.DELETE)) {
+        if (tokEquals(TokenType.DELETE)){
           next();
           _constraint.setOnDelete(parseReferentialAction());
+          if(tokEquals(TokenType.ON)){
+            pass(TokenType.ON, TokenType.UPDATE);
+            _constraint.setOnUpdate(parseReferentialAction());
+          }
         } else if(tokEquals(TokenType.UPDATE)){
           next();
           _constraint.setOnUpdate(parseReferentialAction());
-        }
-        else {
+        } else{
           error(currentToken, "Expecting DELETE or UPDATE but found '" + currentToken.getText() + ".");
         }
       }
-    } else {
+    } else{
       specialError("Column Definition or Constraint Definition");
     }
     return _constraint;

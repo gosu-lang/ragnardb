@@ -27,6 +27,11 @@ public class CreateTable {
     _typeName = new NounHandler(Character.toUpperCase(name.charAt(0)) + name.substring(1)).getSingular();
   }
 
+  public void setName(String name){
+    _tableName = name;
+    _typeName = new NounHandler(Character.toUpperCase(name.charAt(0)) + name.substring(1)).getSingular();
+  }
+
   public void append(ColumnDefinition c){
     columns.add(c);
   }
