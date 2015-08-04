@@ -14,6 +14,8 @@ public class DeleteStatement extends Statement{
   public DeleteStatement(String name){
     _tableName = name;
     _vars = new ArrayList<>();
+    _expr = null;
+    _term = null;
   }
 
   public String getTableName() {
@@ -60,5 +62,20 @@ public class DeleteStatement extends Statement{
 
   public ArrayList<JavaVar> getVariables(){
     return _vars;
+  }
+
+  @Override
+  public String toString(){
+    StringBuilder sb = new StringBuilder("<Delete>\nFROM\n");
+    sb.append(_tableName+"\n");
+    if(_expr != null){
+      sb.append("WHERE\n");
+      sb.append(_expr.toString("\t"));
+    }
+    if(_term != null){
+      sb.append("LIMIT\n");
+      sb.append(_term.toString("\t"));
+    }
+    return sb.toString();
   }
 }

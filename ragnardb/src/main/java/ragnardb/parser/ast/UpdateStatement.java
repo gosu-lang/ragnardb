@@ -48,4 +48,25 @@ public class UpdateStatement extends Statement{
     return e;
   }
 
+  @Override
+  public String toString(){
+    StringBuilder sb = new StringBuilder("<Update>\n");
+    sb.append(_tableName+"\n");
+    sb.append("\t<Columns>\n");
+    for(String columnname: _columns){
+      sb.append("\t" + columnname + "\n");
+    }
+    return sb.toString();
+  }
+
+  protected String toString(String initial){
+    StringBuilder sb = new StringBuilder(initial+"<Update>\n");
+    sb.append(initial+_tableName+"\n");
+    sb.append(initial+"\t<Columns>\n");
+    for(String columnname: _columns){
+      sb.append(initial+"\t" + columnname + "\n");
+    }
+    return sb.toString();
+  }
+
 }
