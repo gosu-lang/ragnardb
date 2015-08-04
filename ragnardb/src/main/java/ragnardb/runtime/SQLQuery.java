@@ -123,6 +123,19 @@ public class SQLQuery<T> implements Iterable<T> {
     return new SetOpQuery(this, query, " UNION " , _metadata , _rootType);
   }
 
+  public SQLQuery<T> unionAll( SQLQuery query) {
+    return new SetOpQuery(this, query, " UNION ALL " , _metadata , _rootType);
+  }
+
+  public SQLQuery<T> intersect( SQLQuery query) {
+    return new SetOpQuery(this, query, " INTERSECT " , _metadata , _rootType);
+  }
+
+  public SQLQuery<T> except( SQLQuery query) {
+    return new SetOpQuery(this, query, " EXCEPT " , _metadata , _rootType);
+  }
+
+
 
 
   public boolean delete() throws SQLException
