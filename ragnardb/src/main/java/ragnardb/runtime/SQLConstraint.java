@@ -89,6 +89,10 @@ public abstract class SQLConstraint
     return new OrConstraint(_propertyInfo, this, sql);
   }
 
+  public static SQLConstraint not(SQLConstraint sql){
+    return new NotConstraint(sql);
+  }
+
 
   private static class CombinedConstraint extends SQLConstraint
   {
@@ -376,6 +380,29 @@ public abstract class SQLConstraint
     }
   }
 
+
+  private static class NotConstraint extends SQLConstraint
+  {
+
+
+    private SQLConstraint _original;
+
+    NotConstraint(SQLConstraint original)
+    {
+      _original = original;
+    }
+
+    public String getSQL( ITypeToSQLMetadata metadata )
+    {
+      return " NOT " + _original.getSQL(metadata);
+    }
+
+    List<Object> getArgs()
+    {
+      return _original.getArgs();
+    }
+  }
+
   private static class ComparatorConstraint extends SQLConstraint
   {
     List<Object> _objs;
@@ -399,7 +426,7 @@ public abstract class SQLConstraint
 
     public String getSQL( ITypeToSQLMetadata metadata )
     {
-      return metadata.getColumnForProperty( _propertyInfo ) + _comparator + RHS;
+      return metadata.getColumnForProperty(_propertyInfo) + _comparator + RHS;
     }
 
     List<Object> getArgs()
