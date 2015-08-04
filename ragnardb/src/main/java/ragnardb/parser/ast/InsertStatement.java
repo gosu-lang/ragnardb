@@ -105,4 +105,47 @@ public class InsertStatement extends Statement{
     e.add(_tableName);
     return e;
   }
+
+  @Override
+  public String toString(){
+    StringBuilder sb = new StringBuilder("<Insert/Replace>\nINTO\n");
+    sb.append(_tableName + "\n");
+    if(_columns.size()!=0){
+      sb.append("\t<Columns>\n");
+      for(String columnname: _columns){
+        sb.append("\t"+columnname+"\n");
+      }
+    }
+    if(_select == null){
+      sb.append("\t<Values>\n");
+      for(Expression expr: _expressions){
+        sb.append(expr.toString("\t"));
+      }
+    } else {
+      sb.append("\t<Values as Select>\n");
+      sb.append(_select.toString("\t"));
+    }
+    return sb.toString();
+  }
+
+  protected String toString(String initial){
+    StringBuilder sb = new StringBuilder(initial+"<Insert/Replace>\n"+initial+"INTO\n");
+    sb.append(initial+_tableName + "\n");
+    if(_columns.size()!=0){
+      sb.append(initial+"\t<Columns>\n");
+      for(String columnname: _columns){
+        sb.append(initial+"\t"+columnname+"\n");
+      }
+    }
+    if(_select == null){
+      sb.append(initial+"\t<Values>\n");
+      for(Expression expr: _expressions){
+        sb.append(expr.toString(initial+"\t"));
+      }
+    } else {
+      sb.append(initial+"\t<Values as Select>\n");
+      sb.append(_select.toString(initial+"\t"));
+    }
+    return sb.toString();
+  }
 }

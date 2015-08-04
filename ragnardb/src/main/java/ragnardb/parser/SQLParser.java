@@ -189,6 +189,11 @@ public class SQLParser {
       if(_select.getResultColumns().size() == 0 || _select.getJoinClauses().size() == 0){
         return new EmptyType();
       }
+      if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
+        error(currentToken, "Garbage tokens at the end of the statement");
+      } do {
+        next();
+      } while(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI));
       return _select;
     } else {
       return new EmptyType();
@@ -743,7 +748,9 @@ public class SQLParser {
       current.addToken(currentToken);
       next();
       JoinClause jc = parseJoinClause();
-      current.addTable(jc);
+      if(jc != null){
+        current.addTable(jc);
+      }
     }
     if (tokEquals(TokenType.WHERE)) {
       current.addToken(currentToken);
@@ -909,6 +916,13 @@ public class SQLParser {
   private JoinClause parseJoinClause(){
     JoinClause _results;
     TableOrSubquery t = parseTableOrSubquery();
+    while(t == null || tokEquals(TokenType.EOF)){
+      next();
+      if(tokEquals(TokenType.EOF)){
+        return null;
+      }
+      t = parseTableOrSubquery();
+    }
     _results = new JoinClause(t);
     while(matchIn(TokenType.COMMA, TokenType.NATURAL, TokenType.LEFT, TokenType.INNER, TokenType.CROSS)) {
       String s = "";
