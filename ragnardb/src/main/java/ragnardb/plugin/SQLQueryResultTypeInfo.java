@@ -36,7 +36,7 @@ public class SQLQueryResultTypeInfo extends SQLBaseTypeInfo{
     ArrayList<ResultColumn> results = statement.getResultColumns();
     for(ResultColumn rc: results){
       for(ColumnDefinition cd: columnDefinitions){
-        if(cd.getColumnName().toLowerCase().equals(rc.getResult().toLowerCase())){
+        if(cd.getColumnName().toLowerCase().equals(rc.getName().toLowerCase())){
           SQLColumnPropertyInfo col = new SQLColumnPropertyInfo(cd.getColumnName(), cd.getPropertyName(),
             getGosuType(cd.getSQLType()),this, cd.getOffset(), cd.getLength());
           _propertiesMap.put(col.getName(), col);

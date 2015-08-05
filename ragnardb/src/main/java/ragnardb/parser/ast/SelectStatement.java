@@ -7,194 +7,131 @@ import java.util.ArrayList;
  * Created by klu on 6/22/2015.
  */
 public class SelectStatement extends Statement {
-  private boolean isRecursive, isValues;
-  private ArrayList<CommonTableExpression> recursiveTables;
-  private ArrayList<ResultColumn> results;
-  private ArrayList<JoinClause> tables;
-  private ArrayList<JavaVar> variables;
+  private SimpleSelect _primary;
+  private ArrayList<JavaVar> _variables;
+  private ArrayList<SimpleSelect> _chained;
+  private ArrayList<SimpleSelect> _recursive;
+  private ArrayList<String> _chains;
+  private ArrayList<OrderingTerm> _orderingterms;
+  private Expression _limitingterm;
+  private Expression _offsetterm;
 
-  /*This is to keep track of which tokens we have to swallow/pass through*/
-  private ArrayList<Token> swallowedTokens = new ArrayList<>();
-
-  private class SelectExpression {
-    private Expression containedExpression;
-    private String containedType;
-
-    private SelectExpression(Expression e, String s){
-      containedExpression = e;
-      containedType = s;
-    }
+  public SelectStatement(SimpleSelect simpleSelect){
+    _primary = simpleSelect;
+    _chained = new ArrayList<>();
+    _recursive = new ArrayList<>();
+    _chains = new ArrayList<>();
+    _orderingterms = new ArrayList<>();
+    _limitingterm = null;
+    _offsetterm = null;
   }
 
-  private ArrayList<SelectExpression> expressions;
-
-  public SelectStatement(){
-    isRecursive = false;
-    isValues = false;
-    recursiveTables = new ArrayList<>();
-    results = new ArrayList<>();
-    expressions = new ArrayList<>();
-    tables = new ArrayList<>();
-    variables = new ArrayList<>();
+  public void addChainedSelect(SimpleSelect simpleSelect, String string){
+    _chained.add(simpleSelect);
+    _chains.add(string);
   }
 
-  public SelectStatement(CommonTableExpression cte){
-    isRecursive = true;
-    recursiveTables = new ArrayList<>();
-    recursiveTables.add(cte);
-    results = new ArrayList<>();
-    expressions = new ArrayList<>();
-    tables = new ArrayList<>();
-    variables = new ArrayList<>();
+  public void setRecursiveSelect(SimpleSelect firstQuery, SimpleSelect secondQuery){
+    _recursive.add(firstQuery);
+    _recursive.add(secondQuery);
   }
 
-  public SelectStatement(ResultColumn rc){
-    recursiveTables = new ArrayList<>();
-    results = new ArrayList<>();
-    results.add(rc);
-    expressions = new ArrayList<>();
-    tables = new ArrayList<>();
-    variables = new ArrayList<>();
+  public void addOrderingTerm(OrderingTerm term){
+    _orderingterms.add(term);
   }
 
-  public SelectStatement(CommonTableExpression cte, ResultColumn rc){
-    isRecursive = true;
-    recursiveTables = new ArrayList<>();
-    recursiveTables.add(cte);
-    results = new ArrayList<>();
-    results.add(rc);
-    expressions = new ArrayList<>();
-    tables = new ArrayList<>();
-    variables = new ArrayList<>();
+  public void setLimitingTerm(Expression e){
+    _limitingterm = e;
   }
 
-  public SelectStatement(boolean b, Expression e, String s){
-    isValues = b;
-    recursiveTables = new ArrayList<>();
-    results = new ArrayList<>();
-    expressions = new ArrayList<>();
-    expressions.add(new SelectExpression(e, s));
-    tables = new ArrayList<>();
-    variables = new ArrayList<>();
+  public void setOffsetterm(Expression e){
+    _offsetterm = e;
   }
 
-  public void setValues(boolean b){isValues = b;}
-
-  public void addExpression(Expression e, String s){
-    expressions.add(new SelectExpression(e,s));
+  public ArrayList<ResultColumn> getResultColumns(){
+    return _primary.getResultColumns();
   }
 
-  public void addCommonTableExpression(CommonTableExpression cte){
-    recursiveTables.add(cte);
+  public void setVariables(ArrayList<JavaVar> vars){
+    _variables = vars;
   }
 
-  public void addResultColumn(ResultColumn rc){
-    results.add(rc);
-  }
-
-  public ArrayList<ResultColumn> getResultColumns(){return results;}
-
-  public ArrayList<JoinClause> getJoinClauses(){return tables;}
-
-  public ArrayList<CommonTableExpression> getCommonTableExpressions(){return recursiveTables;}
-
-  public ArrayList<Expression> getExpressionsOfClause(String clause){
-    ArrayList<Expression> _expressions = new ArrayList<>();
-    for(SelectExpression se: expressions){
-      if(se.containedType.equals(clause)){
-        _expressions.add(se.containedExpression);
-      }
-    }
-    return _expressions;
-  }
-
-  public void addToken(Token t){swallowedTokens.add(t);}
-
-  public ArrayList<Token> getSwallowedTokens(){return swallowedTokens;}
-
-  public void addTable(JoinClause jc){
-    tables.add(jc);
-  }
-
-  public String getTable(){
-    return tables.get(0).getNames().get(0);
+  public ArrayList<JavaVar> getVariables(){
+    return _variables;
   }
 
   public ArrayList<String> getTables(){
-    return tables.get(0).getNames();
+    ArrayList<TableOrSubquery> tables = _primary.getTablesAndSubqueries();
+    ArrayList<String> out = new ArrayList<>();
+    for(TableOrSubquery table: tables){
+      out.add(table.getName());
+    }
+    return out;
   }
 
-  public void setVariables(ArrayList<JavaVar> vars){variables = vars;}
-
-  public ArrayList<JavaVar> getVariables(){return variables;}
-
-  public void addVariable(JavaVar var){variables.add(var);}
-
+  @Override
   public String toString(){
-    StringBuilder sb = new StringBuilder("<Select>\n");
-    if(isRecursive){
-      sb.append("(RECURSIVE)\n");
-      for(CommonTableExpression cte: recursiveTables){
-        sb.append(cte.toString("\t"));
-      }
-      sb.append("(END RECURSIVE)\n");
+    StringBuilder sb = new StringBuilder();
+    if(_recursive.size()>0){
+      sb.append("WITH RECURSIVE\n");
+      sb.append("Initial Query:\n");
+      sb.append(_recursive.get(0));
+      sb.append("Recursive Query:\n");
+      sb.append(_recursive.get(1));
+      sb.append("Outside Query:\n");
     }
-    if(isValues){
-      sb.append("<Values>\n");
-      for(SelectExpression se: expressions){
-        sb.append("\t" + se.containedType + "\n");
-        sb.append(se.containedExpression.toString("\t"));
+    sb.append(_primary);
+    if(_chained.size()>0){
+      for(int i = 0; i< _chained.size(); i++){
+        sb.append(_chains.get(i)+"\n");
+        sb.append(_chained.get(i));
       }
-    } else {
-      sb.append("\tSELECT\n");
-      for(ResultColumn rc: results){
-        sb.append(rc.toString("\t"));
-      }
-      sb.append("\tFROM\n");
-      for(JoinClause jc: tables){
-        sb.append(jc.toString("\t"));
-      }
-      for(SelectExpression se: expressions){
-        sb.append("\t" + se.containedType + "\n");
-        sb.append(se.containedExpression.toString("\t"));
-      }
+    }
+    for(OrderingTerm _order: _orderingterms){
+      sb.append("ORDER BY\n");
+      sb.append(_order.toString("\t"));
+    }
+    if(_limitingterm != null){
+      sb.append("LIMIT\n");
+      sb.append(_limitingterm.toString("\t"));
+    }
+    if(_offsetterm != null){
+      sb.append("OFFSET\n");
+      sb.append(_offsetterm.toString("\t"));
     }
     return sb.toString();
   }
 
   protected String toString(String initial){
-    StringBuilder sb = new StringBuilder(initial+"<Select>\n");
-    if(isRecursive){
-      sb.append(initial+"(RECURSIVE)\n");
-      for(CommonTableExpression cte: recursiveTables){
-        sb.append(cte.toString(initial+"\t"));
-      }
-      sb.append(initial+"(END RECURSIVE)\n");
+    StringBuilder sb = new StringBuilder();
+    if(_recursive.size()>0){
+      sb.append(initial+"WITH RECURSIVE\n");
+      sb.append(initial+"Initial Query:\n");
+      sb.append(_recursive.get(0).toString(initial));
+      sb.append(initial+"Recursive Query:\n");
+      sb.append(_recursive.get(1).toString(initial));
+      sb.append(initial+"Outside Query:\n");
     }
-    if(isValues){
-      sb.append(initial+"<Values>\n");
-      for(SelectExpression se: expressions){
-        sb.append(initial+"\t" + se.containedType + "\n");
-        sb.append(se.containedExpression.toString(initial+"\t"));
+    sb.append(_primary.toString(initial));
+    if(_chained.size()>0){
+      for(int i = 0; i< _chained.size(); i++){
+        sb.append(initial+_chains.get(i)+"\n");
+        sb.append(_chained.get(i).toString(initial));
       }
-    } else {
-      sb.append(initial+"\tSELECT\n");
-      for(ResultColumn rc: results){
-        sb.append(rc.toString(initial+"\t"));
-      }
-      sb.append(initial+"\tFROM\n");
-      for(JoinClause jc: tables){
-        sb.append(jc.toString(initial+"\t"));
-      }
-      for(SelectExpression se: expressions){
-        sb.append(initial+"\t" + se.containedType + "\n");
-        sb.append(se.containedExpression.toString(initial+"\t"));
-      }
+    }
+    for(OrderingTerm _order: _orderingterms){
+      sb.append(initial+"ORDER BY\n");
+      sb.append(_order.toString(initial+"\t"));
+    }
+    if(_limitingterm != null){
+      sb.append(initial+"LIMIT\n");
+      sb.append(_limitingterm.toString(initial+"\t"));
+    }
+    if(_offsetterm != null){
+      sb.append(initial+"OFFSET\n");
+      sb.append(_offsetterm.toString(initial+"\t"));
     }
     return sb.toString();
   }
-
-
-
 
 }

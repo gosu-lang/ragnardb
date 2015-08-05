@@ -71,6 +71,8 @@ UNICODE_ESC
     :   '\\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT
     ;
 	
+array	:	'(' expr (',' expr)* ')'
+	;
 
 tablename
 	:	(ID '.')? ID;
@@ -163,6 +165,7 @@ basictableorsubquery
 resultcolumn
         :       (ID '.')? ('*'
         |	columnname )
+        |	'NULL'
         ;
                 
 orderingterm
@@ -194,7 +197,7 @@ factor	:	term (('*'|'/'|'%') term)*
 
 term	:	literalvalue
 	|	'?' INT
-	|	'(' (expr|selectstmt) ')'
+	|	'(' (array|selectstmt) ')'
 	|	'CASE' (case|casewhen)
 	;
 	

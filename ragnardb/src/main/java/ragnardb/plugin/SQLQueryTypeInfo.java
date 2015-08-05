@@ -158,13 +158,13 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
     }
     if(resultColumns.size() == 1){
       ResultColumn col = resultColumns.get(0);
-      String finalChar = col.getResult().substring(col.getResult().length()-1);
+      String finalChar = Character.toString(col.getName().charAt(col.getName().length() - 1));
       if(finalChar.equals("*")){
         if(tableNames.size() == 1){
           return type.getTable(tableNames.get(0).toLowerCase());
         }
       } else { //now we presume that we are dealing with a single column
-        String column = col.getResult();
+        String column = col.getName();
         return type.getColumn(column, tableNames.get(0).toLowerCase());
       }
     }
@@ -178,7 +178,7 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
     ArrayList<String> columnNames = new ArrayList<>();
     if(resultColumns.size() == 1){
       ResultColumn col = resultColumns.get(0);
-      String finalChar = col.getResult().substring(col.getResult().length() - 1);
+      String finalChar = Character.toString(col.getName().charAt(col.getName().length() - 1));
       if(finalChar.equals("*")){
         ArrayList<ISQLTableType> tables = new ArrayList<>();
         for(String tName: tableNames){
@@ -195,12 +195,12 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
         }
         return type.getResults(columns, select);
       } else {
-        String[] resultInfo = col.getResult().split("\\.");
+        String[] resultInfo = col.getName().split("\\.");
         return type.getColumn(resultInfo[1], resultInfo[0].toLowerCase());
       }
     } else {
       for(ResultColumn rc: resultColumns){
-        String[] split = rc.getResult().split("\\.");
+        String[] split = rc.getName().split("\\.");
         columns.add(type.getColumnProperty(split[1], split[0].toLowerCase()));
       }
       return type.getResults(columns, select);
