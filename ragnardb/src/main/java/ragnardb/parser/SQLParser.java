@@ -490,7 +490,7 @@ public class SQLParser {
   }
 
   private InsertStatement parseInsert(){
-    InsertStatement _insert = null;
+    InsertStatement _insert;
 
     match(TokenType.INSERT);
     match(TokenType.INTO);
@@ -500,41 +500,57 @@ public class SQLParser {
       next();
       name += match(TokenType.IDENT);
     }
+    _insert = new InsertStatement(name);
 
     switch(currentToken.getType()){
       case SET:
         next();
-        match(TokenType.IDENT);
+        name = match(TokenType.IDENT);
         match(TokenType.EQ);
-        parseExpr();
+        Expression e = parseExpr();
+        _insert.addColumn(name);
+        _insert.addExpression(e);
         while(tokEquals(TokenType.COMMA)){
           next();
-          match(TokenType.IDENT);
+          name = match(TokenType.IDENT);
           match(TokenType.EQ);
-          parseExpr();
+          e = parseExpr();
+          _insert.addColumn(name);
+          _insert.addExpression(e);
         }
         break;
+
       case LPAREN:
         next();
-        list(TokenType.IDENT);
+        ArrayList<String> cols = list(TokenType.IDENT);
+        _insert.setColumns(cols);
         match(TokenType.RPAREN);
         if(tokEquals(TokenType.VALUES)){
-          parseValuesExpression();
+          ValuesClause _vals = parseValuesExpression();
+          _insert.set(_vals);
         } else {
           pass(TokenType.DIRECT);
           pass(TokenType.SORTED);
-          parseSelect();
+          SelectStatement _statement = parseSelect();
+          _insert.set(_statement);
         }
         break;
+
       case VALUES:
-        parseValuesExpression();
+        ValuesClause _vals = parseValuesExpression();
+        _insert.set(_vals);
         break;
       case DIRECT:
         next();
+        pass(TokenType.SORTED);
+        SelectStatement _statement = parseSelect();
+        _insert.set(_statement);
+        break;
       case SORTED:
         next();
       case SELECT:
-        parseSelect();
+        _statement = parseSelect();
+        _insert.set(_statement);
         break;
       default:
         error(currentToken, "Unexpected token in insert statement");
@@ -545,7 +561,7 @@ public class SQLParser {
   }
 
   private UpdateStatement parseUpdate(){
-    UpdateStatement _statement = null;
+    UpdateStatement _update;
 
     match(TokenType.UPDATE);
     String name = match(TokenType.IDENT);
@@ -554,42 +570,57 @@ public class SQLParser {
       next();
       name += match(TokenType.IDENT);
     }
+    _update = new UpdateStatement(name);
 
     pass(TokenType.AS);
-    pass(TokenType.IDENT);
+    if(tokEquals(TokenType.IDENT)){
+      String alias = match(TokenType.IDENT);
+      _update.setAlias(alias);
+    }
 
     if(tokEquals(TokenType.SET)){
       next();
-      match(TokenType.IDENT);
+      String s = match(TokenType.IDENT);
       match(TokenType.EQ);
-      parseExpr();
+      Expression e = parseExpr();
+      _update.set(s, e);
+
       while(tokEquals(TokenType.COMMA)){
         next();
-        match(TokenType.IDENT);
+        s = match(TokenType.IDENT);
         match(TokenType.EQ);
-        parseExpr();
+        e = parseExpr();
+        _update.addColumn(s);
+        _update.addExpression(e);
       }
+
     } else if(tokEquals(TokenType.LPAREN)){
       next();
-      list(TokenType.IDENT);
+      ArrayList<String> cols = list(TokenType.IDENT);
+      _update.set(cols);
       match(TokenType.RPAREN);
       match(TokenType.EQ);
       match(TokenType.LPAREN);
-      parseSelect();
+      SelectStatement select = parseSelect();
+      _update.setSelect(select);
       match(TokenType.RPAREN);
+    } else {
+      error(currentToken, "Expecting 'set' or '(' but found '" + currentToken.getText() + "'.");
     }
 
     if(tokEquals(TokenType.WHERE)){
       next();
-      parseExpr();
+      Expression e = parseExpr();
+      _update.setWhereExpression(e);
     }
 
     if(tokEquals(TokenType.LIMIT)){
       next();
-      parseExpr();
+      Expression e = parseExpr();
+      _update.setLimitExpression(e);
     }
 
-    return _statement;
+    return _update;
   }
 
   private void parseDropTable(){
@@ -614,7 +645,7 @@ public class SQLParser {
   }
 
   private DeleteStatement parseDelete(){
-    DeleteStatement _delete = null;
+    DeleteStatement _delete;
 
     match(TokenType.DELETE);
     match(TokenType.FROM);
@@ -624,15 +655,18 @@ public class SQLParser {
       next();
       name += match(TokenType.IDENT);
     }
+    _delete = new DeleteStatement(name);
 
     if(tokEquals(TokenType.WHERE)){
       next();
-      parseExpr();
+      Expression e = parseExpr();
+      _delete.setExpr(e);
     }
 
     if(tokEquals(TokenType.LIMIT)){
       next();
-      parseTerm();
+      Term t = parseTerm();
+      _delete.setTerm(t);
     }
 
     return _delete;

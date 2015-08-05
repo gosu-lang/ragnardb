@@ -1,6 +1,5 @@
 package ragnardb.parser.ast;
 
-import ragnardb.parser.Token;
 import java.util.ArrayList;
 
 /**
