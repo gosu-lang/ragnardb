@@ -1199,8 +1199,7 @@ public class SQLParser {
           next();
           existing.addToken(currentToken);
           match(TokenType.LPAREN);
-          if (tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT)
-            || tokEquals(TokenType.VALUES)) {
+          if (tokEquals(TokenType.SELECT)) {
             SelectStatement ss = parseSelect();
             existing.setSecond(new Operand(new Summand(new Factor(new GeneralTerm(ss)))));
           } else {
@@ -1209,7 +1208,7 @@ public class SQLParser {
             while (tokEquals(TokenType.COMMA)) {
               next();
               parseExpr();
-              //TODO: FIX
+              //TODO: FIX: need to handle more than one expression in condition
             }
           }
           existing.addToken(currentToken);
@@ -1367,8 +1366,7 @@ public class SQLParser {
         break;
       case LPAREN:
         next();
-        if (tokEquals(TokenType.WITH) || tokEquals(TokenType.RECURSIVE) || tokEquals(TokenType.SELECT)
-          || tokEquals(TokenType.VALUES)) {
+        if (tokEquals(TokenType.SELECT)) {
           SelectStatement ss = parseSelect();
           t = new GeneralTerm(ss);
         } else {
