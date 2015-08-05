@@ -76,7 +76,7 @@ WHERE 99>= (SELECT COUNT(DISTINCT SALARY)
 	    WHERE E2.SALARY>E1.SALARY);
 
 select users.user_id, users.email, classified_ads.posted
-from users, classified_ads
+ from users, classified_ads
 where users.user_id = classified_ads.user_id
 group by users.user_id, users.email
 order by upper(users.email);

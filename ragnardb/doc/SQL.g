@@ -156,9 +156,8 @@ tableorsubquery
         
 basictableorsubquery
 	:	(tablename
-        |	'(' selectstmt ')'
-        |	valuesexpression
-        ) ('AS'? ID)? (((((('LEFT'|'RIGHT')('OUTER')?|'INNER'|'CROSS'|'NATURAL')?) 'JOIN')) basictableorsubquery)?
+        |	'(' (selectstmt|valuesexpression) ')'
+        ) ('AS'? ID)? ((((('LEFT'|'RIGHT')('OUTER')?|'INNER'|'CROSS'|'NATURAL')?) 'JOIN'|',') basictableorsubquery)?
 	;        
 
 resultcolumn

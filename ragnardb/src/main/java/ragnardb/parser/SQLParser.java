@@ -385,7 +385,7 @@ public class SQLParser {
       match(TokenType.BY);
       parseExpr();
       while(tokEquals(TokenType.COMMA)){
-        pass(TokenType.COMMA, TokenType.GROUP, TokenType.BY);
+        next();
         parseExpr();
       }
     }
@@ -438,30 +438,6 @@ public class SQLParser {
       } while(!tokEquals(TokenType.LPAREN) && !tokEquals(TokenType.EOF));
     }
 
-    if (tokEquals(TokenType.LPAREN)) {
-      next();
-
-      if(tokEquals(TokenType.IDENT)) {
-        table.append(parseColumnDef());
-      } else{
-        table.append(parseConstraint());
-
-      }
-      while (currentToken.getType() == TokenType.COMMA) {
-        next();
-        if (tokEquals(TokenType.IDENT)) {
-          table.append(parseColumnDef());
-        } else {
-          table.append(parseConstraint());
-        }
-      }
-      match(TokenType.RPAREN);
-    }
-    if (tokEquals(TokenType.WITHOUT)) {
-      next();
-      match(TokenType.ROWID);
-    }
-
     match(TokenType.LPAREN);
     if(matchIn(TokenType.CONSTRAINT, TokenType.CHECK, TokenType.UNIQUE, TokenType.FOREIGN, TokenType.PRIMARY)){
       table.append(parseConstraint());
@@ -481,6 +457,7 @@ public class SQLParser {
         error(currentToken, "Expecting constraint or column definition");
       }
     }
+    match(TokenType.RPAREN);
 
     return table;
   }
@@ -797,6 +774,7 @@ public class SQLParser {
   private ResultColumn parseResultColumn() {
     ResultColumn _rc = null;
     if(tokEquals(TokenType.TIMES)){
+      next();
       _rc = new ResultColumn("*");
     } else if(tokEquals(TokenType.IDENT)){
       String name = match(TokenType.IDENT);
@@ -805,7 +783,8 @@ public class SQLParser {
         next();
         if(tokEquals(TokenType.IDENT)){
           name += match(TokenType.IDENT);
-        } else if(tokEquals(TokenType.DOT)){
+        } else if(tokEquals(TokenType.TIMES)){
+          next();
           name += "*";
         }
       }
@@ -860,10 +839,14 @@ public class SQLParser {
       }
     } else if(tokEquals(TokenType.LPAREN)){
       next();
-      parseSelect();
+      if(tokEquals(TokenType.SELECT)){
+        parseSelect();
+      } else if(tokEquals(TokenType.VALUES)){
+        parseValuesExpression();
+      } else {
+        error(currentToken, "Expecting 'select' or 'values' but found '" + currentToken.getText() + "'.");
+      }
       match(TokenType.RPAREN);
-    } else if(tokEquals(TokenType.VALUES)){
-      parseValuesExpression();
     } else {
       error(currentToken, "Expecting table or subquery but found '" + currentToken.getText() + "'.");
     }
@@ -871,14 +854,17 @@ public class SQLParser {
     pass(TokenType.AS);
     pass(TokenType.IDENT);
 
-    if(matchIn(TokenType.LEFT, TokenType.RIGHT, TokenType.INNER, TokenType.CROSS, TokenType.NATURAL)){
+    if(matchIn(TokenType.LEFT, TokenType.RIGHT, TokenType.INNER, TokenType.CROSS, TokenType.NATURAL, TokenType.COMMA)){
       if(tokEquals(TokenType.LEFT) || tokEquals(TokenType.RIGHT)){
         next();
         match(TokenType.OUTER);
+        match(TokenType.JOIN);
+      } else if(tokEquals(TokenType.COMMA)){
+        next();
       } else{
         next();
+        match(TokenType.JOIN);
       }
-      match(TokenType.JOIN);
       parseBasicTableOrSubquery();
     }
 
