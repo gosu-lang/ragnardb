@@ -1,0 +1,5 @@
+<server>
+  <id>gosu-lang.org-snapshots</id>
+  <username>${env.SNAPSHOT_USER}</username>
+  <password>${env.SNAPSHOT_PASS}</password>
+</server>
