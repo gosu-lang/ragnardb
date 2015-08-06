@@ -10,7 +10,7 @@ machine:
 test:
   # Call 'mvn deploy' instead of the default 'mvn integration-test'
   override:
-    - mvn deploy
+    - mvn deploy -s settings.xml
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/
     - find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
