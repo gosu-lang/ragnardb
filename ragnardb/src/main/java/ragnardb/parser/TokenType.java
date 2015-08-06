@@ -26,6 +26,7 @@ public enum TokenType {
   TRIGGER("trigger"), UNION("union"), UNIQUE("unique"), UPDATE("update"), USING("using"), VACUUM("vacuum"),
   VALUES("values"), VIEW("view"), VIRTUAL("virtual"), WHEN("when"), WHERE("where"), WITH("with"), WITHOUT("without"),
   IDENT("identifier"), LONG("long"), INTERNALDOUBLE("internaldouble"), IDENTITY("identity"), HASH("hash"),
+  REFERENTIAL_INTEGRITY("referential_integrity"),
   LPAREN("("), RPAREN(")"), PLUS("+"), MINUS("-"), DOT("."), COMMA(","), SEMI(";"), SLASH("/"), TIMES("*"), MOD("%"),
   BAR("||"), EQ("="), NEQ("!="), GT(">"), LT("<"), GTE(">="), LTE("<="), OVL("&&"), QUESTION("?"), COLON(":"),
   EOF("End of file"), UNKNOWN;

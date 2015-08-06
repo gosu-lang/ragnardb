@@ -158,7 +158,6 @@ altertable
 	(	'ADD' (constraint ('CHECK'|'NOCHECK')? | 'COLUMN'? (('IF' 'NOT' 'EXISTS')? columndef (('BEFORE'|'AFTER') columnname)? | '(' columndef (',' columndef)* ')'))
 	|	'ALTER' 'COLUMN' columnname (typename ('DEFAULT' expr)? ('NOT'? 'NULL')? ('AUTO_INCREMENT'|'IDENTITY')? | 'RENAME' 'TO' ID | 'SET' ('DEFAULT' expr | 'NOT'? 'NULL') | 'RESTART' 'WITH' INT)
 	|	'DROP' ('COLUMN' ('IF' 'EXISTS')? columnname | 'CONSTRAINT' ('IF' 'EXISTS')? constraintname | 'PRIMARY' 'KEY')
-	|	'SET' 'REFERENTIAL_INTEGRITY' ('FALSE' | 'TRUE' ('CHECK' | 'NOCHECK')? )
 	|	'RENAME' 'TO' ID
 	)
 	;

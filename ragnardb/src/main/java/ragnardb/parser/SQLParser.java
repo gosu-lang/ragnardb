@@ -175,6 +175,7 @@ public class SQLParser {
     }
     errCount++;
     errPosition = pos + 4;
+    throw new SQLParseError("ERROR");
   }
 
   private boolean isAValidStartSymbol() {
@@ -230,10 +231,16 @@ public class SQLParser {
     } else if(tokEquals(TokenType.UPDATE)){
       UpdateStatement _update = parseUpdate();
       _update.setVars(_vars);
+      if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
+        error(currentToken, "Garbage tokens at the end of the statement");
+      }
       return _update;
     } else if(tokEquals(TokenType.INSERT)){
       InsertStatement _insert = parseInsert();
       _insert.setVars(_vars);
+      if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
+        error(currentToken, "Garbage tokens at the end of the statement");
+      }
       return _insert;
     } else if(tokEquals(TokenType.DELETE)){
       DeleteStatement _delete = parseDelete();
@@ -502,6 +509,16 @@ public class SQLParser {
     }
     _insert = new InsertStatement(name);
 
+    // sync
+    /* usually I would not put such a complicated sync point but insert is sufficiently important that it needs a sync
+     */
+    if(!matchIn(TokenType.SET, TokenType.LPAREN, TokenType.DIRECT, TokenType.SORTED, TokenType.VALUES, TokenType.SELECT)){
+      error(currentToken, "Expecting a token to start a list of columns but found '" + currentToken.getText() + "'.");
+      do{
+        next();
+      } while(!matchIn(TokenType.SET, TokenType.LPAREN, TokenType.DIRECT, TokenType.SORTED, TokenType.VALUES, TokenType.SELECT, TokenType.EOF));
+    }
+
     switch(currentToken.getType()){
       case SET:
         next();
@@ -578,6 +595,14 @@ public class SQLParser {
       _update.setAlias(alias);
     }
 
+    // sync
+    if(!matchIn(TokenType.SET, TokenType.LPAREN)){
+      error(currentToken, "Expecting 'set' or '(' but found '" + currentToken.getText() + "'.");
+      do {
+        next();
+      } while(!matchIn(TokenType.SET, TokenType.LPAREN, TokenType.EOF));
+    }
+
     if(tokEquals(TokenType.SET)){
       next();
       String s = match(TokenType.IDENT);
@@ -604,8 +629,6 @@ public class SQLParser {
       SelectStatement select = parseSelect();
       _update.setSelect(select);
       match(TokenType.RPAREN);
-    } else {
-      error(currentToken, "Expecting 'set' or '(' but found '" + currentToken.getText() + "'.");
     }
 
     if(tokEquals(TokenType.WHERE)){
@@ -680,8 +703,8 @@ public class SQLParser {
       next();
       match(TokenType.IDENT);
     }
-    //fixme: fix error message, add in grammar, test, refactor
-    //match(DROP| RENAME...)
+
+
     if(tokEquals(TokenType.ADD)){
       next();
       pass(TokenType.COLUMN);
