@@ -48,7 +48,7 @@ public class SelectStatement extends Statement {
   }
 
   public ArrayList<ResultColumn> getResultColumns(){
-    return _primary.getResultColumns();
+    return _primary == null? null:_primary.getResultColumns();
   }
 
   public void setVariables(ArrayList<JavaVar> vars){
@@ -60,6 +60,9 @@ public class SelectStatement extends Statement {
   }
 
   public ArrayList<String> getTables(){
+    if(_primary == null){
+      return null;
+    }
     ArrayList<TableOrSubquery> tables = _primary.getTablesAndSubqueries();
     ArrayList<String> out = new ArrayList<>();
     for(TableOrSubquery table: tables){

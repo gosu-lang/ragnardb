@@ -10,7 +10,7 @@ options { k = 1; }
    The reason for this limitation is the resolving LL(1) conflicts; we cannot allow more than one ORDER BY and LIMIT clause per statement. This does not mean that you can
    only order by the tables/columns used in the first query; the grammar still allows you to access every query within a join.
 6) We do not allow column definitions as select statements. This would wildly complicate our plugin.
-7) Disallowing comma joins on tables. Bad practice, can lead to issues with our plugin and column resolution.
+7) Term limitations; for parsing simplicity purposes we only allow actual algebraic terms to have +/- signs. This is not a big deal because +/- signs to strings have no meaning anyways.
 
 This grammar is LL(1) expect for one case: database.table vs table. This is extremely trivially resolved in the parser. If this error is encountered as a result of the construction (ID '.')? ID, please ignore.
 */
@@ -147,6 +147,20 @@ updatestmt
 	
 deletestmt
 	:	'DELETE' 'FROM' tablename ('WHERE' expr)? ('LIMIT' term)?
+	;
+	
+droptable
+	:	'DROP' 'TABLE' ('IF' 'EXISTS')? tablename (',' tablename)* ('RESTRICT'|'CASCADE')?
+	;
+	
+altertable
+	:	'ALTER' 'TABLE' tablename 
+	(	'ADD' (constraint ('CHECK'|'NOCHECK')? | 'COLUMN'? (('IF' 'NOT' 'EXISTS')? columndef (('BEFORE'|'AFTER') columnname)? | '(' columndef (',' columndef)* ')'))
+	|	'ALTER' 'COLUMN' columnname (typename ('DEFAULT' expr)? ('NOT'? 'NULL')? ('AUTO_INCREMENT'|'IDENTITY')? | 'RENAME' 'TO' ID | 'SET' ('DEFAULT' expr | 'NOT'? 'NULL') | 'RESTART' 'WITH' INT)
+	|	'DROP' ('COLUMN' ('IF' 'EXISTS')? columnname | 'CONSTRAINT' ('IF' 'EXISTS')? constraintname | 'PRIMARY' 'KEY')
+	|	'SET' 'REFERENTIAL_INTEGRITY' ('FALSE' | 'TRUE' ('CHECK' | 'NOCHECK')? )
+	|	'RENAME' 'TO' ID
+	)
 	;
 	     	
 valuesexpression

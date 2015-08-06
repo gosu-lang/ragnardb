@@ -242,7 +242,7 @@ public class SQLParser {
     } else if(tokEquals(TokenType.SELECT)){
       SelectStatement _select = parseSelect();
       _select.setVariables(_vars);
-      if(_select.getResultColumns().size() == 0 || _select.getTables().size() == 0){
+      if(_select.getResultColumns() == null || _select.getTables() == null ||_select.getResultColumns().size() == 0 || _select.getTables().size() == 0){
         return new EmptyType();
       }
       if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
@@ -252,7 +252,7 @@ public class SQLParser {
     } else if(tokEquals(TokenType.WITH)){
       SelectStatement _select = parseRecursiveQuery();
       _select.setVariables(_vars);
-      if(_select.getResultColumns().size() == 0 || _select.getTables().size() == 0){
+      if(_select.getResultColumns() == null || _select.getTables() == null ||_select.getResultColumns().size() == 0 || _select.getTables().size() == 0){
         return new EmptyType();
       }
       if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
@@ -396,6 +396,14 @@ public class SQLParser {
       _sSelect.setAlias(name);
     }
 
+    // sync
+    if(!tokEquals(TokenType.FROM)){
+      error(currentToken, "Expecting 'from' to begin the table list");
+      do {
+        next();
+      } while(!tokEquals(TokenType.FROM) && !tokEquals(TokenType.EOF));
+    }
+
     match(TokenType.FROM);
     parseTableOrSubquery(_sSelect);
 
@@ -421,7 +429,6 @@ public class SQLParser {
       _sSelect.setHavingExpression(e);
     }
 
-    //TODO: fix
     return _sSelect;
   }
 
@@ -430,13 +437,6 @@ public class SQLParser {
     int col = currentToken.getCol();
     int offset = currentToken.getOffset();
 
-    // sync
-    if (!tokEquals(TokenType.CREATE)) {
-      error(currentToken, "Expected to find 'CREATE'");
-      do {
-        next();
-      } while (!tokEquals(TokenType.CREATE) && !tokEquals(TokenType.EOF));
-    }
     match(TokenType.CREATE);
     if (currentToken.getType() == TokenType.TEMP ||
       currentToken.getType() == TokenType.TEMPORARY) {
@@ -939,7 +939,9 @@ public class SQLParser {
 
     pass(TokenType.AS);
     pass(TokenType.IDENT);
-    simpleSelect.addTableOrSubquery(_table);
+    if(_table != null){
+      simpleSelect.addTableOrSubquery(_table);
+    }
 
     if(matchIn(TokenType.LEFT, TokenType.RIGHT, TokenType.INNER, TokenType.CROSS, TokenType.NATURAL, TokenType.COMMA)){
       if(tokEquals(TokenType.LEFT) || tokEquals(TokenType.RIGHT)){
