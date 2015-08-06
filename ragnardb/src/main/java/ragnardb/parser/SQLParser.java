@@ -175,7 +175,6 @@ public class SQLParser {
     }
     errCount++;
     errPosition = pos + 4;
-    throw new SQLParseError("ERROR");
   }
 
   private boolean isAValidStartSymbol() {
