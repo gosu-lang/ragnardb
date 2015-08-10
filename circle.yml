@@ -7,6 +7,11 @@ machine:
     version:
       oraclejdk8
 
+general:
+  branches:
+    only:
+      - master # only build/deply from master
+
 test:
   # Call 'mvn deploy' instead of the default 'mvn integration-test'
   override:
