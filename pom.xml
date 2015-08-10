@@ -17,6 +17,7 @@
     <module>ragnardb</module>
     <module>ragnardb-parent</module>
   </modules>
+
   <profiles>
     <profile>
       <id>ij</id>

@@ -119,6 +119,23 @@ public class SQLQuery<T> implements Iterable<T> {
     return newQuery;
   }
 
+  public SQLQuery<T> union( SQLQuery query) {
+    return new SetOpQuery(this, query, " UNION " , _metadata , _rootType);
+  }
+
+  public SQLQuery<T> unionAll( SQLQuery query) {
+    return new SetOpQuery(this, query, " UNION ALL " , _metadata , _rootType);
+  }
+
+  public SQLQuery<T> intersect( SQLQuery query) {
+    return new SetOpQuery(this, query, " INTERSECT " , _metadata , _rootType);
+  }
+
+  public SQLQuery<T> except( SQLQuery query) {
+    return new SetOpQuery(this, query, " EXCEPT " , _metadata , _rootType);
+  }
+
+
 
 
   public boolean delete() throws SQLException
@@ -168,6 +185,40 @@ public class SQLQuery<T> implements Iterable<T> {
   //--------------------------------------------------------------------------------
   // Implementation
   //--------------------------------------------------------------------------------
+
+
+  private static class SetOpQuery extends SQLQuery
+  {
+
+
+    private final SQLQuery query1;
+    private final SQLQuery query2;
+    private final String opString;
+
+    SetOpQuery(SQLQuery query1, SQLQuery query2, String opString, ITypeToSQLMetadata  metadata,IType rootType)
+    {
+      super(metadata,rootType);
+      this.query1 = query1;
+      this.query2 = query2;
+      this.opString = opString;
+    }
+
+    @Override
+    public String getSQLString()
+    {
+      return query1.getSQLString() + opString + query2.getSQLString();
+    }
+
+    @Override
+    public List<Object> getArgs()
+    {
+      List ans = new ArrayList<>();
+      ans.addAll(query1.getArgs());
+      ans.addAll(query2.getArgs());
+      return ans;
+
+    }
+  }
 
   private String getSelect()
   {
