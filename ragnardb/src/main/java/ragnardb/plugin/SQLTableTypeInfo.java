@@ -18,8 +18,12 @@ import gw.lang.reflect.PropertyInfoBuilder;
 import gw.lang.reflect.TypeSystem;
 import gw.lang.reflect.gs.IGosuClass;
 import gw.lang.reflect.java.JavaTypes;
+import gw.util.concurrent.LockingLazyVar;
+import ragnardb.api.IModelConfig;
+import ragnardb.api.ISQLResult;
 import ragnardb.parser.ast.Constraint;
 import ragnardb.parser.ast.CreateTable;
+import ragnardb.runtime.ModelConfig;
 import ragnardb.runtime.SQLConstraint;
 import ragnardb.runtime.SQLMetadata;
 import ragnardb.runtime.SQLQuery;
@@ -42,6 +46,23 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private IGosuClass _domainLogic;
   private IConstructorHandler _constructor;
   private final ILocationInfo _location;
+  private LockingLazyVar<IModelConfig> _modelConfig = new LockingLazyVar<IModelConfig>()
+  {
+    @Override
+    protected IModelConfig init()
+    {
+      final String tableName = getOwnersType().getTable().getTableName();
+      final String idColumn = "id";
+      ModelConfig config = new ModelConfig( tableName, idColumn );
+      if( _domainLogic == null )
+      {
+        SQLRecord prototypeObject = (SQLRecord)_domainLogic.getTypeInfo().getConstructor( JavaTypes.STRING(), JavaTypes.STRING() )
+          .getConstructor().newInstance( _classTableName, "id" );
+        prototypeObject.configure( config );
+      }
+      return config;
+    }
+  };
 
   public SQLTableTypeInfo(ISQLTableType type, CreateTable table,  ISQLDdlType system) {
     super(type);
@@ -154,19 +175,15 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private void createConstructorInfos() {
     List<IConstructorInfo> constructorInfos = new ArrayList<>();
 
-    final String tableName = getOwnersType().getTable().getTableName();
-    final String idColumn = "id";
-
-    final IConstructorInfo domainCtor = _domainLogic == null ? null : _domainLogic.getTypeInfo().getConstructor( JavaTypes.STRING(), JavaTypes.STRING() );
+    final IConstructorInfo domainCtor = _domainLogic == null ? null : _domainLogic.getTypeInfo().getConstructor( TypeSystem.get( IModelConfig.class ) );
     _constructor = ( args ) -> {
-      //reflectively instantiate the domain logic class, if it exists
       if( domainCtor != null )
       {
-        return domainCtor.getConstructor().newInstance( tableName, idColumn );
+        return domainCtor.getConstructor().newInstance( _modelConfig.get() );
       }
       else
       {
-        return new SQLRecord( tableName, idColumn );
+        return new SQLRecord( _modelConfig.get() );
       }
     };
 
