@@ -53,11 +53,10 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     {
       final String tableName = getOwnersType().getTable().getTableName();
       final String idColumn = "id";
-      ModelConfig config = new ModelConfig( tableName, idColumn );
+      ModelConfig config = new ModelConfig( tableName, idColumn, getColumnNames() );
       if( _domainLogic == null )
       {
-        SQLRecord prototypeObject = (SQLRecord)_domainLogic.getTypeInfo().getConstructor( JavaTypes.STRING(), JavaTypes.STRING() )
-          .getConstructor().newInstance( _classTableName, "id" );
+        SQLRecord prototypeObject = (SQLRecord)_domainLogic.getTypeInfo().getConstructor().getConstructor().newInstance();
         prototypeObject.configure( config );
       }
       return config;
@@ -164,6 +163,10 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     IPropertyInfo allProp = generateAllProperty();
     _propertiesList.add( allProp );
     _propertiesMap.put( allProp.getName(), allProp );
+
+    IPropertyInfo validProp = generateValidProperty();
+    _propertiesList.add( validProp );
+    _propertiesMap.put( validProp.getName(), validProp );
 
     // Adding Foreign Key References TO this table (The reverse query) TODO
 
@@ -311,6 +314,29 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
       .build( this );
   }
 
+  private IPropertyInfo generateValidProperty()
+  {
+    return new PropertyInfoBuilder()
+      .withName( "IsValid" )
+      .withType( JavaTypes.BOOLEAN() )
+      .withWritable( false )
+      .withAccessor( new IPropertyAccessor()
+      {
+        @Override
+        public Object getValue( Object ctx )
+        {
+          return _modelConfig.get().isValid( (SQLRecord)ctx );
+        }
+
+        @Override
+        public void setValue( Object ctx, Object value )
+        {
+          //ignore
+        }
+      } )
+      .build( this );
+  }
+
   private IMethodInfo generateSelectMethod() {
     return new MethodInfoBuilder()
         .withName("select")
@@ -390,4 +416,13 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     }
   }
 
+  public List<String> getColumnNames()
+  {
+    ArrayList<String> strings = new ArrayList<>();
+    for( ColumnDefinition columnDefinition : _table.getColumnDefinitions() )
+    {
+      strings.add( columnDefinition.getColumnName() );
+    }
+    return strings;
+  }
 }

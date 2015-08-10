@@ -23,16 +23,18 @@ public class SQLRecord implements ISQLResult
 {
   private ValMap _values = new ValMap();
   private boolean _persisted;
-  private final IModelConfig _config;
+  protected IModelConfig _config;
 
 
   public SQLRecord( String tableName, String idColumn ) {
-    this(new ModelConfig(tableName, idColumn));
+    _config = new ModelConfig(tableName, idColumn, Collections.emptyList());
   }
 
-  public SQLRecord( IModelConfig config ) {
+  public SQLRecord(IModelConfig config) {
     _config = config;
   }
+
+  protected SQLRecord() {/* dummy */}
 
   @Override
   public Object getRawValue( String property )
@@ -54,6 +56,10 @@ public class SQLRecord implements ISQLResult
 
   public void configure(IModelConfig config) {
     // to be overridden by extension classes
+  }
+
+  public boolean isValid() {
+    return _config == null || _config.isValid(this);
   }
 
   public boolean save() {

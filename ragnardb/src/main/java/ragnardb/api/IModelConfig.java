@@ -3,6 +3,7 @@ package ragnardb.api;
 
 import gw.lang.reflect.features.IPropertyReference;
 import ragnardb.runtime.IFieldValidator;
+import ragnardb.runtime.SQLRecord;
 
 import java.util.List;
 
@@ -16,6 +17,5 @@ public interface IModelConfig
 
   <T> void addValidation( IPropertyReference<Object, T> propertyReference, IFieldValidator<T> validator );
 
-  List<IFieldValidator> getValidatorsForColumn( String columnName );
-
+  boolean isValid( SQLRecord sqlRecord );
 }

@@ -15,14 +15,16 @@ import java.util.Map;
 
 public class ModelConfig implements IModelConfig
 {
+  private final List<String> _columns;
   private String _tableName;
   private String _idColumn;
   private Map<String, List<IFieldValidator>> _validatorsByField = new HashMap<>();
 
-  public ModelConfig( String tableName, String idColumn )
+  public ModelConfig( String tableName, String idColumn, List<String> columns )
   {
     setTableName( tableName );
     setIdColumn( idColumn );
+    _columns = columns;
   }
 
   public String getTableName()
@@ -57,7 +59,41 @@ public class ModelConfig implements IModelConfig
     _validatorsByField.put( propertyInfo.getColumnName(), validators );
   }
 
-  public List<IFieldValidator> getValidatorsForColumn( String columnName )
+  @Override
+  public boolean isValid( SQLRecord sqlRecord )
+  {
+    Map<String, List<String>> errors = getErrors(sqlRecord);
+    return errors.isEmpty();
+  }
+
+  private Map<String, List<String>> getErrors( SQLRecord sqlRecord )
+  {
+    Map<String, List<String>> errors = new HashMap<>();
+    for( String column : _columns )
+    {
+      List<IFieldValidator> validatorsForColumn = getValidatorsForColumn( column );
+      for( IFieldValidator validator : validatorsForColumn )
+      {
+        try
+        {
+          validator.validateValue( sqlRecord.getRawValue( column ) );
+        }
+        catch( Exception e )
+        {
+          List<String> errorList = errors.get( column );
+          if( errorList == null )
+          {
+            errorList = new ArrayList<>();
+            errors.put( column, errorList );
+          }
+          errorList.add( e.getLocalizedMessage() );
+        }
+      }
+    }
+    return errors;
+  }
+
+  private List<IFieldValidator> getValidatorsForColumn( String columnName )
   {
     List<IFieldValidator> validators = _validatorsByField.get( columnName );
     if( validators == null )
