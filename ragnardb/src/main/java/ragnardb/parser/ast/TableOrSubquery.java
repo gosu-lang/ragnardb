@@ -6,104 +6,70 @@ import java.util.ArrayList;
  * Created by klu on 7/6/2015.
  */
 public class TableOrSubquery {
-  private String name;
-  private String alias;
-  private String index;
-  private SelectStatement subquery;
-  private ArrayList<JoinClause> jcs;
+  private String _name;
+  private Object _containedObject;
+  private Expression _joinexpression;
 
-  public TableOrSubquery(String n){
-    name = n;
-    alias = null;
-    subquery = null;
-    jcs = null;
+  public TableOrSubquery(String name){
+    _name = name;
+    _containedObject = null;
+    _joinexpression = null;
   }
 
-  public TableOrSubquery(String n, String a){
-    name = n;
-    alias = a;
-    subquery = null;
-    jcs = null;
+  public TableOrSubquery(ValuesClause values){
+    _name = "@@Subquery";
+    _containedObject = values;
+    _joinexpression = null;
   }
 
-  public TableOrSubquery(SelectStatement s){
-    subquery = s;
-    jcs = null;
-    name = null;
-    index = null;
+  public TableOrSubquery(SelectStatement selection){
+    _name = "@@Subquery";
+    _containedObject = selection;
+    _joinexpression = null;
   }
 
-  public TableOrSubquery(JoinClause jc){
-    subquery = null;
-    name = null;
-    index = null;
-    alias = null;
-    jcs = new ArrayList<>();
-    jcs.add(jc);
+  public void setJoinExpression(Expression e){
+    _joinexpression = e;
   }
 
-  public String getName(){
-    return name;
-  }
-
-  public boolean hasAlias(){
-    return alias!=null;
-  }
-
-  public void setIndex(String i){
-    index = i;
-  }
-
-  public void addJoinClause(JoinClause jc){
-    jcs.add(jc);
-  }
-
-  public void setAlias(String s){
-    alias = s;
-  }
+  public String getName(){return _name;}
 
   @Override
   public String toString(){
-    StringBuilder sb = new StringBuilder("<Table-Or-Subquery>\n");
-    if(subquery == null && jcs == null){
-      sb.append("\t"+name);
-      if(alias != null){
-        sb.append(" AS " + alias);
+    StringBuilder sb = new StringBuilder("<Table Or Subquery>");
+    if(_containedObject == null){
+      sb.append("Table: " + _name + "\n");
+    } else {
+      sb.append("\n\t<Subquery>\n");
+      if(_containedObject instanceof ValuesClause){
+        sb.append(((ValuesClause) _containedObject).toString("\t"));
+      } else if(_containedObject instanceof SelectStatement){
+        sb.append(((SelectStatement) _containedObject).toString("\t"));
       }
-      if(index != null){
-        sb.append(" INDEXED BY " + index + "\n");
-      }
-      sb.append('\n');
-      return sb.toString();
-    } else if(jcs == null){
-      return "<Table-Or-Subquery>" + subquery.toString();
-    } else{
-      for(JoinClause jc : jcs){
-        sb.append(jc);
-      }
-      return sb.toString();
     }
+    if(_joinexpression != null){
+      sb.append("\tJOIN ON\n");
+      sb.append(_joinexpression.toString("\t"));
+    }
+    return sb.toString();
   }
 
   protected String toString(String initial){
-    StringBuilder sb = new StringBuilder(initial + "<Table-Or-Subquery>\n");
-    if(subquery == null && jcs == null){
-      sb.append(initial+"\t"+name);
-      if(alias != null){
-        sb.append(" AS " + alias);
+    StringBuilder sb = new StringBuilder(initial+"<Table Or Subquery>");
+    if(_containedObject == null){
+      sb.append("Table: " + _name + "\n");
+    } else {
+      sb.append("\n"+initial+"\t<Subquery>\n");
+      if(_containedObject instanceof ValuesClause){
+        sb.append(((ValuesClause) _containedObject).toString(initial+"\t"));
+      } else if(_containedObject instanceof SelectStatement){
+        sb.append(((SelectStatement) _containedObject).toString(initial+"\t"));
       }
-      if(index != null){
-        sb.append(" INDEXED BY " + index + "\n");
-      }
-      sb.append('\n');
-      return sb.toString();
-    } else if(jcs == null){
-      return initial + "\t<Table-Or-Subquery>\n" + subquery.toString(initial+"\t");
-    } else{
-      for(JoinClause jc : jcs){
-        sb.append(jc.toString(initial+"\t"));
-      }
-      return sb.toString();
     }
+    if(_joinexpression != null){
+      sb.append(initial+"\tJOIN ON\n");
+      sb.append(_joinexpression.toString(initial+"\t"));
+    }
+    return sb.toString();
   }
 }
