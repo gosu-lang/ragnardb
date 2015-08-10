@@ -3,7 +3,10 @@ package ragnardb.parser;
 import org.junit.Test;
 
 import java.io.StringReader;
+import java.util.Collections;
+import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
@@ -15,20 +18,6 @@ public class SQLParserStatementsTest {
     try {
       parser.parse();
     } catch (SQLParseError e) {
-      e.printStackTrace();
-      fail();
-    }
-  }
-
-  private void parseWithNoErrorsComputer(SQLParser parser, String statement) {
-    try {
-      parser.parse();
-    } catch (SQLParseError e) {
-      System.out.print("Failed on:" + statement + "\n");
-      e.printStackTrace();
-      fail();
-    } catch (Exception e){
-      System.out.print("EXCEPTIONAL FAILURE! Failed on: " + statement + "\n");
       e.printStackTrace();
       fail();
     }

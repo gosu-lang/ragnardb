@@ -210,7 +210,7 @@ public class SQLParser {
       DDL statements = new DDL();
       while (true) {
         if (tokEquals(TokenType.EOF)) {
-
+          statements.setErrCount(errCount);
           return statements;
         }
         statements.append(parseCreateTable());
@@ -223,16 +223,17 @@ public class SQLParser {
       }
     } else if(tokEquals(TokenType.ALTER)){
       parseAlterTable();
-      return null;
+      return new EmptyType();
     } else if(tokEquals(TokenType.DROP)){
       parseDropTable();
-      return null;
+      return new EmptyType();
     } else if(tokEquals(TokenType.UPDATE)){
       UpdateStatement _update = parseUpdate();
       _update.setVars(_vars);
       if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
         error(currentToken, "Garbage tokens at the end of the statement");
       }
+      _update.setErrCount(errCount);
       return _update;
     } else if(tokEquals(TokenType.INSERT)){
       InsertStatement _insert = parseInsert();
@@ -240,10 +241,15 @@ public class SQLParser {
       if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
         error(currentToken, "Garbage tokens at the end of the statement");
       }
+      _insert.setErrCount(errCount);
       return _insert;
     } else if(tokEquals(TokenType.DELETE)){
       DeleteStatement _delete = parseDelete();
       _delete.setVars(_vars);
+      if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
+        error(currentToken, "Garbage tokens at the end of the statement");
+      }
+      _delete.setErrCount(errCount);
       return _delete;
     } else if(tokEquals(TokenType.SELECT)){
       SelectStatement _select = parseSelect();
@@ -254,6 +260,7 @@ public class SQLParser {
       if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
         error(currentToken, "Garbage tokens at the end of the statement");
       }
+      _select.setErrCount(errCount);
       return _select;
     } else if(tokEquals(TokenType.WITH)){
       SelectStatement _select = parseRecursiveQuery();
@@ -264,6 +271,7 @@ public class SQLParser {
       if(!tokEquals(TokenType.EOF) && !tokEquals(TokenType.SEMI)){
         error(currentToken, "Garbage tokens at the end of the statement");
       }
+      _select.setErrCount(errCount);
       return _select;
     } else {
       return new EmptyType();
