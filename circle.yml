@@ -20,7 +20,4 @@ test:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/
     - find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
     # now trigger the downstream ragnardb-test build
-    - curl \
-      --header "Accept: application/json" \
-      --header "Content-Type: application/json" \
-      --request POST https://circleci.com/api/v1/project/ragnardb-test/gosu-lang/tree/master?circle-token=${CIRCLE_TOKEN}
+    - curl -X POST --header "Content-Type: application/json" -H "Accept: application/json" https://circleci.com/api/v1/project/ragnardb-test/gosu-lang/tree/master?circle-token=${CIRCLE_TOKEN}
