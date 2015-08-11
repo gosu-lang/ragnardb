@@ -1,12 +1,11 @@
 package ragnardb.runtime;
 
-import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.features.IPropertyReference;
 import ragnardb.api.IModelConfig;
 import ragnardb.plugin.SQLColumnPropertyInfo;
 import ragnardb.runtime.validation.FormatValidator;
+import ragnardb.runtime.validation.ValidationException;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,6 +72,31 @@ public class ModelConfig implements IModelConfig
     _validatorsByField.put(propertyInfo.getColumnName(), validators);
   }
 
+  /*Allows validation by required*/
+  public <T> void requiredFields(List<IPropertyReference<Object, T>> propertyReferences){
+    for(IPropertyReference<Object, T> propertyReference: propertyReferences){
+      SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
+      List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
+      if( validators == null )
+      {
+        validators = new ArrayList<>();
+      }
+      validators.add(obj -> {if(obj == null){throw new ValidationException("Validation Exception: Object cannot be null");}});
+      _validatorsByField.put(propertyInfo.getColumnName(), validators);
+    }
+  }
+
+  /*Allows validation by length, set maxlength to -1 to have no maximum length*/
+  public <T> void lengthBetween(IPropertyReference<Object, T> propertyReference, int minlength, int maxlength){
+    SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
+    List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
+    if( validators == null )
+    {
+      validators = new ArrayList<>();
+    }
+    validators.add(new FormatValidator<T>(minlength, maxlength));
+    _validatorsByField.put(propertyInfo.getColumnName(), validators);
+  }
 
 
   @Override
@@ -120,5 +144,9 @@ public class ModelConfig implements IModelConfig
     {
       return validators;
     }
+  }
+
+  public void clearValidators(){
+    _validatorsByField.clear();
   }
 }

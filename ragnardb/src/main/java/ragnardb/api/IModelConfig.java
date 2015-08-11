@@ -17,6 +17,10 @@ public interface IModelConfig
 
   <T> void addValidation( IPropertyReference<Object, T> propertyReference, IFieldValidator<T> validator );
   <T> void validateFormat(IPropertyReference<Object, T> propertyReference, String regexp);
+  <T> void requiredFields(List<IPropertyReference<Object, T>> propertyReferences);
+  <T> void lengthBetween(IPropertyReference<Object, T> propertyReference, int minlength, int maxlength);
+
+  void clearValidators();
 
   boolean isValid( SQLRecord sqlRecord );
 }
