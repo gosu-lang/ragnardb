@@ -178,16 +178,12 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private void createConstructorInfos() {
     List<IConstructorInfo> constructorInfos = new ArrayList<>();
 
-    final IConstructorInfo domainCtor = _domainLogic == null ? null : _domainLogic.getTypeInfo().getConstructor( TypeSystem.get( IModelConfig.class ) );
+    IType instanceType = _domainLogic == null ? TypeSystem.get(SQLRecord.class) : _domainLogic;
+    final IConstructorInfo ctor = instanceType.getTypeInfo().getConstructor();
     _constructor = ( args ) -> {
-      if( domainCtor != null )
-      {
-        return domainCtor.getConstructor().newInstance( _modelConfig.get() );
-      }
-      else
-      {
-        return new SQLRecord( _modelConfig.get() );
-      }
+      SQLRecord instance = (SQLRecord)ctor.getConstructor().newInstance();
+      instance.setConfig( _modelConfig.get() );
+      return instance;
     };
 
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()

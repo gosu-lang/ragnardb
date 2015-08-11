@@ -34,7 +34,7 @@ public class SQLRecord implements ISQLResult
     _config = config;
   }
 
-  protected SQLRecord() {/* dummy */}
+  public SQLRecord() {/* dummy */}
 
   @Override
   public Object getRawValue( String property )
@@ -60,6 +60,11 @@ public class SQLRecord implements ISQLResult
 
   public boolean isValid() {
     return _config == null || _config.isValid(this);
+  }
+
+  public void setConfig( IModelConfig config )
+  {
+    _config = config;
   }
 
   public boolean save() {
