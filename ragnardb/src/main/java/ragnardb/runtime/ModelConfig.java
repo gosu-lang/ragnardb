@@ -4,6 +4,7 @@ import gw.lang.reflect.features.IPropertyReference;
 import ragnardb.api.IModelConfig;
 import ragnardb.plugin.SQLColumnPropertyInfo;
 import ragnardb.runtime.validation.FormatValidator;
+import ragnardb.runtime.validation.UniqueValidator;
 import ragnardb.runtime.validation.ValidationException;
 
 import java.util.ArrayList;
@@ -95,6 +96,28 @@ public class ModelConfig implements IModelConfig
       validators = new ArrayList<>();
     }
     validators.add(new FormatValidator<T>(minlength, maxlength));
+    _validatorsByField.put(propertyInfo.getColumnName(), validators);
+  }
+
+  public <T> void unique(IPropertyReference<Object, T> propertyReference){
+    SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
+    List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
+    if( validators == null )
+    {
+      validators = new ArrayList<>();
+    }
+    validators.add(new UniqueValidator<T>(propertyInfo, _tableName));
+    _validatorsByField.put(propertyInfo.getColumnName(), validators);
+  }
+
+  public <T> void hasContent(IPropertyReference<Object, T> propertyReference){
+    SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
+    List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
+    if( validators == null )
+    {
+      validators = new ArrayList<>();
+    }
+    validators.add(new FormatValidator<T>(1, -1));
     _validatorsByField.put(propertyInfo.getColumnName(), validators);
   }
 

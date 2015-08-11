@@ -19,6 +19,8 @@ public interface IModelConfig
   <T> void validateFormat(IPropertyReference<Object, T> propertyReference, String regexp);
   <T> void requiredFields(List<IPropertyReference<Object, T>> propertyReferences);
   <T> void lengthBetween(IPropertyReference<Object, T> propertyReference, int minlength, int maxlength);
+  <T> void unique(IPropertyReference<Object, T> propertyReference);
+  <T> void hasContent(IPropertyReference<Object, T> propertyReference);
 
   void clearValidators();
 
