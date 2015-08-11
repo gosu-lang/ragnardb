@@ -167,6 +167,12 @@ public class SQLQuery<T> implements Iterable<T> {
     return sqlQuery;
   }
 
+  public SQLQuery<T> count() {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " COUNT(*) " );
+    return newQuery;
+  }
+
   public SQLQuery<T> count( PropertyReference<Object, Object> ref) {
     SQLQuery<T> newQuery = cloneMe();
     newQuery.setManualSelect( " COUNT( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
