@@ -179,6 +179,33 @@ public class SQLQuery<T> implements Iterable<T> {
     return newQuery;
   }
 
+  public SQLQuery<T> max( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MAX( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> min( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MIN( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> sum( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " SUM( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> avg( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " AVG( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+
+
+
   public Iterator<T> iterator()
   {
     Iterator<T> result;
