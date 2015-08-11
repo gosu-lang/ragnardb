@@ -174,6 +174,12 @@ public class SQLRecord implements ISQLResult
     return new SQLRecordResultSetIterator<T>(resultSet, impl);
   }
 
+  static <T> Iterator<T> selectSingleColumn( String sql, List vals ) throws SQLException {
+    PreparedStatement preparedStatement = RagnarDB.prepareStatement(sql, vals);
+    ResultSet resultSet = preparedStatement.executeQuery();
+    return new SingleColumnResultSetIterator<T>(resultSet);
+  }
+
   static Iterable<SQLRecord> executeStatement(String sql, List vals, IType impl) throws SQLException
   {
 //    System.out.println(sql + " @SQLRecord 210"); debugging logging info
@@ -212,11 +218,7 @@ public class SQLRecord implements ISQLResult
   }
 
   
-  static <T> Iterator<T> selectSingleColumn( String sql, List vals ) throws SQLException {
-    PreparedStatement preparedStatement = RagnarDB.prepareStatement( sql, vals );
-    ResultSet resultSet = preparedStatement.executeQuery();
-    return new SingleColumnResultSetIterator<T>(resultSet);
-  }
+
 
   public boolean delete()
   {

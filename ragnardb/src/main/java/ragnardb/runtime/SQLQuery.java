@@ -1,7 +1,10 @@
 package ragnardb.runtime;
 
+import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.features.PropertyReference;
+import gw.lang.reflect.java.GosuTypes;
+import gw.lang.reflect.java.JavaTypes;
 import gw.util.GosuExceptionUtil;
 import ragnardb.RagnarDB;
 import ragnardb.parser.ast.SQL;
@@ -9,6 +12,7 @@ import ragnardb.plugin.SQLColumnPropertyInfo;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.*;
 
 /**
@@ -18,12 +22,22 @@ public class SQLQuery<T> implements Iterable<T> {
 
   protected ITypeToSQLMetadata _metadata;
   protected IType _rootType;
+  protected IType _replaceType;
+  private String _manualSelect;
   private SQLConstraint _whereExpr;
   private SQLConstraint _joinExpr; // Includes On expressions as well!
   private SQLConstraint _orderByExpr;
   private SQLConstraint _limitExpr;
   private SQLConstraint _offsetExpr;
   private PropertyReference _pick;
+
+  private void setManualSelect(String manualSelect){
+    _manualSelect = manualSelect;
+  }
+
+  protected void setType(IType type){
+    _replaceType = type;
+  }
 
   private void addJoin(SQLConstraint cons){
     if(_joinExpr == null){
@@ -153,12 +167,18 @@ public class SQLQuery<T> implements Iterable<T> {
     return sqlQuery;
   }
 
+  public SQLQuery<T> count( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " COUNT( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
   public Iterator<T> iterator()
   {
     Iterator<T> result;
     try
     {
-      if(_pick != null) {
+      if( (_pick != null) || (_manualSelect != null) ) {
         result = SQLRecord.selectSingleColumn( getSQLString(), getArgs() );
       } else {
         result = SQLRecord.select( getSQLString(), getArgs(), _rootType );
@@ -181,6 +201,8 @@ public class SQLQuery<T> implements Iterable<T> {
     String offset =  _offsetExpr == null ? "" :  _offsetExpr.getSQL(_metadata);
     return select + " " +  from + " "  + join + " " + " " + where + " " + orderBy + " " + limit + " " + offset;
   }
+
+
 
   //--------------------------------------------------------------------------------
   // Implementation
@@ -226,6 +248,9 @@ public class SQLQuery<T> implements Iterable<T> {
     {
       return ((SQLColumnPropertyInfo)_pick.getPropertyInfo()).getColumnName();
     }
+    else if ( _manualSelect != null){
+      return _manualSelect;
+    }
     else
     {
       return _metadata.getTableForType( _rootType ) + ".* ";
@@ -255,6 +280,7 @@ public class SQLQuery<T> implements Iterable<T> {
     child._orderByExpr = this._orderByExpr;
     child._limitExpr = this._limitExpr;
     child._offsetExpr = this._offsetExpr;
+    child._manualSelect = this._manualSelect;
     return child;
   }
 
