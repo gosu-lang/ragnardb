@@ -156,7 +156,7 @@ public class SQLQuery<T> implements Iterable<T> {
   {
     String from = "DELETE FROM " + _metadata.getTableForType(_rootType);
     String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
-    PreparedStatement delete = RagnarDB.prepareStatement( from + " " + where, getArgs() );
+    PreparedStatement delete = RagnarDB.prepareStatement(from + " " + where, getArgs());
     return delete.execute();
   }
 
@@ -203,6 +203,35 @@ public class SQLQuery<T> implements Iterable<T> {
     return newQuery;
   }
 
+  public SQLQuery<T> countDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " COUNT( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> maxDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MAX( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> minDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MIN( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> sumDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " SUM( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> avgDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " AVG( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
 
 
 
