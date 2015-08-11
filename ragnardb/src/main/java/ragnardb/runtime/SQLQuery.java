@@ -233,6 +233,63 @@ public class SQLQuery<T> implements Iterable<T> {
     return newQuery;
   }
 
+  public SQLQuery<T> groupConcat( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " GROUP_CONCAT( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> groupConcatDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " GROUP_CONCAT( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> listAgg( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " LISTAGG( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> listAgg( PropertyReference<Object, Object> ref, String str) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " LISTAGG( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() +
+      " , " + str + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> median( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MEDIAN( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> stddevPop( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " STDDEVPOP( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> stddevSamp( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " STDDEVSAMP( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> varPop( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " VARPOP( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> varSamp( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " VARSAMP( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+
+
 
 
   public Iterator<T> iterator()
