@@ -4,6 +4,7 @@ import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.features.IPropertyReference;
 import ragnardb.api.IModelConfig;
 import ragnardb.plugin.SQLColumnPropertyInfo;
+import ragnardb.runtime.validation.FormatValidator;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -58,6 +59,21 @@ public class ModelConfig implements IModelConfig
     validators.add( validator );
     _validatorsByField.put( propertyInfo.getColumnName(), validators );
   }
+
+
+  /*Allows validation by regex*/
+  public <T> void validateFormat(IPropertyReference<Object, T> propertyReference, String regexp){
+    SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
+    List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
+    if( validators == null )
+    {
+      validators = new ArrayList<>();
+    }
+    validators.add(new FormatValidator<T>(regexp));
+    _validatorsByField.put(propertyInfo.getColumnName(), validators);
+  }
+
+
 
   @Override
   public boolean isValid( SQLRecord sqlRecord )

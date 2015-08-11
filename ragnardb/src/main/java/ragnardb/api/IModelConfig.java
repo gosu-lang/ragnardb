@@ -16,6 +16,7 @@ public interface IModelConfig
   String getIdColumn();
 
   <T> void addValidation( IPropertyReference<Object, T> propertyReference, IFieldValidator<T> validator );
+  <T> void validateFormat(IPropertyReference<Object, T> propertyReference, String regexp);
 
   boolean isValid( SQLRecord sqlRecord );
 }
