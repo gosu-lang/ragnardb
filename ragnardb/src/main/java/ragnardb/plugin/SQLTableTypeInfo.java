@@ -54,7 +54,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
       final String tableName = getOwnersType().getTable().getTableName();
       final String idColumn = "id";
       ModelConfig config = new ModelConfig( tableName, idColumn, getColumnNames() );
-      if( _domainLogic == null )
+      if( _domainLogic != null )
       {
         SQLRecord prototypeObject = (SQLRecord)_domainLogic.getTypeInfo().getConstructor().getConstructor().newInstance();
         prototypeObject.configure( config );
