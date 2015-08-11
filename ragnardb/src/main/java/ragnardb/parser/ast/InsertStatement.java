@@ -9,143 +9,109 @@ import java.util.ArrayList;
  * Created by klu on 7/7/2015.
  */
 public class InsertStatement extends Statement{
-  private String _tableName;
+  private String _table;
   private ArrayList<String> _columns;
-  private ArrayList<Expression> _expressions;
-  private ArrayList<Token> _tokens;
+  private ArrayList<JavaVar> _variables;
+  private ValuesClause _values;
   private SelectStatement _select;
-  private ArrayList<JavaVar> _vars;
+  private ArrayList<Expression> _expressions;
 
-  public InsertStatement(String name){
-    _tableName = name;
+  public InsertStatement(String tablename){
+    _table = tablename;
     _columns = new ArrayList<>();
-    _expressions = new ArrayList<>();
-    _tokens = new ArrayList<>();
+    _variables = new ArrayList<>();
+    _values = null;
     _select = null;
-    _vars = new ArrayList<>();
+    _expressions = new ArrayList<>();
   }
 
-  public void setIsSelect(boolean b){
-    if(b){
-      _expressions = null;
-    } else {
-      _select = null;
-      _expressions = new ArrayList<>();
-    }
+  public void addColumn(String columnName){
+    _columns.add(columnName);
   }
 
-  public String getTableName() {
-    return _tableName;
+  public void setColumns(ArrayList<String> columns){
+    _columns = columns;
   }
 
-  public void setTableName(String _tableName) {
-    this._tableName = _tableName;
+  public void set(ValuesClause vals){
+    _values = vals;
+    _select = null;
+    _expressions = new ArrayList<>();
   }
 
-  public ArrayList<String> getColumns() {
-    return _columns;
+  public void set(SelectStatement select){
+    _select = select;
+    _values = null;
+    _expressions = new ArrayList<>();
   }
 
-  public void addColumn(String col){_columns.add(col);}
-
-  public void setColumns(ArrayList<String> _columns) {
-    this._columns = _columns;
+  public void addExpression(Expression e){
+    _expressions.add(e);
+    _select = null;
+    _values = null;
   }
 
-  public ArrayList<Expression> getExpressions() {
-    return _expressions;
+  public void setVars(ArrayList<JavaVar> variables){
+    _variables = variables;
   }
 
-  public void addExpression(Expression e){_expressions.add(e);}
+  public ArrayList<ResultColumn> getResultColumns(){return null;}
 
-  public void setExpressions(ArrayList<Expression> _expressions) {
-    this._expressions = _expressions;
-  }
-
-  public ArrayList<Token> getTokens() {
-    return _tokens;
-  }
-
-  public void addToken(Token t){_tokens.add(t);}
-
-  public void setTokens(ArrayList<Token> _tokens) {
-    this._tokens = _tokens;
-  }
-
-  public SelectStatement getSelect() {
-    return _select;
-  }
-
-  public void setSelect(SelectStatement _select) {
-    this._select = _select;
-  }
-
-  public ArrayList<JavaVar> getVariables() {
-    return _vars;
-  }
-
-  public void addVar(JavaVar v){_vars.add(v);}
-
-  public void setVars(ArrayList<JavaVar> _vars) {
-    this._vars = _vars;
-  }
-
-  public void setDefault(int i){
-    for(int j = 0; j<i; j++){
-      addExpression(new Default());
-    }
-  }
-
-  public ArrayList<ResultColumn> getResultColumns(){
-    return null;
-  }
+  public ArrayList<JavaVar> getVariables(){return _variables;}
 
   public ArrayList<String> getTables(){
-    ArrayList<String> e = new ArrayList<>();
-    e.add(_tableName);
-    return e;
+    ArrayList<String> tables = new ArrayList<>();
+    tables.add(_table);
+    return tables;
   }
 
   @Override
   public String toString(){
-    StringBuilder sb = new StringBuilder("<Insert/Replace>\nINTO\n");
-    sb.append(_tableName + "\n");
-    if(_columns.size()!=0){
-      sb.append("\t<Columns>\n");
-      for(String columnname: _columns){
-        sb.append("\t"+columnname+"\n");
-      }
-    }
-    if(_select == null){
-      sb.append("\t<Values>\n");
-      for(Expression expr: _expressions){
-        sb.append(expr.toString("\t"));
+    StringBuilder sb = new StringBuilder("<Insert>\nINTO: "+_table+"\n");
+    if(_expressions.size()>0){
+      sb.append("SET " + _columns.get(0) + "=\n");
+      sb.append(_expressions.get(0).toString("\t"));
+      for(int i=1; i<_expressions.size(); i++){
+        sb.append("    " + _columns.get(i) + "\n");
+        sb.append(_expressions.get(i).toString("\t"));
       }
     } else {
-      sb.append("\t<Values as Select>\n");
-      sb.append(_select.toString("\t"));
+      if(_columns.size()>0){
+        for(String col: _columns){
+          sb.append("\t"+col+"\n");
+        }
+      }
+      if(_values != null){
+        sb.append(_values.toString("\t"));
+      } else {
+        sb.append(_select.toString("\t"));
+      }
     }
     return sb.toString();
   }
 
   protected String toString(String initial){
-    StringBuilder sb = new StringBuilder(initial+"<Insert/Replace>\n"+initial+"INTO\n");
-    sb.append(initial+_tableName + "\n");
-    if(_columns.size()!=0){
-      sb.append(initial+"\t<Columns>\n");
-      for(String columnname: _columns){
-        sb.append(initial+"\t"+columnname+"\n");
-      }
-    }
-    if(_select == null){
-      sb.append(initial+"\t<Values>\n");
-      for(Expression expr: _expressions){
-        sb.append(expr.toString(initial+"\t"));
+    StringBuilder sb = new StringBuilder(initial+"<Insert>\n"+initial+"INTO: "+_table+"\n");
+    if(_expressions.size()>0){
+      sb.append(initial+"SET " + _columns.get(0) + "=\n");
+      sb.append(_expressions.get(0).toString(initial+"\t"));
+      for(int i=1; i<_expressions.size(); i++){
+        sb.append(initial+"    " + _columns.get(i) + "\n");
+        sb.append(_expressions.get(i).toString(initial+"\t"));
       }
     } else {
-      sb.append(initial+"\t<Values as Select>\n");
-      sb.append(_select.toString(initial+"\t"));
+      if(_columns.size()>0){
+        for(String col: _columns){
+          sb.append(initial+"\t"+col+"\n");
+        }
+      }
+      if(_values != null){
+        sb.append(_values.toString(initial+"\t"));
+      } else {
+        sb.append(_select.toString(initial+"\t"));
+      }
     }
     return sb.toString();
   }
+
 }

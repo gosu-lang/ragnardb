@@ -7,7 +7,17 @@ machine:
     version:
       oraclejdk8
 
+general:
+  branches:
+    only:
+      - master # only build/deply from master
+
 test:
+  # Call 'mvn deploy' instead of the default 'mvn integration-test'
+  override:
+    - mvn deploy -s settings.xml
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/
     - find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+    # now trigger the downstream ragnardb-test build
+    - curl -X POST https://circleci.com/api/v1/project/gosu-lang/ragnardb-test/tree/master?circle-token=$CIRCLE_TOKEN

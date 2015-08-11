@@ -1,11 +1,13 @@
 package ragnardb.parser.ast;
 
+import java.util.ArrayList;
+
 /**
  * Created by klu on 6/22/2015.
  */
 public class GeneralTerm extends Term {
   private SelectStatement _select;
-  private Expression _expression;
+  private ExpressionArray _array;
   private boolean isNegative;
 
   public GeneralTerm() {
@@ -13,20 +15,20 @@ public class GeneralTerm extends Term {
 
   public GeneralTerm(SelectStatement s) {
     _select = s;
-    _expression = null;
+    _array = null;
   }
 
-  public GeneralTerm(Expression e) {
-    _expression = e;
+  public GeneralTerm(ExpressionArray a) {
+    _array = a;
     _select = null;
   }
 
-  public Expression getExpression() {
-    return _expression;
+  public ArrayList<Expression> getExpressions() {
+    return _array.getExpressions();
   }
 
-  public void setExpression(Expression e) {
-    _expression = e;
+  public void setExpression(ExpressionArray a) {
+    _array = a;
   }
 
   public SelectStatement getSelect() {
@@ -39,9 +41,9 @@ public class GeneralTerm extends Term {
 
   public String toString() {
     StringBuilder sb = new StringBuilder("<Term>\n");
-    if (_expression != null) {
+    if (_array != null) {
       sb.append("\t");
-      sb.append(_expression);
+      sb.append(_array);
     }
     if (_select != null) {
       sb.append("\t");
@@ -56,8 +58,8 @@ public class GeneralTerm extends Term {
 
   protected String toString(String initial) {
     StringBuilder sb = new StringBuilder(initial + "<Term>\n");
-    if (_expression != null) {
-      sb.append(_expression.toString(initial + "\t"));
+    if (_array != null) {
+      sb.append(_array.toString(initial + "\t"));
     }
     if (_select != null) {
       sb.append("\t");

@@ -1,6 +1,20 @@
 grammar SQL;
 options { k = 1; }
 
+/* Grammar used by the parser ragnardb. Satisfies H2 grammar EXCEPT with following exceptions:
+1) database.table is allowed in more places; specifically, all dml statements support this (this is compatible with JDBC, easy to implement, and useful)
+2) resultcolumns (the results from the select statement) only support columnnames; expression support does not allow us to generate typeinfo. Furthermore, expression support leads to unusual behavior in JDBC regarding returned results.
+3) <> Comparator is not supported
+4) Datatype support: please check parser for this; not all datatypes are supported
+5) Select statements: ordering and limit by are only permitted once per query in the case of joins. In order to limit results in several queries in joins, please use TOP.
+   The reason for this limitation is the resolving LL(1) conflicts; we cannot allow more than one ORDER BY and LIMIT clause per statement. This does not mean that you can
+   only order by the tables/columns used in the first query; the grammar still allows you to access every query within a join.
+6) We do not allow column definitions as select statements. This would wildly complicate our plugin.
+7) Term limitations; for parsing simplicity purposes we only allow actual algebraic terms to have +/- signs. This is not a big deal because +/- signs to strings have no meaning anyways.
+
+This grammar is LL(1) expect for one case: database.table vs table. This is extremely trivially resolved in the parser. If this error is encountered as a result of the construction (ID '.')? ID, please ignore.
+*/
+
 ID  :	('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
     ;
 
@@ -56,123 +70,122 @@ fragment
 UNICODE_ESC
     :   '\\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT
     ;
+	
+array	:	'(' expr (',' expr)* ')'
+	;
 
-table
+tablename
+	:	(ID '.')? ID;
+	
+queryname
+	:	ID;
+	
+columnname
+	:	ID;
+	
+constraintname
+	:	ID;
 
-    	:	'CREATE' ('TEMP' | 'TEMPORARY')?  'TABLE' ('IF' 'NOT' 'EXISTS')? ('database-name' '.')? 'table-name'
-    	        '(' columndef (columndef ',')* ')' ('WITHOUT' 'ROWID')? 
-    	 ;
+createtable
+    	:	'CREATE' ('TEMP' | 'TEMPORARY')?  'TABLE' ('IF' 'NOT' 'EXISTS')? tablename '(' (columndef | constraint) (',' (columndef | constraint))* ')'
+    	;
+    	
 columndef
-        :	'column-name' ('type-name')? (columnconstraint)*
+        :	columnname typename ('DEFAULT' term)? ('NOT'? 'NULL')? (('AUTO_INCREMENT'|'IDENTITY') ('(' INT (',' INT)? ')')?)? ('UNIQUE' | 'PRIMARY' 'KEY' 'HASH'?)? ('CHECK' condition)?
         ;
         
-columnconstraint
-        :	('CONSTRAINT' 'name')? 
-                 (
-                   'PRIMARY' 'KEY' ('ASC' 'DESC')? 'conflict-clause' ('AUTOINCREMENT')?
-                   | 'NOT' 'NULL' 'conflict-clause'
-                   | 'UNIQUE' conflictclause
-                   | 'CHECK' '(' INT ')'
-                   | 'DEFAULT' (signednumber | literalvalue | '(' INT ')'
-                   | 'COLLLATE' 'collation-name'
-                   | foreignkeyclause
-                 )
-                 )          
-        ;
+constraint
+	:	('CONSTRAINT' ('IF' 'NOT' 'EXISTS' )? constraintname)? 
+	(	'CHECK' expr
+	|	'UNIQUE' '(' columnname (',' columnname)* ')'
+	|	'FOREIGN' 'KEY' '(' columnname (',' columnname)* ')' 'REFERENCES' tablename? ('(' columnname (',' columnname)* ')')? ('ON' ('DELETE' referentialaction ('ON' 'UPDATE' referentialaction)? | 'UPDATE' referentialaction))?
+	|	'PRIMARY' 'KEY' 'HASH'? '(' columnname (',' columnname)* ')'
+	)
+	;
         
-conflictclause
-        :	('ON' 'CONFLICT' 
-                     ('ROLLBACK' | 'ABORT' | 'FAIL' | 'IGNORE' | 'REPLACE')
-                )?
-         ;
-  
-foreignkeyclause
-       	:	'REFERENCES' 'foreign-table' ('(' 'column-name' (',' 'column-name')* ')' )?
-       	        ('MATCH' 'name' | 'ON' ('DELETE' | 'UPDATE') 
-       	          (('SET' ('NULL' |  'DEFAULT' ))| 'CASCADE' | 'RESTRICT' | 'NO' 'ACTION')
-       	        )*
-       	        ( ('NOT')? 'DEFERRABLE' ('INITIALLY' ('DEFERRED' | 'IMMEDIATE'))? )?
-       	;      
+       	
+referentialaction
+	:	'CASCADE'
+	|	'RESTRICT'
+	|	'NO' 'ACTION'
+	|	'SET' ('DEFAULT' | 'NULL')
+	;      
+     
 literalvalue
-        :	'numeric-literal' | 'string-literal' | 'blob-literal' | 'NULL' | 'CURRENT_TIME' | 'CURRENT_DATE' | 'CURRENT_TIMESTAMP'
+        :	INT | FLOAT | ID | STRING | 'blob-literal' | 'NULL' | 'CURRENT_TIME' | 'CURRENT_DATE' | 'CURRENT_TIMESTAMP'
         ;
        	
 signednumber 
-	:	('+'|'-') 'numeric-literal' 
+	:	('+'|'-')? (INT|FLOAT) 
 	;
        	
 typename 
-	:	('name')* ( '(' ( 'signed-number' ')' | '(' 'signed-number' ',' 'signed-number' ')'))?
+	:	(ID)* ('(' signednumber (',' signednumber)? ')')?
 	;
-	
-tableconstraint
-  :  ('CONSTRAINTame')? ( ('PRIMARY' 'KEY' | 'UNIQUE') '(' indexedcolumn (',' indexedcolumn)* ')' conflictclause
-  | 'CHECK' '(' expr ')'
-  | 'FOREIGN' 'KEY' '(' 'columnname' (',' 'columnname' )* ')' foreignkeyclause)
-  ;
 
-indexedcolumn
-      :  'column_name' ('COLLATE' 'collationname')? ('ASC' | 'DESC')?
-      ;
+recursivequery
+	:	'WITH' 'RECURSIVE' queryname '(' columnname (',' columnname)* ')' 'AS' '(' simpleselect 'UNION' 'ALL' simpleselect ')' simpleselect ('ORDER' 'BY' orderingterm (',' orderingterm)*)? ('LIMIT' expr ('OFFSET' expr)?)?
+	;
       
 selectstmt
-	:	('WITH' ('RECURSIVE')? commontableexpression (',' commontableexpression)* )?
-	        selectsub
-	        (compoundoperator selectsub)*
-	        ('ORDER' 'BY' orderingterm (',' orderingterm)*)?
-	        ('LIMIT' INT 'OFFSET' (',' 'OFFSET')* INT)?
+	:	simpleselect ((('UNION' 'ALL'?)|'MINUS'|'EXCEPT'|'INTERSECT') simpleselect)* ('ORDER' 'BY' orderingterm (',' orderingterm)*)? ('LIMIT' expr ('OFFSET' expr)?)?
 	;
 	
-selectsub
-	:	'SELECT' ('DISTINCT' | 'ALL')? resultcolumn (',' resultcolumn)*
-	         ('FROM' (tableorsubquery joinclause))?
-	         ('WHERE' expr)?
-	         ('GROUP' 'BY' expr (',' expr)* ('HAVING' expr)? )?
-	         |
-	         'VALUES' '(' expr (',' expr)* ')' (',' '(' expr (',' expr)* ')')*
-	;       	
+simpleselect
+	:	'SELECT' ('TOP' term)? ('DISTINCT'|'ALL')? (resultcolumn (',' resultcolumn)*| '(' resultcolumn (',' resultcolumn)* ')') ('AS' ID)? 'FROM' tableorsubquery ('WHERE' expr)? (('GROUP' 'BY' expr) (',' 'GROUP' 'BY' expr)*)? ('HAVING' expr)?
+	;
 	
-	tableorsubquery
-                :               ('databasename' '.')? 'tablename' ('AS' 'tablealias')? (('INDEXED' 'BY' 'indexname') | ('NOT' 'INDEXED'))?
-                |       '(' ((joinclause /* | (tableorsubquery (',' tableorsubquery)*)*/ ')') | (selectstmt ')'  (('AS')? 'tablealias')?)) 
-                ;
-         
+insertstmt
+	:	'INSERT' 'INTO' tablename 
+	(	('(' columnname (',' columnname)? ')')? (valuesexpression | 'DIRECT'? 'SORTED'? selectstmt)
+	|	'SET' columnname '=' expr (',' columnname '=' expr)*	)
+	;
+	
+updatestmt
+	:	'UPDATE' tablename ('AS'? ID)? ('SET' columnname '=' expr (',' columnname '=' expr)* | '(' columnname (',' columnname)* ')' '=' '(' selectstmt ')') ('WHERE' expr)? ('LIMIT' expr)?
+	;
+	
+deletestmt
+	:	'DELETE' 'FROM' tablename ('WHERE' expr)? ('LIMIT' term)?
+	;
+	
+droptable
+	:	'DROP' 'TABLE' ('IF' 'EXISTS')? tablename (',' tablename)* ('RESTRICT'|'CASCADE')?
+	;
+	
+altertable
+	:	'ALTER' 'TABLE' tablename 
+	(	'ADD' (constraint ('CHECK'|'NOCHECK')? | 'COLUMN'? (('IF' 'NOT' 'EXISTS')? columndef (('BEFORE'|'AFTER') columnname)? | '(' columndef (',' columndef)* ')'))
+	|	'ALTER' 'COLUMN' columnname (typename ('DEFAULT' expr)? ('NOT'? 'NULL')? ('AUTO_INCREMENT'|'IDENTITY')? | 'RENAME' 'TO' ID | 'SET' ('DEFAULT' expr | 'NOT'? 'NULL') | 'RESTART' 'WITH' INT)
+	|	'DROP' ('COLUMN' ('IF' 'EXISTS')? columnname | 'CONSTRAINT' ('IF' 'EXISTS')? constraintname | 'PRIMARY' 'KEY')
+	|	'RENAME' 'TO' ID
+	)
+	;
+	     	
+valuesexpression
+	:	'VALUES' '(' expr (',' expr)* ')' (',' '(' expr (',' expr)* ')')* ;
+	
+tableorsubquery
+        :       basictableorsubquery ('ON' expr)?
+        ;
+        
+basictableorsubquery
+	:	(tablename
+        |	'(' (selectstmt|valuesexpression) ')'
+        ) ('AS'? ID)? ((((('LEFT'|'RIGHT')('OUTER')?|'INNER'|'CROSS'|'NATURAL')?) 'JOIN'|',') basictableorsubquery)?
+	;        
 
 resultcolumn
-                :               '*'
-                |              'tablename' '.' '*' //lookahead 2 to resolve tablename vs expression
-                |              expr (('AS')? 'columnalias')?
-                ;
+        :       (ID '.')? ('*'
+        |	columnname )
+        |	'NULL'
+        ;
                 
 orderingterm
-                :               expr ('COLLATE' 'collationname')? ('ASC' | 'DESC')? //check collate before checking expression
-                ;
+        :       expr ('ASC' | 'DESC')? ('NULLS' ('FIRST'|'LAST'))? 
+        ;
 
-joinoperator
-                :               ','
-                |              ('NATURAL')? (('LEFT' ('OUTER')?) | 'INNER' | 'CROSS')? 'JOIN'
-                ;
-                
-joinconstraint
-                :               'ON' expr
-                |              'USING' '(' 'columnname' (',' 'columnname')* ')'
-                ;
-
-joinclause
-                :               tableorsubquery (joinoperator tableorsubquery joinconstraint?)* 
-                ;
-                
-compoundoperator
-                :               'UNION' 'ALL'?
-                |              'INTERSECT'
-                |              'EXCEPT'
-                ;
-                
-commontableexpression
-                :               'tablename' ('(' 'columnname' (',' 'columnname')* ')')? 'AS' '(' selectstmt ')'
-                ;
-
-expr	:	andcondition ('OR' andcondition)*
+expr	:	andcondition ('OR' andcondition)* | 'DEFAULT'
 	;
 	
 andcondition
@@ -197,9 +210,8 @@ factor	:	term (('*'|'/'|'%') term)*
 
 term	:	literalvalue
 	|	'?' INT
-	|	'(' (expr|selectstmt) ')'
+	|	'(' (array|selectstmt) ')'
 	|	'CASE' (case|casewhen)
-	|	'columnname'
 	;
 	
 case	:	expr casewhen
@@ -216,6 +228,6 @@ conditionrightside
 	|	'NOT'? ('LIKE' operand ('ESCAPE' ID)?|'REGEXP' operand)
 	;
 	
-compare	:	'comparator'
+compare	:	'>=' | '<=' | '=' | '<' | '>' | '!=' | '&&'
 	;
 	
