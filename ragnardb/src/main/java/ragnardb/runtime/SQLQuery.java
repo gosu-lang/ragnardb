@@ -26,6 +26,7 @@ public class SQLQuery<T> implements Iterable<T> {
   private String _manualSelect;
   private SQLConstraint _whereExpr;
   private SQLConstraint _joinExpr; // Includes On expressions as well!
+  private String _groupBy;
   private SQLConstraint _orderByExpr;
   private SQLConstraint _limitExpr;
   private SQLConstraint _offsetExpr;
@@ -33,6 +34,10 @@ public class SQLQuery<T> implements Iterable<T> {
 
   private void setManualSelect(String manualSelect){
     _manualSelect = manualSelect;
+  }
+
+  protected void setGroupBy(String str){
+    _groupBy = str;
   }
 
   protected void setType(IType type){
@@ -164,6 +169,12 @@ public class SQLQuery<T> implements Iterable<T> {
   {
     SQLQuery<U> sqlQuery = (SQLQuery<U>) cloneMe();
     sqlQuery._pick = ref;
+    return sqlQuery;
+  }
+
+  public SQLQuery<T> groupBy(PropertyReference<Object, Object> ref){
+    SQLQuery<T> sqlQuery = (SQLQuery<T>) cloneMe();
+    sqlQuery.setGroupBy( " GROUP BY( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + ") ");
     return sqlQuery;
   }
 
@@ -315,10 +326,11 @@ public class SQLQuery<T> implements Iterable<T> {
     String from = "FROM " + _metadata.getTableForType(_rootType);
     String join = _joinExpr == null ? "" : _joinExpr.getSQL( _metadata);
     String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
+    String groupBy = _groupBy == null ? "" : _groupBy;
     String orderBy =  _orderByExpr == null ? "" :  _orderByExpr.getSQL(_metadata);
     String limit =  _limitExpr == null ? "" :  _limitExpr.getSQL(_metadata);
     String offset =  _offsetExpr == null ? "" :  _offsetExpr.getSQL(_metadata);
-    return select + " " +  from + " "  + join + " " + " " + where + " " + orderBy + " " + limit + " " + offset;
+    return select + " " +  from + " "  + join + " " + " " + where + " " + groupBy + " " + orderBy + " " + limit + " " + offset;
   }
 
 
@@ -396,6 +408,7 @@ public class SQLQuery<T> implements Iterable<T> {
     child._whereExpr = this._whereExpr;
     child._joinExpr = this._joinExpr;
     child._pick = this._pick;
+    child._groupBy = this._groupBy;
     child._orderByExpr = this._orderByExpr;
     child._limitExpr = this._limitExpr;
     child._offsetExpr = this._offsetExpr;
