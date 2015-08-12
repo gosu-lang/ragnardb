@@ -1,10 +1,36 @@
-# ragnardb
+# RagnarDB
 
 RagnarDB is an experimental O/R framework for the Gosu programming language.
 
-## Environment setup
+## DDL Files
 
-### Prerequisites
+*TODO: Describe DDL semantics*
+
+## SQL Query Files
+
+*TODO: Describe SQL semantics*
+
+### Query Parameters
+
+## Runtime API
+
+*TODO: Describe DDL Types runtime API (e.g. save())*
+
+### Query Builder API
+
+### Gosu Extension API
+
+### Validation API
+
+### Property Listeners
+
+### Life Cycle Callback API
+
+## Developing RagnarDB
+
+### Environment Setup
+
+#### Prerequisites
 
 * IJ 14 CE
 * JDK 8
@@ -15,7 +41,7 @@ RagnarDB is an experimental O/R framework for the Gosu programming language.
   * IDEA_HOME
   * IDEA_JDK
 
-### IJ setup
+#### IJ setup
 
 Within this (ragnardb) project, take the following steps:
 
@@ -31,7 +57,7 @@ Within this (ragnardb) project, take the following steps:
 4. Add a run configuration of type plugin.  Call it "Gosu Sandbox" although the name is irrelevant. Make sure its classpath is "gosu-custom-types-plugin".
 5. Run the plugin configuration, which will launch another "sandbox" IJ instance.
 
-### Gosu sandbox setup
+#### Gosu sandbox setup
 
 1. Get the ij-gosu plugin JAR from http://build/job/ij-gosu/ (Guidewire internal only)
 2. Choose Configure -> Plugins -> Install Plugin from disk..., then select the JAR you downloaded
