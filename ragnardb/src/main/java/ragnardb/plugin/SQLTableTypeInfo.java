@@ -16,10 +16,17 @@ import gw.lang.reflect.MethodList;
 import gw.lang.reflect.ParameterInfoBuilder;
 import gw.lang.reflect.PropertyInfoBuilder;
 import gw.lang.reflect.TypeSystem;
+import gw.lang.reflect.features.IPropertyReference;
+import gw.lang.reflect.features.PropertyReference;
 import gw.lang.reflect.gs.IGosuClass;
 import gw.lang.reflect.java.JavaTypes;
+import gw.util.concurrent.LockingLazyVar;
+import javafx.util.Pair;
+import ragnardb.api.IModelConfig;
+import ragnardb.api.ISQLResult;
 import ragnardb.parser.ast.Constraint;
 import ragnardb.parser.ast.CreateTable;
+import ragnardb.runtime.ModelConfig;
 import ragnardb.runtime.SQLConstraint;
 import ragnardb.runtime.SQLMetadata;
 import ragnardb.runtime.SQLQuery;
@@ -27,10 +34,7 @@ import ragnardb.runtime.SQLRecord;
 import ragnardb.utils.NounHandler;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SQLTableTypeInfo extends SQLBaseTypeInfo {
@@ -42,6 +46,22 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private IGosuClass _domainLogic;
   private IConstructorHandler _constructor;
   private final ILocationInfo _location;
+  private LockingLazyVar<IModelConfig> _modelConfig = new LockingLazyVar<IModelConfig>()
+  {
+    @Override
+    protected IModelConfig init()
+    {
+      final String tableName = getOwnersType().getTable().getTableName();
+      final String idColumn = "id";
+      ModelConfig config = new ModelConfig( tableName, idColumn, getColumnNames() );
+      if( _domainLogic != null )
+      {
+        SQLRecord prototypeObject = (SQLRecord)_domainLogic.getTypeInfo().getConstructor().getConstructor().newInstance();
+        prototypeObject.configure( config );
+      }
+      return config;
+    }
+  };
 
   public SQLTableTypeInfo(ISQLTableType type, CreateTable table,  ISQLDdlType system) {
     super(type);
@@ -144,9 +164,46 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     _propertiesList.add( allProp );
     _propertiesMap.put( allProp.getName(), allProp );
 
+    IPropertyInfo validProp = generateValidProperty();
+    _propertiesList.add( validProp );
+    _propertiesMap.put( validProp.getName(), validProp );
+
     // Adding Foreign Key References TO this table (The reverse query) TODO
 
     _domainLogic = maybeGetDomainLogic();
+
+    //resolving errors property
+    IPropertyInfo errorsList = new PropertyInfoBuilder()
+      .withName("errors")
+      .withDescription("Gets the validation errors present")
+      .withWritable(false)
+      .withType(JavaTypes.MAP().getParameterizedType(TypeSystem.getByFullName("gw.lang.reflect.features.IPropertyReference"), JavaTypes.LIST().getParameterizedType(JavaTypes.STRING())))
+      .withAccessor(new IPropertyAccessor() {
+        @Override
+        public Object getValue(Object o) {
+          Map<IPropertyReference, List<String>> errorsMap = new HashMap<>();
+          Map<String, List<String>> errorsByName = _modelConfig.get().getErrorsList();
+          List<IPropertyReference> propertyReferences = _modelConfig.get().getPropertyReferences();
+          for (String colName : errorsByName.keySet()) {
+            for (IPropertyReference prop : propertyReferences) {
+              if (((SQLColumnPropertyInfo)prop.getPropertyInfo()).getColumnName().equals(colName)){
+                errorsMap.put(prop, errorsByName.get(colName));
+              }
+            }
+          }
+          return errorsMap;
+        }
+
+        @Override
+        public void setValue(Object o, Object o1) {
+          //ignore
+        }
+      })
+      .build(this);
+
+    _propertiesList.add(errorsList);
+    _propertiesMap.put("errors", errorsList);
+
     createMethodInfos();
     createConstructorInfos();
   }
@@ -154,20 +211,12 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
   private void createConstructorInfos() {
     List<IConstructorInfo> constructorInfos = new ArrayList<>();
 
-    final String tableName = getOwnersType().getTable().getTableName();
-    final String idColumn = "id";
-
-    final IConstructorInfo domainCtor = _domainLogic == null ? null : _domainLogic.getTypeInfo().getConstructor( JavaTypes.STRING(), JavaTypes.STRING() );
+    IType instanceType = _domainLogic == null ? TypeSystem.get(SQLRecord.class) : _domainLogic;
+    final IConstructorInfo ctor = instanceType.getTypeInfo().getConstructor();
     _constructor = ( args ) -> {
-      //reflectively instantiate the domain logic class, if it exists
-      if( domainCtor != null )
-      {
-        return domainCtor.getConstructor().newInstance( tableName, idColumn );
-      }
-      else
-      {
-        return new SQLRecord( tableName, idColumn );
-      }
+      SQLRecord instance = (SQLRecord)ctor.getConstructor().newInstance();
+      instance.setConfig( _modelConfig.get() );
+      return instance;
     };
 
     IConstructorInfo constructorMethod = new ConstructorInfoBuilder()
@@ -191,6 +240,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     }
 
     methodList.add(generateCreateMethod());
+    methodList.add(generateSaveMethod());
     methodList.add(generateWhereMethod());
     methodList.add(generateSelectMethod());
 
@@ -258,6 +308,16 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .build(this);
   }
 
+  private IMethodInfo generateSaveMethod() {
+    return new MethodInfoBuilder()
+      .withName("save")
+      .withDescription("Creates or updates a table entry")
+      .withParameters()
+      .withReturnType(JavaTypes.pBOOLEAN())
+      .withCallHandler((ctx, args) -> ((SQLRecord) ctx).save())
+      .build(this);
+  }
+
   private IMethodInfo generateWhereMethod() {
     return new MethodInfoBuilder()
         .withName("where")
@@ -283,6 +343,29 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         public Object getValue( Object ctx )
         {
           return new SQLQuery<SQLRecord>(_md, getOwnersType());
+        }
+
+        @Override
+        public void setValue( Object ctx, Object value )
+        {
+          //ignore
+        }
+      } )
+      .build( this );
+  }
+
+  private IPropertyInfo generateValidProperty()
+  {
+    return new PropertyInfoBuilder()
+      .withName( "IsValid" )
+      .withType( JavaTypes.BOOLEAN() )
+      .withWritable( false )
+      .withAccessor( new IPropertyAccessor()
+      {
+        @Override
+        public Object getValue( Object ctx )
+        {
+          return _modelConfig.get().isValid( (SQLRecord)ctx );
         }
 
         @Override
@@ -373,4 +456,13 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     }
   }
 
+  public List<String> getColumnNames()
+  {
+    ArrayList<String> strings = new ArrayList<>();
+    for( ColumnDefinition columnDefinition : _table.getColumnDefinitions() )
+    {
+      strings.add( columnDefinition.getColumnName() );
+    }
+    return strings;
+  }
 }

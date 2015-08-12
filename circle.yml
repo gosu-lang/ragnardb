@@ -10,7 +10,7 @@ machine:
 general:
   branches:
     only:
-      - master # only build/deply from master
+      - master # only build/deploy from master
 
 test:
   # Call 'mvn deploy' instead of the default 'mvn integration-test'

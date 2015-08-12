@@ -1202,6 +1202,7 @@ public class SQLParser {
   private Expression parseExpr() {
     Expression expression;
     if(tokEquals(TokenType.DEFAULT)){
+      next();
       return new Default();
     }
     AndCondition condition = parseAndCondition();
