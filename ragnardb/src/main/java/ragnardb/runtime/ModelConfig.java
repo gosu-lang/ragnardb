@@ -77,8 +77,8 @@ public class ModelConfig implements IModelConfig
   }
 
   /*Allows validation by required*/
-  public <T> void requiredFields(List<IPropertyReference<Object, T>> propertyReferences){
-    for(IPropertyReference<Object, T> propertyReference: propertyReferences){
+  public <T> void requiredFields(List<IPropertyReference<Object, T>> propertyReferenceList){
+    for(IPropertyReference<Object, T> propertyReference: propertyReferenceList){
       propertyReferences.add(propertyReference);
       SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
       List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
