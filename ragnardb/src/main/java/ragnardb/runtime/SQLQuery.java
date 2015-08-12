@@ -1,7 +1,10 @@
 package ragnardb.runtime;
 
+import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.features.PropertyReference;
+import gw.lang.reflect.java.GosuTypes;
+import gw.lang.reflect.java.JavaTypes;
 import gw.util.GosuExceptionUtil;
 import ragnardb.RagnarDB;
 import ragnardb.parser.ast.SQL;
@@ -9,6 +12,7 @@ import ragnardb.plugin.SQLColumnPropertyInfo;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.*;
 
 /**
@@ -18,12 +22,27 @@ public class SQLQuery<T> implements Iterable<T> {
 
   protected ITypeToSQLMetadata _metadata;
   protected IType _rootType;
+  protected IType _replaceType;
+  private String _manualSelect;
   private SQLConstraint _whereExpr;
   private SQLConstraint _joinExpr; // Includes On expressions as well!
+  private String _groupBy;
   private SQLConstraint _orderByExpr;
   private SQLConstraint _limitExpr;
   private SQLConstraint _offsetExpr;
   private PropertyReference _pick;
+
+  private void setManualSelect(String manualSelect){
+    _manualSelect = manualSelect;
+  }
+
+  protected void setGroupBy(String str){
+    _groupBy = str;
+  }
+
+  protected void setType(IType type){
+    _replaceType = type;
+  }
 
   private void addJoin(SQLConstraint cons){
     if(_joinExpr == null){
@@ -142,7 +161,7 @@ public class SQLQuery<T> implements Iterable<T> {
   {
     String from = "DELETE FROM " + _metadata.getTableForType(_rootType);
     String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
-    PreparedStatement delete = RagnarDB.prepareStatement( from + " " + where, getArgs() );
+    PreparedStatement delete = RagnarDB.prepareStatement(from + " " + where, getArgs());
     return delete.execute();
   }
 
@@ -153,12 +172,143 @@ public class SQLQuery<T> implements Iterable<T> {
     return sqlQuery;
   }
 
+  public SQLQuery<T> groupBy(PropertyReference<Object, Object> ref){
+    SQLQuery<T> sqlQuery = (SQLQuery<T>) cloneMe();
+    sqlQuery.setGroupBy( " GROUP BY( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + ") ");
+    return sqlQuery;
+  }
+
+  public SQLQuery<T> count() {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " COUNT(*) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> count( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " COUNT( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> max( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MAX( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> min( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MIN( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> sum( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " SUM( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> avg( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " AVG( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> countDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " COUNT( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> maxDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MAX( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> minDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MIN( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> sumDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " SUM( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> avgDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " AVG( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> groupConcat( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " GROUP_CONCAT( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> groupConcatDistinct( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " GROUP_CONCAT( DISTINCT " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> listAgg( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " LISTAGG( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> listAgg( PropertyReference<Object, Object> ref, String str) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " LISTAGG( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() +
+      " , " + str + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> median( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " MEDIAN( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> stddevPop( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " STDDEVPOP( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> stddevSamp( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " STDDEVSAMP( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> varPop( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " VARPOP( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+  public SQLQuery<T> varSamp( PropertyReference<Object, Object> ref) {
+    SQLQuery<T> newQuery = cloneMe();
+    newQuery.setManualSelect( " VARSAMP( " + ((SQLColumnPropertyInfo)ref.getPropertyInfo()).getColumnName() + " ) " );
+    return newQuery;
+  }
+
+
+
+
+
   public Iterator<T> iterator()
   {
     Iterator<T> result;
     try
     {
-      if(_pick != null) {
+      if( (_pick != null) || (_manualSelect != null) ) {
         result = SQLRecord.selectSingleColumn( getSQLString(), getArgs() );
       } else {
         result = SQLRecord.select( getSQLString(), getArgs(), _rootType );
@@ -176,11 +326,14 @@ public class SQLQuery<T> implements Iterable<T> {
     String from = "FROM " + _metadata.getTableForType(_rootType);
     String join = _joinExpr == null ? "" : _joinExpr.getSQL( _metadata);
     String where = _whereExpr == null ? "" : "WHERE " + _whereExpr.getSQL( _metadata );
+    String groupBy = _groupBy == null ? "" : _groupBy;
     String orderBy =  _orderByExpr == null ? "" :  _orderByExpr.getSQL(_metadata);
     String limit =  _limitExpr == null ? "" :  _limitExpr.getSQL(_metadata);
     String offset =  _offsetExpr == null ? "" :  _offsetExpr.getSQL(_metadata);
-    return select + " " +  from + " "  + join + " " + " " + where + " " + orderBy + " " + limit + " " + offset;
+    return select + " " +  from + " "  + join + " " + " " + where + " " + groupBy + " " + orderBy + " " + limit + " " + offset;
   }
+
+
 
   //--------------------------------------------------------------------------------
   // Implementation
@@ -226,6 +379,9 @@ public class SQLQuery<T> implements Iterable<T> {
     {
       return ((SQLColumnPropertyInfo)_pick.getPropertyInfo()).getColumnName();
     }
+    else if ( _manualSelect != null){
+      return _manualSelect;
+    }
     else
     {
       return _metadata.getTableForType( _rootType ) + ".* ";
@@ -252,9 +408,11 @@ public class SQLQuery<T> implements Iterable<T> {
     child._whereExpr = this._whereExpr;
     child._joinExpr = this._joinExpr;
     child._pick = this._pick;
+    child._groupBy = this._groupBy;
     child._orderByExpr = this._orderByExpr;
     child._limitExpr = this._limitExpr;
     child._offsetExpr = this._offsetExpr;
+    child._manualSelect = this._manualSelect;
     return child;
   }
 
