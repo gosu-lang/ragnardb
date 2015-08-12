@@ -1,6 +1,8 @@
 package ragnardb.runtime;
 
 import gw.lang.reflect.features.IPropertyReference;
+import gw.lang.reflect.features.PropertyReference;
+import javafx.util.Pair;
 import ragnardb.api.IModelConfig;
 import ragnardb.plugin.SQLColumnPropertyInfo;
 import ragnardb.runtime.validation.ContentValidator;
@@ -17,6 +19,8 @@ public class ModelConfig implements IModelConfig
   private String _tableName;
   private String _idColumn;
   private Map<String, List<IFieldValidator>> _validatorsByField = new HashMap<>();
+  private Map<String, List<String>> errorsList = new HashMap<>();
+  private List<IPropertyReference> propertyReferences = new ArrayList<>();
 
   public ModelConfig( String tableName, String idColumn, List<String> columns )
   {
@@ -47,6 +51,7 @@ public class ModelConfig implements IModelConfig
 
   public <T> void addValidation(IPropertyReference<Object, T> propertyReference, IFieldValidator<T> validator)
   {
+    propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
     List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
     if( validators == null )
@@ -60,6 +65,7 @@ public class ModelConfig implements IModelConfig
 
   /*Allows validation by regex*/
   public <T> void validateFormat(IPropertyReference<Object, T> propertyReference, String regexp){
+    propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
     List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
     if( validators == null )
@@ -73,6 +79,7 @@ public class ModelConfig implements IModelConfig
   /*Allows validation by required*/
   public <T> void requiredFields(List<IPropertyReference<Object, T>> propertyReferences){
     for(IPropertyReference<Object, T> propertyReference: propertyReferences){
+      propertyReferences.add(propertyReference);
       SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
       List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
       if( validators == null )
@@ -86,6 +93,7 @@ public class ModelConfig implements IModelConfig
 
   /*Allows validation by length, set maxlength to -1 to have no maximum length*/
   public <T> void lengthBetween(IPropertyReference<Object, T> propertyReference, int minlength, int maxlength){
+    propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
     List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
     if( validators == null )
@@ -97,6 +105,7 @@ public class ModelConfig implements IModelConfig
   }
 
   public <T> void unique(IPropertyReference<Object, T> propertyReference){
+    propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
     List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
     if( validators == null )
@@ -108,6 +117,7 @@ public class ModelConfig implements IModelConfig
   }
 
   public <T> void hasContent(IPropertyReference<Object, T> propertyReference){
+    propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
     List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
     if( validators == null )
@@ -124,6 +134,7 @@ public class ModelConfig implements IModelConfig
   }
 
   public <T> void isInSet(IPropertyReference<Object, T> propertyReference, Set<Object> objs){
+    propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
     List<IFieldValidator> validators = _validatorsByField.get( propertyInfo.getColumnName() );
     if( validators == null )
@@ -141,6 +152,17 @@ public class ModelConfig implements IModelConfig
     Map<String, List<String>> errors = getErrors(sqlRecord);
     return errors.isEmpty();
   }
+
+  @Override
+  /*This WILL modify the saved list of errors*/
+  public boolean isValidModifyingErrors( SQLRecord sqlRecord ){
+    errorsList = getErrors(sqlRecord);
+    return errorsList.isEmpty();
+  }
+
+  public Map<String, List<String>> getErrorsList(){return errorsList;}
+
+  public List<IPropertyReference> getPropertyReferences(){return propertyReferences;}
 
   private Map<String, List<String>> getErrors( SQLRecord sqlRecord )
   {
@@ -171,7 +193,7 @@ public class ModelConfig implements IModelConfig
 
   private List<IFieldValidator> getValidatorsForColumn( String columnName )
   {
-    List<IFieldValidator> validators = _validatorsByField.get( columnName );
+    List<IFieldValidator> validators = _validatorsByField.get(columnName);
     if( validators == null )
     {
       return Collections.emptyList();

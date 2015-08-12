@@ -68,6 +68,10 @@ public class SQLRecord implements ISQLResult
   }
 
   public boolean save() {
+    if(!_config.isValidModifyingErrors(this)){
+      System.out.println("Sorry, a validation error has occurred! Please check the errors.");
+      return false;
+    }
     if(_persisted) {
       return update();
     } else {

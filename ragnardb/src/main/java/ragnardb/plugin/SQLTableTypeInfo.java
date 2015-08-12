@@ -16,9 +16,12 @@ import gw.lang.reflect.MethodList;
 import gw.lang.reflect.ParameterInfoBuilder;
 import gw.lang.reflect.PropertyInfoBuilder;
 import gw.lang.reflect.TypeSystem;
+import gw.lang.reflect.features.IPropertyReference;
+import gw.lang.reflect.features.PropertyReference;
 import gw.lang.reflect.gs.IGosuClass;
 import gw.lang.reflect.java.JavaTypes;
 import gw.util.concurrent.LockingLazyVar;
+import javafx.util.Pair;
 import ragnardb.api.IModelConfig;
 import ragnardb.api.ISQLResult;
 import ragnardb.parser.ast.Constraint;
@@ -31,10 +34,7 @@ import ragnardb.runtime.SQLRecord;
 import ragnardb.utils.NounHandler;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SQLTableTypeInfo extends SQLBaseTypeInfo {
@@ -171,6 +171,39 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     // Adding Foreign Key References TO this table (The reverse query) TODO
 
     _domainLogic = maybeGetDomainLogic();
+
+    //resolving errors property
+    IPropertyInfo errorsList = new PropertyInfoBuilder()
+      .withName("errors")
+      .withDescription("Gets the validation errors present")
+      .withWritable(false)
+      .withType(JavaTypes.MAP().getParameterizedType(TypeSystem.getByFullName("gw.lang.reflect.features.IPropertyReference"), JavaTypes.LIST().getParameterizedType(JavaTypes.STRING())))
+      .withAccessor(new IPropertyAccessor() {
+        @Override
+        public Object getValue(Object o) {
+          Map<IPropertyReference, List<String>> errorsMap = new HashMap<>();
+          Map<String, List<String>> errorsByName = _modelConfig.get().getErrorsList();
+          List<IPropertyReference> propertyReferences = _modelConfig.get().getPropertyReferences();
+          for (String colName : errorsByName.keySet()) {
+            for (IPropertyReference prop : propertyReferences) {
+              if (((SQLColumnPropertyInfo)prop.getPropertyInfo()).getColumnName().equals(colName)){
+                errorsMap.put(prop, errorsByName.get(colName));
+              }
+            }
+          }
+          return errorsMap;
+        }
+
+        @Override
+        public void setValue(Object o, Object o1) {
+          //ignore
+        }
+      })
+      .build(this);
+
+    _propertiesList.add(errorsList);
+    _propertiesMap.put("errors", errorsList);
+
     createMethodInfos();
     createConstructorInfos();
   }
@@ -207,6 +240,7 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
     }
 
     methodList.add(generateCreateMethod());
+    methodList.add(generateSaveMethod());
     methodList.add(generateWhereMethod());
     methodList.add(generateSelectMethod());
 
@@ -272,6 +306,16 @@ public class SQLTableTypeInfo extends SQLBaseTypeInfo {
         .withReturnType(this.getOwnersType())
         .withCallHandler((ctx, args) -> ((SQLRecord) ctx).create())
         .build(this);
+  }
+
+  private IMethodInfo generateSaveMethod() {
+    return new MethodInfoBuilder()
+      .withName("save")
+      .withDescription("Creates or updates a table entry")
+      .withParameters()
+      .withReturnType(JavaTypes.pBOOLEAN())
+      .withCallHandler((ctx, args) -> ((SQLRecord) ctx).save())
+      .build(this);
   }
 
   private IMethodInfo generateWhereMethod() {
