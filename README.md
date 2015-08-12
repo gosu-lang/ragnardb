@@ -2,13 +2,35 @@
 
 RagnarDB is an experimental O/R framework for the Gosu programming language.
 
+## Parsing
+
+
 ## DDL Files
 
 *TODO: Describe DDL semantics*
 
 ## SQL Query Files
 
-*TODO: Describe SQL semantics*
+.sql files are also handled in this plugin. Upon creation of an SQL file and import into a gosu class or program file,
+the name of the SQL file can be directly addressed as a variable. This query type has one relevant property and one
+relevant method.
+
+sqlSource is a property which allows you to directly access, as a string, the text of the file. This property is not 
+recommended for use against a database, however, it may have uses in Gosu.
+
+To run this query against a database, use the method execute. execute does two things: first, execute will parameterize
+(see **Query Parameters** for details) parts of the file. execute will then create a preparedStatement and run it against
+the database. What execute returns depends on the contents of the file; for all queries which are not selection queries,
+execute returns an integer of the number of columns affected. For selection queries of entire tables, execute returns the
+table type (see **DDL Files** for details). For single columns, execute returns a type appropriate for the type of the
+column. For all other queries, execute returns a created query result type with all the relevant columns accessible.
+
+*Currently known issues:*
+
+execute does not handle multiple statements in an sql file; this is an intentional design choice to simply naming, 
+parameterization, return type handling, on the basis that multiple queries can simply be put into multiple files.
+
+
 
 ### Query Parameters
 
