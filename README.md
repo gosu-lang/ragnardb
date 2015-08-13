@@ -36,7 +36,13 @@ query result types do not fully extend sql record at the moment, creating some p
 
 ### Query Parameters
 
-With normal SQL files, using execute simply runs the 
+With normal SQL files, using execute simply runs the query. We have extended the SQL grammar to support parameterization,
+in the form of replacing normal expressions with @ to indicate the use of a parameter. @variablename alerts the plugin to
+a new parameter, variablename. When any particular variable name is used the first time, the full variable type must also
+be stated (a parse error will result if this is not the case). @age:java.lang.Integer alerts the plugin to a new parameter
+called age of type int. When execute is called, it expects as many arguments as there are formal parameters given. In the
+execution, all parameters are replaced with the arguments. Note that if you use a parameter name multiple times, it only
+appears as one formal parameter and all instances of it will be replaced by the same argument value. 
 
 ## Runtime API
 
