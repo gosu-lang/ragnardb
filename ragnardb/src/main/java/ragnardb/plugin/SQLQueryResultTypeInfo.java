@@ -60,8 +60,13 @@ public class SQLQueryResultTypeInfo extends SQLBaseTypeInfo{
 
   private void createConstructorInfos(String table) {
     List<IConstructorInfo> constructorInfos = new ArrayList<>();
+    IType instanceType = TypeSystem.get(SQLRecord.class);
+    final IConstructorInfo ctor = instanceType.getTypeInfo().getConstructor();
 
-    _constructor = ( args ) -> {return new SQLRecord(table, "id");};
+    _constructor = ( args ) -> {
+      SQLRecord instance = (SQLRecord)ctor.getConstructor().newInstance();
+      return instance;
+    };
 
     IConstructorInfo constructor = new ConstructorInfoBuilder()
       .withDescription("Creates a new query result object")

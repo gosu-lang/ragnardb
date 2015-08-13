@@ -30,9 +30,13 @@ column. For all other queries, execute returns a created query result type with 
 execute does not handle multiple statements in an sql file; this is an intentional design choice to simply naming, 
 parameterization, return type handling, on the basis that multiple queries can simply be put into multiple files.
 
+subqueries automatically trigger a query result type with all properties as objects
 
+query result types do not fully extend sql record at the moment, creating some problems with field access
 
 ### Query Parameters
+
+With normal SQL files, using execute simply runs the 
 
 ## Runtime API
 

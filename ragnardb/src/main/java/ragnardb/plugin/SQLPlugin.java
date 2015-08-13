@@ -5,6 +5,7 @@ import gw.fs.FileFactory;
 import gw.fs.IDirectory;
 import gw.fs.IFile;
 import gw.lang.reflect.*;
+import gw.lang.reflect.java.JavaTypes;
 import gw.lang.reflect.module.IModule;
 import gw.util.GosuStringUtil;
 import gw.util.Pair;
@@ -383,7 +384,7 @@ public class SQLPlugin extends TypeLoaderBase {
       }
       namespace = namespace.contains("\\.")?namespace.substring(0, namespace.lastIndexOf('.')):"";
     }
-    return null;
+    return JavaTypes.OBJECT();
   }
 
   protected SQLColumnPropertyInfo getColumnProperty(String columnName, String namespace, String tableName){
