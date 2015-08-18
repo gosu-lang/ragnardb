@@ -22,7 +22,7 @@ public class ColumnDefinition {
   private int col;
   private int _offset;
 
-  static public HashMap<String,Integer> lookUp = new HashMap<String,Integer>();
+  static final public HashMap<String,Integer> lookUp = new HashMap<String,Integer>();
 
   static{
    lookUp.put("int", Types.INTEGER);

@@ -69,27 +69,11 @@ public class NounHandler {
     String[] finalSplit = new String[1];
     String[] initialSplit = word.split("[^A-Za-z0-9']");
     ArrayList<String> currentList = new ArrayList<>(Arrays.asList(initialSplit));
-
-    /*splits on capital letters and numbers*/
-    ArrayList<String[]> nextList = new ArrayList<String[]>();
-    for(int i = 0; i<currentList.size();i++){
-      String[] next = currentList.get(i).split("(?=[A-Z0-9])|(?<=[A-Z0-9])");
-      nextList.add(next);
-    }
-    ArrayList<String> finalList = new ArrayList<>();
-    for(String[] ss: nextList){
-      for(String s: ss){
-        finalList.add(s);
-      }
-    }
-
-
     finalSplit = currentList.toArray(finalSplit);
     return finalSplit;
   }
 
   private static String[] getWordsStatic(String word) {
-    String[] finalSplit = new String[1];
     String[] initialSplit = word.split("[^A-Za-z0-9']");
     ArrayList<String> currentList = new ArrayList<>(Arrays.asList(initialSplit));
 

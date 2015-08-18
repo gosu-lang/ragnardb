@@ -224,7 +224,7 @@ public class SQLParser {
           return statements;
         }
         statements.append(parseCreateTable());
-        if (!(tokEquals(TokenType.EOF) | tokEquals(TokenType.SEMI))) {
+        if (!(tokEquals(TokenType.EOF) || tokEquals(TokenType.SEMI))) {
           error(currentToken, "Expecting 'SEMI' or 'EOF but found " + currentToken.getType().getName());
         }
         if (tokEquals(TokenType.SEMI)) {

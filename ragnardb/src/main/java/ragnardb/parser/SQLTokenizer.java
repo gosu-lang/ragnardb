@@ -12,7 +12,7 @@ public class SQLTokenizer {
   private char ch;
   private boolean EOF;
   private String fileName;
-  public static String MEMORY_FILE = "MEMORY_FILE";
+  public final static String MEMORY_FILE = "MEMORY_FILE";
   public SQLTokenizer(Reader r) {
     this(r, MEMORY_FILE);
   }
