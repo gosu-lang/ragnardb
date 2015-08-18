@@ -4,17 +4,31 @@ RagnarDB is an experimental O/R framework for the Gosu programming language.
 
 ## Parsing
 
-
+The grammar is an ANTLR3 grammar file and can be found in SQL.g; a description of the grammar file can be found at the
+top of the file. The parser is an LR(1) parser and is contained in SQLParser. It accepts and parses input from the 
+SQLTokenizer. The parser has several sync points in key statements; furthermore the parser always advances the input even
+if the input is incorrect. The parser generates information for the plugin downstream; as part of its error handling
+package, if input errors prevent sufficient amounts of useful information from being read, useful type information may
+not be generated. Finally, any errors will prevent execute (see **SQL Query Files**) from being created. A maximum of
+25 error messages will be displayed per file.
 
 ## DDL Files
 
-*TODO: Describe DDL semantics*
+.ddl files can only at the present be parsed if they contain a series of CREATE TABLE statements, separated by semicolons.
+A ddl file generates a ddl type, which has the property sqlSource. sqlSource allows you to directly access, as a string,
+the text of the file. A ddl file also generates a type for every table in the file (that's been successfully parsed). The
+type name is the name of the table in singular form (see **Noun Handler** for details). 
+
+A table type has properties which correspond to the columns in the table, as well as any foreign key references. These
+properties are properly typed. The list of possible methods associated with a table can be found in **Runtime API** and
+**Query Builder API**.
 
 ## SQL Query Files
 
 .sql files are also handled in this plugin. Upon creation of an SQL file and import into a gosu class or program file,
 the name of the SQL file can be directly addressed as a variable. This query type has one relevant property and one
-relevant method.
+relevant method. Currently, the only supported commands (which generate type information) are SELECT, INSERT, UPDATE and
+DELETE.
 
 sqlSource is a property which allows you to directly access, as a string, the text of the file. This property is not 
 recommended for use against a database, however, it may have uses in Gosu.
@@ -96,6 +110,17 @@ an inline function. The inline function should have a test and throw an exceptio
 ### Property Listeners
 
 ### Life Cycle Callback API
+
+### Noun Handler
+
+The utils package has a single class, NounHandler. This class enables a number of operations related to name handling.
+A NounHandler must be instantiated before use. A single instance can have the string it's holding changed. Two methods
+in NounHandler are generally used for changing names; getCamelCased, which changes snake casing, spaces, numbers to camel
+casing, and getSingular, which does the same, but also changes the last lexical unit in a string to a singular form. The
+string can be changed with changeWord.
+
+Because of the complexity of the English language, we have also added addException, which can allow you to put a specific
+singularizing form if you are not satisfied with how the handler works.
 
 ## Developing RagnarDB
 
