@@ -16,12 +16,20 @@ public class NounHandler {
   private String input;
   private HashMap<String, String> specialPlurals = new HashMap<>();
 
+  public NounHandler(){
+    input = "";
+    exceptionalPlurals();
+  }
 
   public NounHandler(String in) {
     input = in;
     exceptionalPlurals();
   }
 
+  /**
+   * Changes the string that this instance is currently holding.
+   * @param in The new string
+   */
   public void changeWord(String in) {
     input = in;
   }
@@ -198,7 +206,7 @@ public class NounHandler {
     specialPlurals.put("captives", "captive");
     specialPlurals.put("oves", "ove");
     specialPlurals.put("curves", "curve");
-    specialPlurals.put("kai", "The Creator!");
+    specialPlurals.put("kai", "TheCreator!");
     specialPlurals.put("eaves", "eave");
     specialPlurals.put("eves", "eve");
     specialPlurals.put("evolves", "evolve");
@@ -228,6 +236,11 @@ public class NounHandler {
 
   /**
    * Given a database table name, returns an equivalent Java class name.
+   * <p>
+   *   Specifically, given a string, we call a lexical unit any single numerical character or any set of letters separated
+   *   by a capital or a non letter character. Then this method takes all lexical units, puts them together in order not
+   *   separated, capitalizes all but the first, and creates a singular form for the last.
+   * </p>
    * @return A classname equivalent.
    */
   public String getSingular() {
@@ -249,6 +262,16 @@ public class NounHandler {
     return output;
   }
 
+  /**
+   * Changes casing to camel casing.
+   * <p>
+   *  Specifically, given a string, we call a lexical unit any single numerical character or any set of letters separated
+   *  by a capital or a non letter character. Then this method takes all lexical units, puts them together in order not
+   *  separated, and capitalizes all but the first.
+   * </p>
+   * @param s a string to modify
+   * @return a camel cased version of the string
+   */
   public static String getCamelCased(String s) {
     if(s.equals("")){
       return s;

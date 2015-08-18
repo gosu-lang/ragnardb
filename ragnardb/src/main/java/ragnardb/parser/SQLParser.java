@@ -11,7 +11,7 @@ import java.util.List;
 public class SQLParser {
 
   /**
-   * This is the parser for RagnarDB. This is an LL(1) parser using the grammar referred to in SQL.g. All valid
+   * This is the parser for RagnarDB. This is an LR(1) parser using the grammar referred to in SQL.g. All valid
    * sentences in this parser are valid for use in the database; however, not necessarily all possible statements
    * according to the H2 grammar are valid in this parser. For conflicts, please see SQL.g for explanation.
    */
@@ -160,6 +160,12 @@ public class SQLParser {
     return items;
   }
 
+  /**
+   * Part of the error handling client.
+   *
+   * @param token
+   * @param message
+   */
   private void error(Token token, String message) {
     String fileName = _tokenizer.getFileName();
     if(SQLTokenizer.MEMORY_FILE.equals(fileName)) {
@@ -189,6 +195,10 @@ public class SQLParser {
             tokEquals(TokenType.EOF));
   }
 
+  /**
+   * Parses a file
+   * @return a statement or a ddl type
+   */
   public SQL parse() {
     errors = new ArrayList<>();
     errCount = 0;
