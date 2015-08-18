@@ -22,6 +22,9 @@ public class UniqueValidator<T> extends FieldValidator<T> {
 
   @Override
   public void validateValue(T value) {
+    if(value == null){
+      throw new ValidationException("Validation Exception: Attempted to apply validation test to null object");
+    }
     ValidationQuery query = new ValidationQuery("SELECT * FROM " + tableName + " WHERE " + propInfo.getColumnName() + " = ?", Collections.singletonList(value));
     if(!query.unique()){
       throw new ValidationException("Validation Exception: Unique value required for '" + propInfo.getName() + "'.");

@@ -5,6 +5,7 @@ RagnarDB is an experimental O/R framework for the Gosu programming language.
 ## Parsing
 
 
+
 ## DDL Files
 
 *TODO: Describe DDL semantics*
@@ -27,12 +28,12 @@ column. For all other queries, execute returns a created query result type with 
 
 *Currently known issues:*
 
-execute does not handle multiple statements in an sql file; this is an intentional design choice to simply naming, 
+-execute does not handle multiple statements in an sql file; this is an intentional design choice to simply naming, 
 parameterization, return type handling, on the basis that multiple queries can simply be put into multiple files.
 
-subqueries automatically trigger a query result type with all properties as objects
+-subqueries automatically trigger a query result type with all properties as objects
 
-query result types do not fully extend sql record at the moment, creating some problems with field access
+-query result types do not fully extend sql record at the moment, creating some problems with field access
 
 ### Query Parameters
 
@@ -53,6 +54,44 @@ appears as one formal parameter and all instances of it will be replaced by the 
 ### Gosu Extension API
 
 ### Validation API
+
+See **Gosu Extension API** for an overview of how to extend table types. The method configure is an empty method in all
+table types which should be overridden in the extension class to enable validation. A model configurator is automatically
+created; validators can be added to this configurator. A validator has the method validate which accepts a property
+reference. The method returns null, but throws an exception if validation fails. Adding validators modifies the save
+method (see **Runtime API** for details).
+
+*Default Validators*
+
+The following methods of the model configurator create default validators. All validators throw a validation exception, 
+which is a subclass of runtime exception on validation failure.
+
+-requiredFields: Expects a list of property references. Equivalent to the SQL declaration NOT NULL on a column; demands
+that the the property is not null. Fails if the property reference has not been instantiated or is null.
+
+-lengthBetween: Expects a property reference, a minimum, and a maximum length. To specify no maximum length, enter -1.
+Fails if the property reference has not been instantiated or the property's string representation is outside the 
+inclusive range of [minimum, maximum].
+
+-validateFormat: Expects a property reference and a regex string. Fails if the property reference has not been
+instantiated or its string representation does not match the regex. Can be used with non strings, although results may
+not be predictable.
+
+-unique: Expects a property reference. Equivalent to the SQL declaration UNIQUE on a column; demands that this value does
+not occur elsewhere in this table. Fails if the property reference has not been instantiated or is not unique in this
+table.
+
+-hasContent: Expects a property reference. Equivalent to calling lengthBetween with the parameters (property reference,
+1, -1). Fails if the property reference has not been instantiated or its string representation is empty.
+
+-isInSet: Expects a property reference and a list or set of values. Fails if the property reference has not been
+instantiated or its value is not within the group of accepted values. Note that this functions ultimately by calling 
+equals in comparison.
+
+*Custom Validators*
+
+The model configurator also has an addValidator method. This expects a property reference and a validator, which can be
+an inline function. The inline function should have a test and throw an exception if this test fails.
 
 ### Property Listeners
 

@@ -1499,6 +1499,12 @@ public class SQLParser {
         }
         t = new CaseTerm(c);
         break;
+      case NULL:
+      case CURRENT_DATE:
+      case CURRENT_TIME:
+      case CURRENT_TIMESTAMP:
+        next();
+        break;
       default:
         specialError("Any term");
         break;

@@ -91,7 +91,7 @@ createtable
     	;
     	
 columndef
-        :	columnname typename ('DEFAULT' term)? ('NOT'? 'NULL')? (('AUTO_INCREMENT'|'IDENTITY') ('(' INT (',' INT)? ')')?)? ('UNIQUE' | 'PRIMARY' 'KEY' 'HASH'?)? ('CHECK' condition)?
+        :	columnname typename ('DEFAULT' (term|'NULL'))? ('NOT'? 'NULL')? (('AUTO_INCREMENT'|'IDENTITY') ('(' INT (',' INT)? ')')?)? ('UNIQUE' | 'PRIMARY' 'KEY' 'HASH'?)? ('CHECK' condition)?
         ;
         
 constraint

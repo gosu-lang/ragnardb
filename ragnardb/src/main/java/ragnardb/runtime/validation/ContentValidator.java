@@ -16,6 +16,9 @@ public class ContentValidator<T> extends FieldValidator<T>{
 
   @Override
   public void validateValue(T value) {
+    if(value == null){
+      throw new ValidationException("Validation Exception: Attempted to apply validation test to null object");
+    }
     if(!objs.contains(value)){
       throw new ValidationException("Validation Exception: Value is not in accepted list of values");
     }

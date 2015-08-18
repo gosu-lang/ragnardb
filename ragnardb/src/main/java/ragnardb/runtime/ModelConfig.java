@@ -91,6 +91,11 @@ public class ModelConfig implements IModelConfig
     }
   }
 
+  public <T> void requiredFields(IPropertyReference<Object, T> ... propertyReferenceList){
+    List<IPropertyReference<Object, T>> propList = Arrays.asList(propertyReferenceList);
+    requiredFields(propList);
+  }
+
   /*Allows validation by length, set maxlength to -1 to have no maximum length*/
   public <T> void lengthBetween(IPropertyReference<Object, T> propertyReference, int minlength, int maxlength){
     propertyReferences.add(propertyReference);
