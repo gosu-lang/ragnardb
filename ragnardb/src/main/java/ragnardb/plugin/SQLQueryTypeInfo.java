@@ -24,6 +24,10 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
     decorateQuery(type);
   }
 
+  /**
+   * Initializes type information.
+   * @param type
+   */
   private void decorateQuery(ISQLQueryType type){
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
@@ -57,6 +61,11 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
     _constructorList = Collections.emptyList();
   }
 
+  /**
+   * Generates the method execute.
+   * @param type
+   * @return
+   */
   private MethodList getMethods(ISQLQueryType type){
     MethodList result = new MethodList();
     Statement tree = (Statement) type.getParseTree();
@@ -154,6 +163,12 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
     return parameters;
   }
 
+  /**
+   * Determines the return type of a selection statement.
+   * @param select
+   * @param type
+   * @return
+   */
   private IType returnType(Statement select, ISQLQueryType type){
     ArrayList<ResultColumn> resultColumns = select.getResultColumns();
     ArrayList<String> tableNames = select.getTables();
@@ -175,6 +190,12 @@ public class SQLQueryTypeInfo extends SQLBaseTypeInfo {
     return type.getResults(select, type);
   }
 
+  /**
+   * Accessory method to the above returnType method; does the work for multiple table queries.
+   * @param select
+   * @param type
+   * @return
+   */
   private IType handleMultipleTables(Statement select, ISQLQueryType type){
     ArrayList<ResultColumn> resultColumns = select.getResultColumns();
     ArrayList<String> tableNames = select.getTables();

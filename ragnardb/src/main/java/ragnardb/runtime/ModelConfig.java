@@ -63,7 +63,12 @@ public class ModelConfig implements IModelConfig
   }
 
 
-  /*Allows validation by regex*/
+  /**
+   * Validation by regex
+   * @param propertyReference a property reference
+   * @param regexp a regex
+   * @param <T>
+   */
   public <T> void validateFormat(IPropertyReference<Object, T> propertyReference, String regexp){
     propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
@@ -76,7 +81,11 @@ public class ModelConfig implements IModelConfig
     _validatorsByField.put(propertyInfo.getColumnName(), validators);
   }
 
-  /*Allows validation by required*/
+  /**
+   * NOT NULL Validation
+   * @param propertyReferenceList list of properties you want not to be null
+   * @param <T>
+   */
   public <T> void requiredFields(List<IPropertyReference<Object, T>> propertyReferenceList){
     for(IPropertyReference<Object, T> propertyReference: propertyReferenceList){
       propertyReferences.add(propertyReference);
@@ -91,12 +100,23 @@ public class ModelConfig implements IModelConfig
     }
   }
 
+  /**
+   * For convenience; see other requiredFields method
+   * @param propertyReferenceList
+   * @param <T>
+   */
   public <T> void requiredFields(IPropertyReference<Object, T> ... propertyReferenceList){
     List<IPropertyReference<Object, T>> propList = Arrays.asList(propertyReferenceList);
     requiredFields(propList);
   }
 
-  /*Allows validation by length, set maxlength to -1 to have no maximum length*/
+  /**
+   * Validation by length of string representation. To specify no maximum, enter -1.
+   * @param propertyReference
+   * @param minlength
+   * @param maxlength
+   * @param <T>
+   */
   public <T> void lengthBetween(IPropertyReference<Object, T> propertyReference, int minlength, int maxlength){
     propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
@@ -109,6 +129,11 @@ public class ModelConfig implements IModelConfig
     _validatorsByField.put(propertyInfo.getColumnName(), validators);
   }
 
+  /**
+   * UNIQUE Validation; will not work against unsaved data.
+   * @param propertyReference
+   * @param <T>
+   */
   public <T> void unique(IPropertyReference<Object, T> propertyReference){
     propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
@@ -121,6 +146,11 @@ public class ModelConfig implements IModelConfig
     _validatorsByField.put(propertyInfo.getColumnName(), validators);
   }
 
+  /**
+   * Equivalent to calling lengthBetween with (1,-1).
+   * @param propertyReference
+   * @param <T>
+   */
   public <T> void hasContent(IPropertyReference<Object, T> propertyReference){
     propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
@@ -133,11 +163,22 @@ public class ModelConfig implements IModelConfig
     _validatorsByField.put(propertyInfo.getColumnName(), validators);
   }
 
-  /*Misnomer; we actually take a list object*/
+  /**
+   * See other isInSet
+   * @param propertyReference
+   * @param objs
+   * @param <T>
+   */
   public <T> void isInSet(IPropertyReference<Object, T> propertyReference, List<Object> objs){
     isInSet(propertyReference, new HashSet<Object>(objs));
   }
 
+  /**
+   * Tests if a property reference has a value equal to a given set.
+   * @param propertyReference
+   * @param objs
+   * @param <T>
+   */
   public <T> void isInSet(IPropertyReference<Object, T> propertyReference, Set<Object> objs){
     propertyReferences.add(propertyReference);
     SQLColumnPropertyInfo propertyInfo = (SQLColumnPropertyInfo)propertyReference.getPropertyInfo();
