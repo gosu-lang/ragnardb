@@ -63,6 +63,12 @@ public class SQLDdlType extends SQLTypeBase implements ISQLDdlType {
   }
 
   @Override
+  public IType resolveRelativeInnerClass( String s, boolean b )
+  {
+    return getInnerClass( s );
+  }
+
+  @Override
   public List<CreateTable> getTables() {
     return ((DDL) getParseTree()).getList().stream().collect(Collectors.toList());
   }
