@@ -45,7 +45,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
-import gw.lang.reflect.IFileBasedType;
+import gw.lang.reflect.IType;
 import gw.lang.reflect.gs.IGosuClass;
 import gw.plugin.ij.lang.psi.impl.CustomPsiClassCache;
 import gw.plugin.ij.util.FileUtil;
@@ -63,17 +63,17 @@ public class JavaFacadePsiClass implements PsiClass
 
   @Nullable
   private PsiFile _file;
-  private IFileBasedType _type;
+  private IType _type;
   private PsiClass _delegate;
 
-  public JavaFacadePsiClass( PsiClass delegate, IFileBasedType type )
+  public JavaFacadePsiClass( PsiClass delegate, IType type )
   {
     super();
 
     initialize( delegate, type );
   }
 
-  public void initialize( PsiClass delegate, IFileBasedType type )
+  public void initialize( PsiClass delegate, IType type )
   {
     final VirtualFile virtualFile = FileUtil.getTypeResourceFiles( type ).get( 0 );
     final PsiManager manager = PsiManagerImpl.getInstance( (Project)type.getTypeLoader().getModule().getExecutionEnvironment().getProject().getNativeProject() );
@@ -118,7 +118,7 @@ public class JavaFacadePsiClass implements PsiClass
     return _type.isEnum();
   }
 
-  public IFileBasedType getType()
+  public IType getType()
   {
     return _type;
   }

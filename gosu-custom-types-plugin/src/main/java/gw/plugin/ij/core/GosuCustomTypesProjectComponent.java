@@ -11,7 +11,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.DefaultProject;
 import org.jetbrains.annotations.NotNull;
 
 public class GosuCustomTypesProjectComponent implements ProjectComponent {
@@ -42,7 +41,7 @@ public class GosuCustomTypesProjectComponent implements ProjectComponent {
   // BaseComponent
   @Override
   public void initComponent() {
-    if (!(_project instanceof DefaultProject) && !PluginLoaderUtil.instance( _project ).isStarted()) {
+    if( !_project.isDefault() && !PluginLoaderUtil.instance( _project ).isStarted() ) {
       PluginLoaderUtil.instance( _project ).setProject();
     }
   }

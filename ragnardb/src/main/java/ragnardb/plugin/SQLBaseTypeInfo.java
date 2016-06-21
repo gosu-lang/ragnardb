@@ -12,14 +12,14 @@ public abstract class SQLBaseTypeInfo extends BaseTypeInfo {
   protected MethodList _methodList;
   protected List<IConstructorInfo> _constructorList;
 
-  public SQLBaseTypeInfo(IFileBasedType type) {
+  public SQLBaseTypeInfo(IType type) {
     super(type);
   }
 
   @Override
-  public IFileBasedType getOwnersType()
+  public IType getOwnersType()
   {
-    return (IFileBasedType)super.getOwnersType();
+    return super.getOwnersType();
   }
 
   /**

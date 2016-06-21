@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.DefaultProject;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -175,7 +174,7 @@ public class PluginLoaderUtil
 
   public void setProject()
   {
-    if( !(_project instanceof DefaultProject) )
+    if( !_project.isDefault() )
     {
       _failureReason = PluginFailureReason.NONE;
       _permanentProjectConnection = _project.getMessageBus().connect();

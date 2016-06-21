@@ -1,8 +1,6 @@
 package ragnardb.plugin;
 
-import gw.lang.reflect.IFileBasedType;
 import gw.lang.reflect.IType;
-import ragnardb.parser.ast.SelectStatement;
 import ragnardb.parser.ast.Statement;
 
 import java.util.ArrayList;

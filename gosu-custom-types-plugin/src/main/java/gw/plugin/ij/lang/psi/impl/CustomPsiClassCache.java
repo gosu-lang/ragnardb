@@ -24,14 +24,13 @@ import gw.lang.reflect.IDefaultTypeLoader;
 import gw.lang.reflect.IEnumData;
 import gw.lang.reflect.IEnumType;
 import gw.lang.reflect.IFeatureInfo;
-import gw.lang.reflect.IFileBasedType;
+import gw.lang.reflect.IType;
 import gw.lang.reflect.IHasParameterInfos;
 import gw.lang.reflect.ILocationInfo;
 import gw.lang.reflect.IMethodInfo;
 import gw.lang.reflect.IParameterInfo;
 import gw.lang.reflect.IPropertyInfo;
 import gw.lang.reflect.IRelativeTypeInfo;
-import gw.lang.reflect.IType;
 import gw.lang.reflect.ITypeInfo;
 import gw.lang.reflect.ITypeLoader;
 import gw.lang.reflect.MethodList;
@@ -77,10 +76,6 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
 
   public JavaFacadePsiClass getPsiClass( @NotNull IType type )
   {
-    if( !(type instanceof IFileBasedType) )
-    {
-      return null;
-    }
     List<VirtualFile> typeResourceFiles = FileUtil.getTypeResourceFiles( type );
     if( typeResourceFiles.isEmpty() )
     {
@@ -99,9 +94,9 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
     if( psiFacadeClass == null || !psiFacadeClass.isValid() )
     {
       PsiClass delegate = createPsiClass( type );
-      psiFacadeClass = new JavaFacadePsiClass( delegate, (IFileBasedType)type );
+      psiFacadeClass = new JavaFacadePsiClass( delegate, type );
       map.put( name, psiFacadeClass );
-      _psi2Class.put( ((IFileBasedType)type).getSourceFiles()[0].getPath().getPathString(), psiFacadeClass );
+      _psi2Class.put( type.getSourceFiles()[0].getPath().getPathString(), psiFacadeClass );
     }
     return psiFacadeClass;
   }
@@ -109,11 +104,6 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
   @NotNull
   private PsiClass createPsiClass( @NotNull IType type )
   {
-    if( !(type instanceof IFileBasedType) )
-    {
-      throw new RuntimeException( "Only file-based types can have custom PsiClasses: " + type.getClass().getName() );
-    }
-
     PsiManager manager = PsiManagerImpl.getInstance( (Project)type.getTypeLoader().getModule().getExecutionEnvironment().getProject().getNativeProject() );
     String source = generateSource( type );
     final PsiJavaFile aFile = createDummyJavaFile( type, manager, source );
@@ -556,13 +546,10 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
             if( typeName.endsWith( prefix ) )
             {
               IType type = TypeSystem.getByFullNameIfValid( typeName, module );
-              if( type instanceof IFileBasedType )
+              PsiClass psiClass = getPsiClass( type );
+              if( psiClass != null )
               {
-                PsiClass psiClass = getPsiClass( type );
-                if( psiClass != null )
-                {
-                  classes.add( psiClass );
-                }
+                classes.add( psiClass );
               }
             }
           }

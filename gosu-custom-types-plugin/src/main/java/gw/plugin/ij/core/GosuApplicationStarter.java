@@ -49,7 +49,8 @@ public class GosuApplicationStarter implements ApplicationStarter, ApplicationLo
   }
 
   @Override
-  public void beforeApplicationLoaded(Application application) {
+  public void beforeApplicationLoaded( @NotNull Application application, @NotNull String s )
+  {
     // When started without "gosu" command line argument
     fixClassLoaders();
   }

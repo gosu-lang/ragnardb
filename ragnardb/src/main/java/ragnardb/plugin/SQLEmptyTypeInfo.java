@@ -1,6 +1,6 @@
 package ragnardb.plugin;
 
-import gw.lang.reflect.IFileBasedType;
+import gw.lang.reflect.IType;
 import gw.lang.reflect.MethodList;
 
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import java.util.HashMap;
 public class SQLEmptyTypeInfo extends SQLBaseTypeInfo{
 
 
-  public SQLEmptyTypeInfo(IFileBasedType type) {
+  public SQLEmptyTypeInfo(IType type) {
     super(type);
     _propertiesList = new ArrayList<>();
     _propertiesMap = new HashMap<>();
