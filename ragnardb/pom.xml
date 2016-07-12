@@ -62,7 +62,7 @@
             </manifest>
             <manifestEntries>
               <Gosu-Typeloaders>ragnardb.plugin.SQLPlugin</Gosu-Typeloaders>
-              <Contains-Sources>gs, gsx, gst</Contains-Sources>
+              <Contains-Sources>ddl, sql</Contains-Sources>
             </manifestEntries>
           </archive>
         </configuration>
