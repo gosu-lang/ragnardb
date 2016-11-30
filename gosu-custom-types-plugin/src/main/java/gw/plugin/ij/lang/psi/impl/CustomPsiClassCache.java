@@ -397,18 +397,18 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
       IType type = pi.getOwnersType();
       VirtualFile virtualFile = FileUtil.getTypeResourceFiles( type ).get( 0 );
       URL fileUrl = loc.getFileUrl();
-      if( fileUrl != null )
+      if( fileUrl != null && virtualFile != null )
       {
         //## todo: handle types with multiple files e.g., the xsd type refers to elements in other types like Schema.xsd
         //## todo: For now just ignore typeinfo that comes from outside the immediate xsd
         IFile ifile = CommonServices.getFileSystem().getIFile( loc.getFileUrl() );
         VirtualFile vfile = ((IDEAFile)ifile).getVirtualFile();
-        if( vfile.equals( virtualFile ) )
+        if( !vfile.equals( virtualFile ) )
         {
-          offset = -1;
+          virtualFile = null;
         }
       }
-      else
+      if( virtualFile != null )
       {
         Document doc = FileDocumentManager.getInstance().getDocument( virtualFile );
         offset = doc.getLineStartOffset( loc.getLine() - 1 );
