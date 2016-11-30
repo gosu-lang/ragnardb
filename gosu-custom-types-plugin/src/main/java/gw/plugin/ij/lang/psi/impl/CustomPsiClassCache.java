@@ -16,6 +16,8 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import gw.config.CommonServices;
+import gw.fs.IFile;
 import gw.lang.parser.IHasInnerClass;
 import gw.lang.reflect.AbstractTypeSystemListener;
 import gw.lang.reflect.IAttributedFeatureInfo;
@@ -43,7 +45,9 @@ import gw.lang.reflect.java.IJavaType;
 import gw.lang.reflect.java.JavaTypes;
 import gw.lang.reflect.module.IModule;
 import gw.plugin.ij.custom.JavaFacadePsiClass;
+import gw.plugin.ij.filesystem.IDEAFile;
 import gw.plugin.ij.util.FileUtil;
+import java.net.URL;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -392,11 +396,26 @@ public class CustomPsiClassCache extends AbstractTypeSystemListener
     {
       IType type = pi.getOwnersType();
       VirtualFile virtualFile = FileUtil.getTypeResourceFiles( type ).get( 0 );
-      Document doc = FileDocumentManager.getInstance().getDocument( virtualFile );
-      offset = doc.getLineStartOffset( loc.getLine()  - 1 );
-      if( loc.getColumn() > 0 )
+      URL fileUrl = loc.getFileUrl();
+      if( fileUrl != null )
       {
-        offset += loc.getColumn() - 1;
+        //## todo: handle types with multiple files e.g., the xsd type refers to elements in other types like Schema.xsd
+        //## todo: For now just ignore typeinfo that comes from outside the immediate xsd
+        IFile ifile = CommonServices.getFileSystem().getIFile( loc.getFileUrl() );
+        VirtualFile vfile = ((IDEAFile)ifile).getVirtualFile();
+        if( vfile.equals( virtualFile ) )
+        {
+          offset = -1;
+        }
+      }
+      else
+      {
+        Document doc = FileDocumentManager.getInstance().getDocument( virtualFile );
+        offset = doc.getLineStartOffset( loc.getLine() - 1 );
+        if( loc.getColumn() > 0 )
+        {
+          offset += loc.getColumn() - 1;
+        }
       }
     }
     return sb.append( offset ).append( ", " )
