@@ -3,10 +3,13 @@ package ragnardb.plugin;
 import gw.fs.IDirectory;
 import gw.fs.IFile;
 import gw.fs.ResourcePath;
+import gw.lang.reflect.IDefaultTypeLoader;
 import gw.lang.reflect.IType;
 import gw.lang.reflect.ITypeInfo;
 import gw.lang.reflect.ITypeRef;
 import gw.lang.reflect.TypeBase;
+import gw.lang.reflect.gs.ClassType;
+import gw.lang.reflect.gs.ISourceFileHandle;
 import gw.lang.reflect.module.IModule;
 import gw.util.StreamUtil;
 import gw.util.concurrent.LockingLazyVar;
@@ -25,6 +28,7 @@ public abstract class SQLTypeBase extends TypeBase implements ISQLTypeBase {
   private IFile _file;
   protected final SQLPlugin _plugin;
   private ITypeRef _typeRef;
+  private ISourceFileHandle _fileHandle;
   private LockingLazyVar<SQLBaseTypeInfo> _typeInfo;
 
   public SQLTypeBase(IFile file, SQLPlugin plugin) {
@@ -51,13 +55,12 @@ public abstract class SQLTypeBase extends TypeBase implements ISQLTypeBase {
   }
 
   private void setParseTree(){
-    SQLParser p = null;
     try {
-      p = new SQLParser(new SQLTokenizer(getReader(), getFile().getName()));
+      SQLParser p = new SQLParser(new SQLTokenizer(getReader(), getFile().getName()));
+      _parseTree = p.parse();
     } catch (Exception e) {
       throw new RuntimeException( e );
     }
-    _parseTree = p.parse();
   }
 
   @Override
@@ -132,4 +135,17 @@ public abstract class SQLTypeBase extends TypeBase implements ISQLTypeBase {
     return StreamUtil.getContent(reader);
   }
 
+  @Override
+  public ISourceFileHandle getSourceFileHandle() {
+    if( _fileHandle == null ) {
+      IDefaultTypeLoader loader = getTypeLoader().getModule().getTypeLoaders( IDefaultTypeLoader.class ).get( 0 );
+      _fileHandle = loader.getSouceFileHandle( getName() );
+    }
+    return _fileHandle;
+  }
+
+  @Override
+  public ClassType getClassType() {
+    return ClassType.Unknown;
+  }
 }
